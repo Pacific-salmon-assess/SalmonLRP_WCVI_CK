@@ -1,0 +1,683 @@
+
+# **** Plotting functions for looking at data availability ***********
+# plot_Num_CUs_Over_Time()      - Plot number of CUs over time for all MUs
+# plot_CU_DataObs_Over_Time()   - Plot available CU estimates over time, by MU
+# plot_CU_Escp_Over_Time()
+# plot_CU_EscpRatio_Over_Time()
+
+
+
+# *** Plotting functions that show retrospective results *********
+
+# plotAnnualRetro() 
+# plotLogistic()
+
+
+
+
+
+# =================================================================================
+# Functions for plotting data availability
+# ================================================================================
+
+# Plot number of CUs over time for all MUs
+plot_Num_CUs_Over_Time<-function(Dat,Dir, plotName) {
+  
+  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""))
+  
+  # How many stocks per CU?
+  Max_CUs <- Dat %>% group_by(MU) %>% summarise(n=length(unique((CU))))
+  
+  Num_CUs_Over_Time <- Dat %>%  filter(is.na(Escp) == F) %>% group_by(MU, yr) %>% summarise(n=length(unique((CU))))
+  MUs <- unique(Num_CUs_Over_Time$MU)
+  for(mm in 1:length(MUs)){
+    Dat <- Num_CUs_Over_Time %>% filter(MU == MUs[mm])
+    if(mm==1){
+      plot(Dat$yr, Dat$n, col = mm, type="l", ylim = c(1, max(Max_CUs$n)), lwd=2, 
+           xlab = "Year", ylab = "Number of CUs", main = "CUs per MU Over Time")
+    } else {
+      lines(Dat$yr, Dat$n, col = mm, lwd = 2)
+    }
+    legend("topleft", lty=1, col = 1:length(MUs), legend = MUs, lwd=2)
+  }
+  
+  dev.off()
+  
+}
+
+
+# Plot available CU estimates over time, by MU
+plot_CU_DataObs_Over_Time <-function(Dat, Dir, plotName) {
+  
+  theme_update(plot.title = element_text(hjust = 0.5))
+  
+  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""))
+  
+  MUs <- unique(Dat$MU)
+  
+  p <- list()
+  
+  for(mm in 1:length(MUs)){
+    Dat.MU <- Dat %>% filter(MU == MUs[mm])
+    binDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU, yr) %>% summarise(value=ifelse(Escp >= 0, 1, 0))
+    p[[mm]]<-qplot(data=na.omit(binDat),x=yr,y=CU) + 
+      labs(title=MUs[mm], x = "Year", y = "CU") + 
+      theme(plot.title = element_text(size=14, face="bold",hjust=0.5))
+  }
+  
+  do.call(grid.arrange,p)
+  
+  dev.off()
+  
+}
+
+# Plot available CU estimates over time, by CU
+plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T) {
+  
+  theme_update(plot.title = element_text(hjust = 0.5))
+  
+  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""), height = 7, width = 10)
+
+  p <- list()
+  
+  if(samePlot == T){
+      MUs <- unique(Dat$MU)
+      for(mm in 1:length(MUs)){
+        Dat.MU <- Dat %>% filter(MU == MUs[mm])
+        escpDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU_Name, yr) %>% summarise(value=sum(Escp))
+        p[[mm]]<-ggplot(data=escpDat,aes(x=yr,y=value)) + 
+              geom_line(aes(colour=CU_Name),size=1.1 ) + 
+              labs(title=MUs[mm], x = "Year", y = "Escapement") + 
+              theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
+              theme_classic()
+      }
+      
+      
+  } else {
+    CUs <- unique(Dat$CU_Name)
+    for(ss in 1:length(CUs)){
+       escpDat <- Dat %>% filter(CU_Name == CUs[ss]) 
+      p[[ss]]<-ggplot(data=escpDat,aes(x=yr,y=Escp)) +
+        geom_line() +
+        labs(title=CUs[ss], x = "Year", y = "Escapement") + 
+        theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
+        theme_classic()
+    }
+  }
+
+  
+  do.call( grid.arrange, args = c(p, nrow=2))
+  
+  
+  dev.off()
+  
+}
+
+
+
+# Plot available CU estimates over time, by CU
+plot_Subpop_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T) {
+  
+  theme_update(plot.title = element_text(hjust = 0.5))
+  
+  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""), height = 7, width = 10)
+  
+  p <- list()
+ 
+  if(samePlot == T){
+    escpDat <- Dat %>% group_by(Subpop_Name, yr) %>% summarise(value=sum(Escp))
+    p<-ggplot(data=escpDat,aes(x=yr,y=value)) + 
+      geom_line(aes(colour=Subpop_Name),size=1.1 ) + 
+      labs( x = "Year", y = "Escapement") + 
+      theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
+      theme_classic()
+    print(p)
+  } else {
+    Subs <- unique(Dat$Subpop_Name)
+    for(ss in 1:length(Subs)){
+      escpDat <- Dat %>% filter(Subpop_Name == Subs[ss]) %>% group_by(yr) %>% summarise(value=sum(Escp))
+      p[[ss]]<-ggplot(data=escpDat,aes(x=yr,y=value)) +
+        geom_line() +
+        labs(title=Subs[ss], x = "Year", y = "Escapement") + 
+        theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
+        theme_classic()
+    }
+    do.call( grid.arrange, args = c(p, ncol=3))
+  }
+  
+  
+  dev.off()
+  
+}
+
+
+# Plot available CU estimates over time, by MU
+plot_CU_EscpRatio_Over_Time <-function(Dat, Dir, plotName,baseYr) {
+  
+  theme_update(plot.title = element_text(hjust = 0.5))
+  
+  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""))
+  
+  MUs <- unique(Dat$MU)
+  
+  p <- list()
+  
+  for(mm in 1:length(MUs)){
+    Dat.MU <- Dat %>% filter(MU == MUs[mm])
+    
+    escpDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU, yr) %>% summarise(value=sum(Escp))
+    
+    tmpDat<-escpDat %>% group_by(CU) %>% summarise(valueBaseYr= value[yr==baseYr])
+    
+    tmpDat<-left_join(escpDat,tmpDat)
+    
+    ratioDat <- tmpDat  %>% group_by(CU, yr) %>% summarise(ratio = value/valueBaseYr)
+    
+    p[[mm]]<-ggplot(data=ratioDat,aes(x=yr,y=ratio)) + 
+      geom_line(aes(colour=CU),size=1.1 ) + 
+      labs(title=MUs[mm], x = "Year", y = "Escapement Ratio") + 
+      theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
+      theme_classic()
+  }
+  
+  do.call(grid.arrange,p)
+  
+  
+  dev.off()
+  
+}
+
+
+
+# =================================================================================
+# Functions for plotting retrospective analysis results
+# ================================================================================
+
+plotAnnualRetro<-function(Dat, Name ,outDir, useGenMean = F, genYrs = 3) {
+  
+  # Calculate aggregate escapement (note: CUs with no LBM but with escapement data will be included)
+  Dat.AggEscp <-  Dat %>% group_by(yr) %>%  summarise(Agg_Escp = sum(Escp))
+  
+  if(useGenMean == T){
+    Dat.AggEscp$Agg_Escp <- rollapply(Dat.AggEscp$Agg_Escp, genYrs, gm_mean, fill = NA, align="right")
+    Ylab <- "Gen. Mean of Agg. Escapement"
+  } else {
+    Ylab <- "Agg. Escapement"
+  }
+  
+  # Extract retrospective LRP estimates
+  LRPs<-read.csv(paste(outDir,"/DataOut/AnnualRetrospective/", Name, "/annualRetro_LRPs.csv", sep=""))
+  
+  # Create plot
+  annual_LRP_plot <- ggplot(data=LRPs, mapping = aes(x=retroYear, y=LRP)) +
+    geom_line(aes(col = "LRP"), size = 2) +
+    geom_line(data=Dat.AggEscp, mapping=aes(x=yr,y=Agg_Escp), size = 1.2) +
+    xlab("Year") + ylab(Ylab) +
+    scale_color_manual(values = 'steelblue2') +
+    labs(color = '') +
+    theme_classic() + 
+    theme(legend.position = "none")
+  
+  if(length(LRPs$LRP_lwr[is.na(LRPs$LRP_lwr)=="TRUE"])==0) {
+    annual_LRP_plot <- annual_LRP_plot + 
+      geom_ribbon(aes(ymin = LRP_lwr, ymax = LRP_upr, x=retroYear), fill = "steelblue2", alpha = 0.5)
+  }
+  
+  # Save plot
+  ggsave(paste(outDir,"/Figures/AnnualRetrospective/", Name, "/Annual_LRP.pdf",sep=""), plot = annual_LRP_plot,
+         width = 3.5, height = 3, units = "in")    
+  
+}
+
+
+
+#=================================================================================
+# COmpare multiple LRPs on one plot
+#=============================================================================
+
+
+plotAnnualRetro_Compare<-function(Dat, Names , L_Names = NA, outDir, useGenMean = F, genYrs = 3) {
+  
+  if(is.na(L_Names[1])){
+    L_Names <- Names
+  }
+  
+  # Calculate aggregate escapement (note: CUs with no LBM but with escapement data will be included)
+  Dat.AggEscp <-  Dat %>% group_by(yr) %>%  summarise(Agg_Escp = sum(Escp))
+  
+  if(useGenMean == T){
+    Dat.AggEscp$Agg_Escp <- rollapply(Dat.AggEscp$Agg_Escp, genYrs, gm_mean, fill = NA, align="right")
+    Ylab <- "Gen. Mean of Agg. Escapement"
+  } else {
+    Ylab <- "Agg. Escapement"
+  }
+  
+  # Extract retrospective LRP estimates
+  LRPs <- read.csv(paste(outDir,"/DataOut/", Names[1], "/annualRetro_LRPs.csv", sep=""))
+  LRPs$Mod <- L_Names[1]
+  if(length(Names) > 1){
+    for(i in 2:length(Names)){
+      LRP_New <- read.csv(paste(outDir,"/DataOut/", Names[i], "/annualRetro_LRPs.csv", sep=""))
+      LRP_New$Mod <- L_Names[i]
+      LRPs <- rbind(LRPs, LRP_New)
+    }
+    leg.pos = "right"
+  }  else {
+    leg.pos = "none"
+  }
+
+  # Create plot
+  annual_LRP_plot <- ggplot() +
+    geom_line(data=Dat.AggEscp, mapping=aes(x=yr,y=Agg_Escp), size = 1.2) +
+    geom_ribbon(data = LRPs, aes(x=retroYear, y=LRP, colour = Mod, ymin = LRP_lwr, ymax = LRP_upr, fill = Mod), alpha = 0.5) +
+    geom_line(data = LRPs,aes(x=retroYear, y=LRP, colour = Mod), size = 1.2) +
+       xlab("Year") + ylab(Ylab) +
+    theme_classic() +
+    theme(legend.position = leg.pos)
+  # Save plot
+  
+  ggsave(paste(outDir,"/Figures/Annual_LRP",paste(Names, collapse = "_"),".pdf",sep=""), plot = annual_LRP_plot,
+         width = 5, height = 4, units = "in") 
+  
+}
+
+#==================================================================
+# Plot logistic model from 
+#==============================================================
+
+plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0.95, useBern_Logistic = F){
+  
+  # y label different depending on model
+  if(useBern_Logistic){
+    Ylab = "Pr(All CUs > Lower Benchmark)"
+  } else {
+    Ylab = "Prop. CUs > Lower Benchmark"
+  }
+  
+  if(useGenMean){
+      Xlab = "Gen. Mean Agg. Escapement"
+    }else {
+      Xlab = "Aggregate Escapement"
+  }
+  
+  
+  # Create plot
+  annual_LRP_plot <- ggplot(data=Preds, mapping=aes(x=xx,y=fit)) + 
+    geom_ribbon(aes(ymin = lwr, ymax = upr, x=xx), fill = "grey85") +
+    geom_line(mapping=aes(x=xx, y=fit), col="red", size=1) +
+    geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
+    geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
+    geom_point(data=Data, aes(x = xx, y = yy)) +
+    xlab(Xlab) + ylab(Ylab) +
+    #  ggtitle(paste("Retrospective Year", max(Dat.LRP$yr), sep=" ")) +
+    theme_classic()
+  
+  # If LRP$lwr is <0, assume can't fit LRP
+  if(LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
+    annual_LRP_plot <- annual_LRP_plot + 
+      geom_vline(xintercept=LRP$fit, linetype="dashed", color="orange", size = 1) +
+      geom_hline(yintercept= p, linetype="dashed", color="orange", size = 1) +
+      geom_vline(xintercept = LRP$lwr, linetype = "dotted", color = "orange", size = 1) +
+      geom_vline(xintercept = LRP$upr, linetype = "dotted", color = "orange", size = 1) 
+  }
+  
+  
+  # Save plot
+  ggsave(paste(outDir, "/",plotName,".pdf",sep=""), plot = annual_LRP_plot,
+         width = 4, height = 3, units = "in")      
+  
+}  
+
+
+
+#==================================================================
+# Plot status by year 
+#==============================================================
+
+
+plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, ps_Prop,
+                            WSP_estYr, WSP_AboveLRP, outDir, fName) {
+  
+  Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
+  
+  # Extract / calculate data for plot ==========================================================
+  
+  # Step 1: Get output summaries for modelled LRPs (i.e., integrated Bern and Bin regressions):
+  
+  # # --- read in LRPs for each model option
+  # Bin_Names <- paste("Bin.", runPrefix, ps_Bin*100, sep="")
+  # Bern_Names <- paste("Bern.",runPrefix, ps_Bern*100, sep="")
+  # 
+  # # --- loop over proportion / probability values to read in LRPs 
+  # for(pp in 1:length(ps_Bern)){
+  #   # read in data
+  #   Bern_Dat <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", Bern_Names[pp], "/annualRetro_LRPs.csv", sep=""))
+  #   Bern_Dat$Name <- Bern_Names[pp]
+  #   if(pp == 1){
+  #     LRP_DF <- Bern_Dat
+  #   } else {
+  #     New_Rows <- Bern_Dat
+  #     LRP_DF <- rbind(LRP_DF, New_Rows)
+  #   }
+  # }
+  # 
+  # for(pp in 1:length(ps_Bin)){
+  #   # read in data
+  #   Bin_Dat <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", Bin_Names[pp], "/annualRetro_LRPs.csv", sep=""))
+  #   Bin_Dat$Name <- Bin_Names[pp]
+  #   New_Rows <- rbind(Bin_Dat, Bern_Dat)
+  #   LRP_DF <- rbind(LRP_DF, New_Rows)
+  # }
+  
+  # Step 1: Get output summaries for modelled LRPs (i.e., integrated Bern and Bin regressions):
+    
+    # # --- read in LRPs for each model option
+    
+  for (mm in 1:length(modelFitList)) {
+    
+    retroResults <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "/annualRetro_LRPs.csv", sep=""))
+    
+    # Set-up name for labelling plot ====================
+    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"AggE_CU.Sgen_HM_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggE_CU.Sgen__IM_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"AggE_CU.Sgen_HMcap_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggE_CU.Sgen_IMcap_"
+    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"AggE_SP.1000_"
+    
+    if (retroResults$LRPmodel[1] == "BernLogistic") name2<-"Bern"
+    if (retroResults$LRPmodel[1] == "BinLogistic") name2<-"Bin"
+    
+    name3<-strsplit(modelFitList[mm], "_")[[1]][2]
+    
+ 
+    retroResults$Name <- paste(name1,name2,name3,sep="")
+      
+      if(mm == 1){
+         LRP_DF <- retroResults
+      } else {
+         New_Rows <- retroResults
+         LRP_DF <- rbind(LRP_DF, New_Rows)
+      }
+    
+    # Loop over years and summarize status as above (True) or below (False) the LRP for each year
+    for (yy in 1:length(retroYears)) {  
+      # Check if LRP is valid (Error bounds don't cross 0)
+      LRPs <- retroResults %>% filter(retroYear == LRP_estYr) %>% select(LRP, LRP_lwr, LRP_upr)
+      # Now compare to that year's Agg Escapement
+      if(LRPs$LRP_lwr < 0 | LRPs$LRP == Inf) { 
+        Status <- NA 
+      } else {
+        Curr_Esc <- AggEscp %>% filter(yr == retroYears[yy]) %>% pull(Gen_Mean)
+        Status <-  Curr_Esc > LRPs$LRP
+      }
+      New_Row <- data.frame(LRP_estYr = LRP_estYr, retroYear = retroYears[yy], Name = retroResults$Name, AboveLRP=Status)
+      Status_DF <- rbind(Status_DF, New_Row)
+    } # end of year (yy) loop
+    
+  } # end of model (mm) loop
+  
+
+  # Step 2: Assess status for data-based LRP options based on the observed proportion of CUs above LRP
+  
+  # --- for each year, extract Sgens and calc proportion above Sgen
+  # --- note: for current coho case study, we can get saved CU parameters for the last model in model list since Sgen ests are the same for all model types
+  #        -- may need to change later to be specific to CU-level benchmark method if multiple options considered
+  CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",modelFitList[1],"/annualRetro__SRparsByCU.csv",sep=""))
+  CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
+  
+  # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
+  EscpDat <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
+    filter(is.na(Gen_Mean) == F)
+  
+  # -- join together Escp data with Sgens
+  CU_Status <- left_join(EscpDat[ , c("CU_Name", "yr", "Escp", "Gen_Mean")], 
+                         CU_Params[, c( "CU_Name", "est_Sgen", "low_Sgen", "up_Sgen", "retroYr")], 
+                         by = c("CU_Name" = "CU_Name"))
+  colnames(CU_Status)[colnames(CU_Status)=="retroYr"] <- "LRP_estYr"
+  
+  # --- for each year, get proportion of stocks above Sgen
+  NCUs <- length(unique(CU_Status$CU_Name))
+  CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
+    summarise(Prop = sum(Escp > est_Sgen)/NCUs)
+  
+  # --- for each year, add to Status_DF using 60,80,100
+  #    --- note: should make these an input variable in the future
+  Ps <- ps_Prop
+  for(pp in 1:length(Ps)){
+    Name <- rep(paste("Prop.Sgen_", Ps[pp]*100, sep=""), length(retroYears))
+    Status <- CU_Status_Summ$Prop >= Ps[pp]
+    New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
+    Status_DF <- rbind(Status_DF, New_Rows)
+  }
+  
+  # Step 3:  Add row to Status_DF for 2014 status assessment
+  
+  New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
+  Status_DF <- rbind(Status_DF, New_Row)
+  
+  Status_DF <- arrange(Status_DF, Name)
+  
+  
+  # Make Plot =============================================================
+  
+  methods <- unique(Status_DF$Name)
+  
+  # --- set-up pdf to save to
+  pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
+  par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
+  
+  # ---- specify colouts 
+  #  cols <- c( "#FF0900", "#08AB0B") # (red, green)
+  cols <- c( "#FF0900", "grey80") # (red, grey)
+  
+  
+  #---- set xlims for all sites
+  Xlow <- min(retroYears)
+  Xhigh <- max(retroYears)
+  
+  # --- standardize aggregate escapement values
+  AggEscp <- AggEscp %>% filter(yr %in% retroYears)
+  AggEscp$StdGen_Mean<- AggEscp$Gen_Mean/mean(AggEscp$Gen_Mean)
+  #AggEscp$StdAgg_Escp <- AggEscp$Agg_Escp/mean(AggEscp$Agg_Escp, na.rm=T) # - do not need this at present bc only comparing to Gen_Mean
+  
+  # --- plot margin, also use for jittering
+  low <- min(AggEscp$StdGen_Mean, na.rm=T) 
+  high <- max(AggEscp$StdGen_Mean, na.rm=T)
+  
+  # --- create empty plotting region
+  plot(1, type="n", xlab="", ylab="", xlim=c(Xlow, Xhigh), ylim=c(low-(high-low)/8*length(methods), high), axes=F,
+       main = paste("LRP Estimation Year = ",LRP_estYr, sep=""))
+  
+  # --- add generational mean escapement
+  lines(x=AggEscp$yr, y=AggEscp$StdGen_Mean, lwd=1.5)
+  
+  # --- loop over methods and ....
+  for(mm in 1:length(methods)){
+    #subset data by method
+    Mdat <- Status_DF %>% filter(Name == methods[mm] & is.na(AboveLRP)==F)
+    
+    if(dim(Mdat)[1] > 0){
+      #set y location for that method
+      #set increment
+      inc <- (high-low)/8
+      y <- low-inc*(mm)
+      #do each plot segment by segment with appropriate colors
+      for(k in 1:dim(Mdat)[1]){
+        segments(x0=Mdat$retroYear[k]-0.5, x1=Mdat$retroYear[k]+0.5, y0=y, y1=y, col=cols[Mdat$AboveLRP[k]+1], lwd=4)
+      }
+      #label the method
+      text(x=(Xlow-((Xhigh-Xlow)/2)), y=y, labels=methods[mm], 
+           xpd=NA, pos=4, cex=0.8)
+    }
+  }
+  
+  
+  # Add vertical lines to plots to help distinguish years
+  addVertLines_minor<-function(x,low,high,n) {
+    segments(x0=x, y0=low-(high-low)/8*n, x1=x, y1=high, lty=3,col="grey85")
+  }
+  
+  addVertLines_major<-function(x,low,high,n) {
+    segments(x0=x, y0=low-(high-low)/8*n, x1=x, y1=high, lty=2)
+  }
+  
+
+  sapply(seq(1997.5,2018.5,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
+  sapply(seq(1999.5,2015.5,by=5), addVertLines_major,low=low,high=high,n=length(methods))
+  
+  #sapply(seq(1998,2018,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
+  #sapply(seq(2000,2015,by=5), addVertLines_major,low=low,high=high,n=length(methods))
+ 
+  # add x-axis label
+  axis(1)
+  mtext(side = 1, "Year", outer = T)
+  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4)
+  
+  # legend( "topright", bty="n", lty=c(1,1,1,1), lwd=c(2,2,4,2) , 
+  #         col=c("black", "grey", "#08AB0B", Tcols[1]),
+  #         legend=c( "Gen. Mean Esc.", "Escapement", 
+  #                   "Status", "Status 95% CI"),
+  #         cex = 0.7) 
+  
+  dev.off()
+  
+}
+
+
+
+plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, inputPrefix, plotAveLine) {
+  
+  # Read in data for all NCU levels and combine
+  for (cc in 1:length(nCUList)) {
+    
+    if (cc == 1) {
+      nCUDat<-read.csv(paste(Dir,"/DataOut/nCUCombinations/",inputPrefix,"_",p*100,"_",nCUList[cc],"CUs.csv",sep=""))
+      } else {
+      newDat<-read.csv(paste(Dir,"/DataOut/nCUCombinations/",inputPrefix,"_",p*100,"_",nCUList[cc],"CUs.csv",sep=""))
+      nCUDat<-rbind(nCUDat,newDat)
+    }
+ 
+  }
+  
+  makeYrPlot<-function (year, Dat, aveLine) {
+    
+    Dat<-Dat %>% filter(retroYear==year, BMmodel == BMmodel)
+ 
+     maxNCU<-max(Dat$nCUs)
+    AllCU<-Dat %>% filter(nCUs == maxNCU)
+    AllCU_status_lwr<-AllCU$Gen_Mean / AllCU$LRP_lwr
+    AllCU_status_upr<- AllCU$Gen_Mean /AllCU$LRP_upr
+    
+    # manually create a jitter for 3 and 4 CU cases
+    nCUs.jit<-Dat$nCUs
+    nCUs.jit[nCUs.jit == 4] <- seq(3.8,4.2,length.out=length(nCUs.jit[nCUs.jit == 4]))
+    nCUs.jit[nCUs.jit == 3] <- seq(2.7,3.3,length.out=length(nCUs.jit[nCUs.jit == 3]))
+    # append jittered nCUs to Dat
+    Dat<-add_column(Dat,nCUs.jit)
+    
+    # flag any LRP status estimates with error estimates that didn't converge and/or make sense
+    errorFlag<-rep(FALSE,length(nCUs.jit))
+    errorFlag[Dat$LRP_lwr < 0] <- TRUE
+    errorFlag[is.na(Dat$LRP_lwr) == TRUE] <- TRUE
+    
+    # calculate nCU-specific mean and SE
+    Dat2 <- Dat[errorFlag == FALSE,]
+    Mean<-Dat2 %>% group_by(nCUs) %>% summarize(meanStatus=gm_mean(status))
+    SE<- Dat2 %>% group_by(nCUs) %>% summarize(meanStatus=stdErr(status))
+    
+    g<-ggplot(Dat, aes(x=nCUs.jit, y=status)) +
+        scale_x_reverse(breaks=unique(nCUs)) +
+        geom_errorbar(aes(x=nCUs.jit, ymax = Gen_Mean/LRP_lwr, ymin = Gen_Mean/LRP_upr), width = 0, colour="grey") +
+        geom_point() +   
+        labs(title=year, x = "Number of CUs", y = "Aggregate Status") +
+        theme_classic() +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        ylim(0,4.5) + 
+        geom_point(data = Dat[errorFlag==TRUE,],aes(x=nCUs.jit, y=status),shape=4, size=3) # add additional points for cases that didn't converge
+  
+    if (aveLine == TRUE) {
+
+      g <- g + geom_segment(data = Mean %>% filter(nCUs==3), aes(x=2.6, xend=3.4, y=meanStatus,yend=meanStatus),colour="red", linetype="dashed") +
+        geom_segment(data = Mean %>% filter(nCUs==4), aes(x=4.4, xend=3.7, y=meanStatus,yend=meanStatus),colour="red", linetype="dashed")
+     
+    }
+    
+}
+
+  LRP.mod<-LRPmodel
+  
+  ps <- lapply(yearList, makeYrPlot, Dat = nCUDat %>% filter(LRPmodel == LRP.mod), aveLine=plotAveLine)
+
+   
+   if (LRPmodel == "BernLogistic") plotName <- paste("StatusByNCUs_Bern.",BMmodel,p*100, sep="")
+   if (LRPmodel == "BinLogistic") plotName <- paste("StatusByNCUs_Bin.",BMmodel,p*100, sep="")
+   pdf(paste(Dir,"/Figures/", plotName, ".pdf", sep=""), width=6.5, height=6.5)
+   
+   do.call(grid.arrange,  ps)
+  
+   dev.off()
+   
+}
+
+
+plotLRP.CV_by_nCUs<-function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, inputPrefix, fName) {
+  
+  # Read in data for all NCU levels and combine
+  for (cc in 1:length(nCUList)) {
+    
+    if (cc == 1) {
+      nCUDat<-read.csv(paste(Dir,"/DataOut/nCUCombinations/",inputPrefix,"_",p*100,"_",nCUList[cc],"CUs.csv",sep=""))
+    } else {
+      newDat<-read.csv(paste(Dir,"/DataOut/nCUCombinations/",inputPrefix,"_",p*100,"_",nCUList[cc],"CUs.csv",sep=""))
+      nCUDat<-rbind(nCUDat,newDat)
+    }
+    
+  }
+  
+  makeYrPlot<-function (year, Dat) {
+    
+    Dat<-Dat %>% filter(retroYear==year)
+    
+    maxNCU<-max(Dat$nCUs)
+    #AllCU<-Dat %>% filter(nCUs == maxNCU)
+    #AllCU_status_lwr<-AllCU$Gen_Mean / AllCU$LRP_lwr
+    #AllCU_status_upr<- AllCU$Gen_Mean /AllCU$LRP_upr
+    
+    # manually create a jitter for 3 and 4 CU cases
+    nCUs.jit<-Dat$nCUs
+    nCUs.jit[nCUs.jit == 4] <- seq(3.8,4.2,length.out=length(nCUs.jit[nCUs.jit == 4]))
+    nCUs.jit[nCUs.jit == 3] <- seq(2.7,3.3,length.out=length(nCUs.jit[nCUs.jit == 3]))
+    # append jittered nCUs to Dat
+    Dat<-add_column(Dat,nCUs.jit)
+    
+    # flag any LRP status estimates with error estimates that didn't converge and/or make sense. and then remove
+    errorFlag<-rep(FALSE,length(nCUs.jit))
+    errorFlag[Dat$LRP_lwr < 0] <- TRUE
+    errorFlag[is.na(Dat$LRP_lwr) == TRUE] <- TRUE
+    Dat <- Dat[errorFlag == FALSE,]
+
+    g<-ggplot(Dat, aes(x=nCUs.jit, y=cv)) +
+      scale_x_reverse(breaks=unique(nCUs)) +
+      #geom_errorbar(aes(x=nCUs.jit, ymax = Gen_Mean/LRP_lwr, ymin = Gen_Mean/LRP_upr), width = 0, colour="grey") +
+      geom_point() +   
+      labs(title=year, x = "Number of CUs", y = "CV on LRP estimate") +
+      theme_classic() +
+      theme(plot.title = element_text(hjust = 0.5)) +
+      ylim(0,0.5)
+  }
+  
+  LRP.mod<-LRPmodel
+  BM.mod<-BMmodel
+  
+  ps <- lapply(yearList, makeYrPlot, Dat = nCUDat %>% filter(LRPmodel == LRP.mod, BMmodel == BM.mod) )
+  
+  if (LRPmodel == "BernLogistic") plotName <- paste("LRP_CVs_ByNCUs_Bern.",BM.mod,p*100, sep="")
+  if (LRPmodel == "BinLogistic") plotName <- paste("LRP_CVs_ByNCUs_Bin.",BM.mod,p*100, sep="")
+  pdf(paste(Dir,"/Figures/", plotName, ".pdf", sep=""), width=6.5, height=6.5)
+  
+  do.call(grid.arrange,  ps)
+  
+  dev.off()
+  
+  
+}

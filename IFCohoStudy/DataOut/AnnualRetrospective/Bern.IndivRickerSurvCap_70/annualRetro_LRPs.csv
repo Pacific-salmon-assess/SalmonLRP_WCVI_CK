@@ -1,0 +1,5 @@
+"","retroYear","LRP","LRP_lwr","LRP_upr","BMmodel","LRPmodel","useGenMean","integratedModel"
+"1",2015,27710.7915131128,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
+"2",2016,27714.1565837989,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
+"3",2017,27718.4464279175,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
+"4",2018,27618.746736184,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
