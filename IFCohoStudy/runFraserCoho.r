@@ -108,15 +108,15 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean<-c(10.966785, 4.921672, 11.568484, 20.767309, 14.918850)
+cap_priorMean<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
 
 TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-                   logMuA_sig = sqrt(2), Tau_dist = 0.01, Tau_A_dist = 0.1, 
+                   logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                    cap_mean=cap_priorMean, cap_sig=sqrt(2))
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean<-c(11.234666, 5.204434, 11.681914, 21.125634, 15.044061)
+cap_priorMean<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
@@ -334,18 +334,18 @@ plotLRP.CV_by_nCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMm
 #                 "Bin.SPopAbundThreshST_60",
 #                 "Bin.SPopAbundThreshST_80")
 
-modelFitList<-c("Bin.HierRickerSurv_60",
-                "Bin.HierRickerSurv_80",
-                "Bin.HierRickerSurv_99",
-                "Bin.IndivRickerSurv_60",
+modelFitList<-c("Bin.IndivRickerSurv_60",
                 "Bin.IndivRickerSurv_80",
                 "Bin.IndivRickerSurv_99",
-                "Bin.HierRickerSurvCap_60",
-                "Bin.HierRickerSurvCap_80",
-                "Bin.HierRickerSurvCap_99",
+                "Bin.HierRickerSurv_60",
+                "Bin.HierRickerSurv_80",
+                "Bin.HierRickerSurv_99",
                 "Bin.IndivRickerSurvCap_60",
                 "Bin.IndivRickerSurvCap_80",
                 "Bin.IndivRickerSurvCap_99",
+                "Bin.HierRickerSurvCap_60",
+                "Bin.HierRickerSurvCap_80",
+                "Bin.HierRickerSurvCap_99",
                 "Bern.SPopAbundThreshST_75",
                 "Bern.SPopAbundThreshST_85",
                 "Bern.SPopAbundThreshST_95")

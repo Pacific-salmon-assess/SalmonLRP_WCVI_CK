@@ -1,5 +1,5 @@
 "","retroYear","LRP","LRP_lwr","LRP_upr","BMmodel","LRPmodel","useGenMean","integratedModel"
-"1",2015,27730.1780153465,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
-"2",2016,27733.4814302575,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
-"3",2017,27738.0838667132,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
-"4",2018,27632.9914315114,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
+"1",2015,27728.8138225684,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
+"2",2016,27734.8213675579,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
+"3",2017,27737.0502683514,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE
+"4",2018,27707.9539350996,NA,NA,"SR_IndivRicker_SurvCap","BernLogistic",FALSE,TRUE

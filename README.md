@@ -25,7 +25,7 @@ Code and associated files are organized into the following sub-folders:
 
 This case study compares multiple LRP options for the Interior Fraser Coho Stock Management Unit (SMU), which is made up of 5 Conservation Units (Middle Fraser, Fraser Canyon, Lower Thompson, North Thompson, South Thompson). Lower benchmarks for each CU are obtained by fitting stock-recruitment models to CU-level data in order to estimate Sgen, which is the spawner abundance from which the CU can recover to Smsy within one generation in the absence of fishing. 
 
-Data for this case study was provided by Michael Arbeider (DFO, Fraser Stock Assessment, Kamloops, BC). These data were compiled for the most recent Interior Fraser Coho Salmon Recovery Potential Assessment (Arebider et al. 2020, available at http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2020/2020_025-eng.pdf), with one additional year of data added.
+Data for this case study covered brood years 1998-2014 (return years 2001-2018). Data for the 1998-2013 brood years were taken from the 2018 Interior Fraser Coho RPA report (Appendix 4 of Arebider et al. 2020, available at http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2020/2020_025-eng.pdf), while one additional year of spawner-recruit data (2014 brood year) and sub-population level escapement series were provided by DFO’s Fraser River Stock Assessment Unit (M. Arbeider, pers. comm., 2020).   
 
 Aggregate LRPs are estimated using an integrated model coded in TMB that simultaneoulsy fits (i) CU-level stock-recruit models to estimate Sgen and (ii) a SMU-level logsitic regression model that estimates the aggregate abundance that has historically been associated with a specified proportion of CUs being above Sgen (binomial model) or the aggregate abundance that has historically been associated with all CUs having a specified probability of being above Sgen (bernoulli model).  
 
@@ -53,10 +53,16 @@ An alternative definition of CU-level benchmarks is also considered for Interior
 
 The Interior Fraser Coho case study includes functions that retrospectively compare and plot LRPs based on sub-population diversity (using a 1000-fish threshold) with LRPs based on CU-level diversity (using Sgen).  TMB code to calculate LRPs based on sub-population diversity is located in "LRP_RetroEval/Code/TMB_Files/ThresholdAbund_Subpop1000.cpp".  
 
+
 #### To run case study:
 
 1) Set working directory to "LRP_RetroEval\IFCohoStudy"
 
 2) Run code in "runFraserCoho.r". This is the master file for this analysis from which all other files are sourced, and in which scenarios and plot options can be specified.
 
+
+### Analysis outputs
+
+Current model outputs, including .csv files of estimated parameters and plots, are posted to a dropbox site that can be accessed at:
+https://www.dropbox.com/sh/otiku88jc2eu8cx/AACagLQd85blX7jc8-yBYs4Na?dl=0
 

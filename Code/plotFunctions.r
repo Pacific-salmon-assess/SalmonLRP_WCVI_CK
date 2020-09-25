@@ -378,11 +378,11 @@ plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat, 
     retroResults <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "/annualRetro_LRPs.csv", sep=""))
     
     # Set-up name for labelling plot ====================
-    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"AggE_CU.Sgen_HM_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggE_CU.Sgen__IM_"
-    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"AggE_CU.Sgen_HMcap_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggE_CU.Sgen_IMcap_"
-    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"AggE_SP.1000_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"CU.Sgen_HM_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"CU.Sgen__IM_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"CU.Sgen_HMcap_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"CU.Sgen_IMcap_"
+    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"SP.1000_"
     
     if (retroResults$LRPmodel[1] == "BernLogistic") name2<-"Bern"
     if (retroResults$LRPmodel[1] == "BinLogistic") name2<-"Bin"
@@ -419,43 +419,43 @@ plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat, 
 
   # Step 2: Assess status for data-based LRP options based on the observed proportion of CUs above LRP
   
-  # --- for each year, extract Sgens and calc proportion above Sgen
-  # --- note: for current coho case study, we can get saved CU parameters for the last model in model list since Sgen ests are the same for all model types
-  #        -- may need to change later to be specific to CU-level benchmark method if multiple options considered
-  CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",modelFitList[1],"/annualRetro__SRparsByCU.csv",sep=""))
-  CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
-  
-  # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
-  EscpDat <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
-    filter(is.na(Gen_Mean) == F)
-  
-  # -- join together Escp data with Sgens
-  CU_Status <- left_join(EscpDat[ , c("CU_Name", "yr", "Escp", "Gen_Mean")], 
-                         CU_Params[, c( "CU_Name", "est_Sgen", "low_Sgen", "up_Sgen", "retroYr")], 
-                         by = c("CU_Name" = "CU_Name"))
-  colnames(CU_Status)[colnames(CU_Status)=="retroYr"] <- "LRP_estYr"
-  
-  # --- for each year, get proportion of stocks above Sgen
-  NCUs <- length(unique(CU_Status$CU_Name))
-  CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
-    summarise(Prop = sum(Escp > est_Sgen)/NCUs)
-  
-  # --- for each year, add to Status_DF using 60,80,100
-  #    --- note: should make these an input variable in the future
-  Ps <- ps_Prop
-  for(pp in 1:length(Ps)){
-    Name <- rep(paste("Prop.Sgen_", Ps[pp]*100, sep=""), length(retroYears))
-    Status <- CU_Status_Summ$Prop >= Ps[pp]
-    New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
-    Status_DF <- rbind(Status_DF, New_Rows)
-  }
+  # # --- for each year, extract Sgens and calc proportion above Sgen
+  # # --- note: for current coho case study, we can get saved CU parameters for the last model in model list since Sgen ests are the same for all model types
+  # #        -- may need to change later to be specific to CU-level benchmark method if multiple options considered
+  # CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",modelFitList[1],"/annualRetro__SRparsByCU.csv",sep=""))
+  # CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
+  # 
+  # # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
+  # EscpDat <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
+  #   filter(is.na(Gen_Mean) == F)
+  # 
+  # # -- join together Escp data with Sgens
+  # CU_Status <- left_join(EscpDat[ , c("CU_Name", "yr", "Escp", "Gen_Mean")], 
+  #                        CU_Params[, c( "CU_Name", "est_Sgen", "low_Sgen", "up_Sgen", "retroYr")], 
+  #                        by = c("CU_Name" = "CU_Name"))
+  # colnames(CU_Status)[colnames(CU_Status)=="retroYr"] <- "LRP_estYr"
+  # 
+  # # --- for each year, get proportion of stocks above Sgen
+  # NCUs <- length(unique(CU_Status$CU_Name))
+  # CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
+  #   summarise(Prop = sum(Escp > est_Sgen)/NCUs)
+  # 
+  # # --- for each year, add to Status_DF using 60,80,100
+  # #    --- note: should make these an input variable in the future
+  # Ps <- ps_Prop
+  # for(pp in 1:length(Ps)){
+  #   Name <- rep(paste("Prop.Sgen_", Ps[pp]*100, sep=""), length(retroYears))
+  #   Status <- CU_Status_Summ$Prop >= Ps[pp]
+  #   New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
+  #   Status_DF <- rbind(Status_DF, New_Rows)
+  # }
   
   # Step 3:  Add row to Status_DF for 2014 status assessment
   
-  New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
-  Status_DF <- rbind(Status_DF, New_Row)
+#  New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
+#  Status_DF <- rbind(Status_DF, New_Row)
   
-  Status_DF <- arrange(Status_DF, Name)
+#  Status_DF <- arrange(Status_DF, Name)
   
   
   # Make Plot =============================================================

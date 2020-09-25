@@ -61,8 +61,8 @@ setwd(codeDir)
   
 
 # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
-CoEscpDat <- CoEscpDat %>% filter(yr >= 1998 & yr <= 2017)
-CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998 & BroodYear <= 2013)
+CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
+CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
 # Prep data frame
 CoSRDat$yr_num <- CoSRDat$BroodYear - min(CoSRDat$BroodYear)
@@ -77,7 +77,7 @@ EscDat <- CoEscpDat
 Bern_Logistic <- F
 useGenMean <- F
 genYrs <- 3
-p<-0.95
+p<-0.80
 
 Scale<-1000
 
@@ -314,6 +314,7 @@ print(cap_priorMean)
 TMB_Inputs <- list(Scale = Scale, logA_Start = 1, logMuA_mean = 1, 
                    logMuA_sig = sqrt(2), Tau_dist = 0.01, Tau_A_dist = 0.1, 
                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                  # gamma_mean = 0.375, gamma_sig = 0.02, S_dep = 1000, Sgen_sig = 1, # forcing informative prior on gamma
                    cap_mean=cap_priorMean, cap_sig=sqrt(2))
 
 
@@ -948,7 +949,7 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
   SR_dat <- SRDat %>% filter(CU_ID == i)
   
   xyMax<-max(c(SR_dat$Recruits,SR_dat$Spawners))*1.2
- 
+
   # Create plot
   p <- ggplot(data=dat, mapping=aes(x=Pred_Spwn,y=Pred_Rec)) +
     # add hier surv model
@@ -1002,8 +1003,8 @@ makeParEstPlots<-function(i, est_hier, est_hierCap, est_IM, est_IMCap, parName) 
   
   for (mod in 1:4) {
     if (mod == 1) dat<-est_hier %>% filter(CU_ID == i, Param == parName)
-    if (mod == 2) dat<-est_hierCap %>% filter(CU_ID == i, Param == parName)
-    if (mod == 3) dat<-est_IM %>% filter(CU_ID == i, Param == parName)
+    if (mod == 2) dat<-est_IM %>% filter(CU_ID == i, Param == parName)
+    if (mod == 3) dat<-est_hierCap %>% filter(CU_ID == i, Param == parName)
     if (mod == 4) dat<-est_IMCap %>% filter(CU_ID == i, Param == parName)
     
     parEst[mod]<-dat$Estimate
@@ -1012,11 +1013,14 @@ makeParEstPlots<-function(i, est_hier, est_hierCap, est_IM, est_IMCap, parName) 
   }
   
   model[1]<-"HM"
-  model[2]<-"HM_Cap"
-  model[3]<-"IM"
-  model[4]<-"IM_Cap"
+  model[2]<-"IM"
+  model[3]<-"HM.HiSRep"
+  model[4]<-"IM.HiSRep"
   
   plot.dat<-data.frame(model,parEst,lwr,upr)
+  
+  # assign plot order:
+  plot.dat$model<-factor(plot.dat$model, levels = c("IM", "HM", "IM.HiSRep", "HM.HiSRep"))
   
   p<- ggplot(data=plot.dat, mapping=aes(x=model, y=parEst)) +
     geom_errorbar(aes(x=model,ymax=upr,ymin=lwr), width=0,colour="black") +
@@ -1033,7 +1037,41 @@ est_hierCap<-read.csv(paste(cohoDir,"/DataOut/ModelFits/AllEsts_Hier_Ricker_Surv
 est_IM<-read.csv(paste(cohoDir,"/DataOut/ModelFits/AllEsts_IM_Ricker_Surv.csv", sep=""))
 est_IMCap<-read.csv(paste(cohoDir,"/DataOut/ModelFits/AllEsts_IM_Ricker_Surv_priorCap.csv", sep=""))
 
+
+# Set-up plot to compare LRP estimates among models
+LRP_ests<-data.frame(rbind(est_hier[est_hier$Param=="Agg_LRP",],
+                           est_hierCap[est_hierCap$Param=="Agg_LRP",],
+                           est_IM[est_IM$Param=="Agg_LRP",],
+                           est_IMCap[est_IMCap$Param=="Agg_LRP",]))
+
+LRP_ests$ModName[LRP_ests$Mod == "SR_HierRicker_Surv"]<-"HM"
+LRP_ests$ModName[LRP_ests$Mod == "SR_IndivRicker_Surv"]<-"IM"
+LRP_ests$ModName[LRP_ests$Mod == "SR_HierRicker_SurvCap"]<-"HM.HiSRep"
+LRP_ests$ModName[LRP_ests$Mod == "SR_IndivRicker_SurvCap"]<-"IM.HiSRep"
+
+
+LRP_ests$Upper<-LRP_ests$Estimate + (1.96*LRP_ests$Std..Error)
+LRP_ests$Lower<-LRP_ests$Estimate - (1.96*LRP_ests$Std..Error)
+
+# assign plot order:
+LRP_ests$ModName<-factor(LRP_ests$ModName, levels = c("IM", "HM", "IM.HiSRep", "HM.HiSRep"))
+
+
+pdf(paste(cohoDir,"/Figures/", "compareSRpar_LRP_Ests.pdf", sep=""))
+p.lrp<- ggplot(data=LRP_ests, mapping=aes(x=ModName, y=Estimate)) +
+  geom_errorbar(aes(x=ModName,ymax=Upper,ymin=Lower), width=0,colour="black") +
+  geom_point(mapping=aes(x=ModName, y=Estimate), col="black", size=2) +
+  xlab("") + ylab("Aggregate LRP") +
+  ylim(min(LRP_ests$Lower), max(LRP_ests$Upper)) +
+  theme_classic()
+dev.off()
+
+
+# Set-up Sgen plot
 ps<-lapply(CUID_list, makeParEstPlots, est_hier=est_hier, est_hierCap=est_hierCap, est_IM=est_IM, est_IMCap=est_IMCap, parName = "Sgen")
+# Add LRP to Sgen plot
+#ps[[6]]<- p.lrp
+
 pdf(paste(cohoDir,"/Figures/", "compareSRpar_Sgen_Ests.pdf", sep=""))
 do.call(grid.arrange,  ps)
 dev.off()
