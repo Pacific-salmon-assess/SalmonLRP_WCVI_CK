@@ -379,9 +379,9 @@ plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat, 
     
     # Set-up name for labelling plot ====================
     if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"CU.Sgen_HM_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"CU.Sgen__IM_"
-    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"CU.Sgen_HMcap_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"CU.Sgen_IMcap_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"CU.Sgen_IM_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"CU.Sgen_HM.HiSrep_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"CU.Sgen_IM.HiSrep_"
     if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"SP.1000_"
     
     if (retroResults$LRPmodel[1] == "BernLogistic") name2<-"Bern"

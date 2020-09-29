@@ -293,9 +293,10 @@ CU_Names <- unique(SRDat[, "CU_Name"])
 cap<-rep(NA,N_Stocks)
 
 for (i in 1:N_Stocks) {
+ logA<-All_Ests[All_Ests$Param =="logA" & All_Ests$CU_Name == CU_Names[i],"Estimate"]
  A<-All_Ests[All_Ests$Param =="A" & All_Ests$CU_Name == CU_Names[i],"Estimate"]
  B<-All_Ests[All_Ests$Param =="B" & All_Ests$CU_Name == CU_Names[i],"Estimate"] * Scale
- cap[i] <- log(A)/B
+ cap[i] <- log(logA)/B
 }
 
 cap_priorMean<- cap*1.5
@@ -698,6 +699,26 @@ cap_priorMean<- cap*1.5
 
 print("Prior means for capacity in individual models, by CU:")
 print(cap_priorMean)
+
+
+# Plot prior distributions, by CU
+xx<-seq(1,30,length=1000)
+# manually set x-axes for now by specifying min and max for each CU
+x.plotMin<-c(5000, 800, 5000, 13000, 8000)
+x.plotMax<-c(18000, 12500, 18000, 28000,22000)
+par(mfrow=c(2,3), mar=c(4,3,1,1))
+# Loop over CUs to plot
+for (i in 1:5) {
+  yy<-dnorm(xx,mean=cap_priorMean[i],sqrt(2))
+   plot(xx*1000,yy*1000, main=CU_Names[i], typ="l", lwd=2, 
+       ylab="", xlab="SRep", xlim=c(x.plotMin[i], x.plotMax[i]), axes=F)
+  abline(v=cap[i]*1000,lty=2, col="red")
+  axis(side = 1,labels=T)
+  axis(side = 2,labels=F)
+  box()
+}
+
+
 
 # Exact inputs from Arbeider et al:
 TMB_Inputs <- list(Scale = Scale, logA_Start = 1, Tau_dist = 0.01, 

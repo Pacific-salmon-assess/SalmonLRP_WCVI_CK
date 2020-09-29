@@ -335,20 +335,17 @@ plotLRP.CV_by_nCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMm
 #                 "Bin.SPopAbundThreshST_80")
 
 modelFitList<-c("Bin.IndivRickerSurv_60",
-                "Bin.IndivRickerSurv_80",
-                "Bin.IndivRickerSurv_99",
                 "Bin.HierRickerSurv_60",
-                "Bin.HierRickerSurv_80",
-                "Bin.HierRickerSurv_99",
                 "Bin.IndivRickerSurvCap_60",
-                "Bin.IndivRickerSurvCap_80",
-                "Bin.IndivRickerSurvCap_99",
                 "Bin.HierRickerSurvCap_60",
+                "Bin.IndivRickerSurv_80",
+                "Bin.HierRickerSurv_80",
+                "Bin.IndivRickerSurvCap_80",
                 "Bin.HierRickerSurvCap_80",
-                "Bin.HierRickerSurvCap_99",
-                "Bern.SPopAbundThreshST_75",
-                "Bern.SPopAbundThreshST_85",
-                "Bern.SPopAbundThreshST_95")
+                "Bin.IndivRickerSurv_99",
+                "Bin.HierRickerSurv_99",
+                "Bin.IndivRickerSurvCap_99",
+                "Bin.HierRickerSurvCap_99")
 
 # Specify which thresholds should be tested in the data-based proportional thresholds
 ps_Prop<-c(0.6, 0.8, 1.0)

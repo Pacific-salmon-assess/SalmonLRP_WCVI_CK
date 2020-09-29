@@ -23,9 +23,11 @@ Code and associated files are organized into the following sub-folders:
 
 ### Interior Fraser Coho Case Study
 
+*** Note: Some of the Interior Fraser Coho data are still provisional, and are not to be used for other purposes without permission from Michael Arbeider (Michael.Arbeider@dfo-mpo.gc.ca) ***
+
 This case study compares multiple LRP options for the Interior Fraser Coho Stock Management Unit (SMU), which is made up of 5 Conservation Units (Middle Fraser, Fraser Canyon, Lower Thompson, North Thompson, South Thompson). Lower benchmarks for each CU are obtained by fitting stock-recruitment models to CU-level data in order to estimate Sgen, which is the spawner abundance from which the CU can recover to Smsy within one generation in the absence of fishing. 
 
-Data for this case study covered brood years 1998-2014 (return years 2001-2018). Data for the 1998-2013 brood years were taken from the 2018 Interior Fraser Coho RPA report (Appendix 4 of Arebider et al. 2020, available at http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2020/2020_025-eng.pdf), while one additional year of spawner-recruit data (2014 brood year) and sub-population level escapement series were provided by DFO’s Fraser River Stock Assessment Unit (M. Arbeider, pers. comm., 2020).   
+Data for this case study covered brood years 1998-2014 (return years 2001-2018). Data for the 1998-2013 brood years were taken from the 2018 Interior Fraser Coho RPA report (Appendix 4 of Arebider et al. 2020, available at http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2020/2020_025-eng.pdf), while one additional year of spawner-recruit data (2014 brood year) and sub-population level escapement series were provided by DFO’s Fraser River Stock Assessment Unit (M. Arbeider, pers. comm., 2020). 
 
 Aggregate LRPs are estimated using an integrated model coded in TMB that simultaneoulsy fits (i) CU-level stock-recruit models to estimate Sgen and (ii) a SMU-level logsitic regression model that estimates the aggregate abundance that has historically been associated with a specified proportion of CUs being above Sgen (binomial model) or the aggregate abundance that has historically been associated with all CUs having a specified probability of being above Sgen (bernoulli model).  
 
