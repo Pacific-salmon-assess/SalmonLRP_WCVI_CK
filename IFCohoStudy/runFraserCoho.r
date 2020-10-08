@@ -221,30 +221,31 @@ runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018,
 # For CU approach ===========================================================
 
 nCUs<-c(5,3,4)
-ps<-c(0.60, 0.80,0.90)
+ps<-c(0.60, 0.80,0.99)
+
 
 for (pp in 1:length(ps)){
 
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
+  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
                genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""))
-  
+
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
                genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap", LRPmodel="BinLogistic", integratedModel=T,
                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep="")) 
   
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
+  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
              genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
              useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""))
-  
+
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
                genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap", LRPmodel="BinLogistic", integratedModel=T,
                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep="")) 
   
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, 
+  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2,
                genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", integratedModel=F,
                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""))
-  
+
   
 }
 
@@ -266,13 +267,11 @@ plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BM
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.80, Dir=cohoDir,
                      inputPrefix="Bin.IndivRickerSurv_80",plotAveLine=TRUE)
 
-# The following two plot calls are not currently working; need to re-visit once priors for nCU scenarios with priorCap model are fixed
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_SurvCap",p=0.80, Dir=cohoDir,
+                      inputPrefix="Bin.HierRickerSurvCap_80",plotAveLine=TRUE)
 
-# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_SurvCap",p=0.80, Dir=cohoDir,
-#                      inputPrefix="Bin.HierRickerSurvCap_80",plotAveLine=TRUE)
-# 
-# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.80, Dir=cohoDir,
-#                      inputPrefix="Bin.IndivRickerSurvCap_80",plotAveLine=TRUE)
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.80, Dir=cohoDir,
+                      inputPrefix="Bin.IndivRickerSurvCap_80",plotAveLine=TRUE)
 
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.95, Dir=cohoDir,
                      inputPrefix="Bin.SPopAbundThreshST_80", plotAveLine=TRUE)

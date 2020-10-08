@@ -230,10 +230,17 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
       AggEscp.ii <- EscpDat.ii %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>% 
         mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
       
+      TMB_Inputs.ii<-TMB_Inputs
+      
+      # Specify priors on Srep specific to nCUs, if model with SRep prior is used:
+      if (is.null(TMB_Inputs$cap_mean) == FALSE) {
+        TMB_Inputs.ii$cap_mean<-TMB_Inputs$cap_mean[which(CUs.ii %in% as.character(unique(EscpDat$CU_Name)))]
+      }
+      
       # Run annual retrospective analyses for sampled CUs:
         out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=startYr, endYr=endYr, BroodYrLag=BroodYrLag, 
                             genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, integratedModel=integratedModel,
-                            useGenMean=useGenMean, TMB_Inputs=TMB_Inputs, outDir=cohoDir, RunName = NA, 
+                            useGenMean=useGenMean, TMB_Inputs=TMB_Inputs.ii, outDir=cohoDir, RunName = NA, 
                             bootstrapMode = T, plotLRP=F)
           
 
