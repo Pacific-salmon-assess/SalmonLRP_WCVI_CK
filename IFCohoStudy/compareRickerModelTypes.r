@@ -270,6 +270,8 @@ All_Ests <- left_join(All_Ests, unique(SRDat[, c("CU_ID", "CU_Name")]))
 # don't want logged or scaled param values, so need to convert
 All_Ests$Estimate[All_Ests$Param == "logSigma"] <- exp(All_Ests$Estimate[All_Ests$Param == "logSigma"] )
 All_Ests$Param[All_Ests$Param == "logSigma"] <- "sigma"
+All_Ests$Estimate[All_Ests$Param == "logSigmaA"] <- exp(All_Ests$Estimate[All_Ests$Param == "logSigmaA"] )
+All_Ests$Param[All_Ests$Param == "logSigmaA"] <- "sigmaA"
 All_Ests$Estimate[All_Ests$Param == "logB"] <- exp(All_Ests$Estimate[All_Ests$Param == "logB"] )
 All_Ests$Param[All_Ests$Param == "logB"] <- "B"
 All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% mutate(Std..Error = Std..Error/Scale)
@@ -303,6 +305,26 @@ cap_priorMean<- cap*1.5
 
 print("Prior means for capacity in Hier model, by CU:")
 print(cap_priorMean)
+
+
+pdf(paste(cohoDir,"/Figures/", "SrepPriorDist_HM_priorCap.pdf", sep=""), width=6, height=4)
+# Plot prior distributions, by CU
+xx<-seq(1,30,length=1000)
+# manually set x-axes for now by specifying min and max for each CU
+x.plotMin<-c(5000, 800, 5000, 13000, 8000)
+x.plotMax<-c(18000, 12500, 18000, 28000,22000)
+par(mfrow=c(2,3), mar=c(4,3,1,1))
+# Loop over CUs to plot
+for (i in 1:5) {
+  yy<-dnorm(xx,mean=cap_priorMean[i],sqrt(2))
+  plot(xx*1000,yy*1000, main=CU_Names[i], typ="l", lwd=2, 
+       ylab="", xlab="SRep", xlim=c(x.plotMin[i], x.plotMax[i]), axes=F)
+  abline(v=cap[i]*1000,lty=2, col="red")
+  axis(side = 1,labels=T)
+  axis(side = 2,labels=F)
+  box()
+}
+dev.off()
 
 # Compile TMB model
 
@@ -492,13 +514,15 @@ All_Ests_cap <- left_join(All_Ests_cap, unique(SRDat[, c("CU_ID", "CU_Name")]))
 # don't want logged or scaled param values, so need to convert
 All_Ests_cap$Estimate[All_Ests_cap$Param == "logSigma"] <- exp(All_Ests_cap$Estimate[All_Ests_cap$Param == "logSigma"] )
 All_Ests_cap$Param[All_Ests_cap$Param == "logSigma"] <- "sigma"
+All_Ests_cap$Estimate[All_Ests_cap$Param == "logSigmaA"] <- exp(All_Ests$Estimate[All_Ests$Param == "logSigmaA"] )
+All_Ests_cap$Param[All_Ests_cap$Param == "logSigmaA"] <- "sigmaA"
 All_Ests_cap$Param[All_Ests_cap$Param == "SMSY"] <- "Smsy"
 All_Ests_cap[All_Ests_cap$Param == "B",] <- All_Ests_cap %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% mutate(Std..Error = Std..Error/Scale)
 All_Ests_cap[All_Ests_cap$Param %in% c("Sgen", "Smsy", "SRep", "cap", "Agg_LRP"), ] <-  All_Ests_cap %>% filter(Param %in% c("Sgen", "Smsy", "SRep","cap", "Agg_LRP")) %>% 
   mutate(Estimate = Estimate*Scale) %>% mutate(Std..Error = Std..Error*Scale)
 Preds <- All_Ests_cap %>% filter(Param == "Logit_Preds")
 Preds_Rec_cap <- All_Ests_cap %>% filter(Param == "Rec_Preds")
-All_Ests <- All_Ests %>% filter(!(Param %in% c( "logSgen", "Logit_Preds", "Rec_Preds"))) 
+All_Ests_cap <- All_Ests_cap %>% filter(!(Param %in% c( "logSgen", "Logit_Preds", "Rec_Preds"))) 
 
 write.csv(All_Ests_cap,paste(cohoDir,"/DataOut/ModelFits/AllEsts_Hier_Ricker_Surv_priorCap.csv", sep=""))
 
@@ -700,7 +724,7 @@ cap_priorMean<- cap*1.5
 print("Prior means for capacity in individual models, by CU:")
 print(cap_priorMean)
 
-
+pdf(paste(cohoDir,"/Figures/", "SrepPriorDist_IM_priorCap.pdf", sep=""),width=6, height=4)
 # Plot prior distributions, by CU
 xx<-seq(1,30,length=1000)
 # manually set x-axes for now by specifying min and max for each CU
@@ -717,7 +741,7 @@ for (i in 1:5) {
   axis(side = 2,labels=F)
   box()
 }
-
+dev.off()
 
 
 # Exact inputs from Arbeider et al:

@@ -206,7 +206,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
 
 
 runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p,
-                                BMmodelList, LRPmodelList, integratedModel,useGenMean, TMB_Inputs, outDir) {
+                                BMmodel, LRPmodel, integratedModel,useGenMean, TMB_Inputs, outDir, RunName) {
  
   CU_Names<-unique(EscpDat$CU_Name)
   
@@ -231,24 +231,15 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
         mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
       
       # Run annual retrospective analyses for sampled CUs:
-      
-      # Loop over BM model types
-      for (bb in 1:length(unique(BMmodelList))) {
-        BMmodel<-BMmodelList[bb]
-        
-        # Loop over LRP model types
-        for (ll in 1:length(unique(LRPmodelList))) {
-          LRPmodel<-LRPmodelList[ll]
-         
-          out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=startYr, endYr=endYr, BroodYrLag=BroodYrLag, 
-                               genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, integratedModel=integratedModel,
-                               useGenMean=useGenMean, TMB_Inputs=TMB_Inputs, outDir=cohoDir, RunName = NA, 
-                               bootstrapMode = T, plotLRP=F)
+        out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=startYr, endYr=endYr, BroodYrLag=BroodYrLag, 
+                            genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, integratedModel=integratedModel,
+                            useGenMean=useGenMean, TMB_Inputs=TMB_Inputs, outDir=cohoDir, RunName = NA, 
+                            bootstrapMode = T, plotLRP=F)
           
 
           # Add output to table
           # - if first retrospective run, create dataframe to store outputs
-          if (ii == 1 & bb == 1 & ll == 1) {
+          if (ii == 1) {
             output.df<-left_join(out$LRPs,AggEscp.ii, by = c("retroYear" = "yr"))
             nCUs<-rep(nCUList[nn],nrow(output.df))
             iCombn<-rep(ii,nrow(output.df))
@@ -256,22 +247,22 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
             se<-(output.df$LRP_upr-output.df$LRP) / 1.96 # back-calculate what SE on LRP estimate was
             cv<-se/output.df$LRP # calculate CV as SE / LRP
             output.df<-data.frame(iCombn, nCUs, output.df, status, se, cv) 
-          } else {
+           } else {
             new.df<-left_join(out$LRPs,AggEscp.ii, by = c("retroYear" = "yr"))
             nCUs<-rep(nCUList[nn],nrow(new.df))
             iCombn<-rep(ii,nrow(new.df))
-            status<-new.df$Gen_Mean/new.df$LRP 
+            status<-new.df$Gen_Mean/new.df$LRP
             se<-(new.df$LRP_upr-new.df$LRP) / 1.96 # back-calculate what SE on LRP estimate was
             cv<-se/new.df$LRP # calculate CV as SE / LRP
-            new.df<-data.frame(iCombn, nCUs, new.df, status, se, cv) 
+            new.df<-data.frame(iCombn, nCUs, new.df, status, se, cv)
             output.df<-rbind(output.df, new.df)
           }
           
           
           
-        } # End of LRP types loop
+#        } # End of LRP types loop
         
-      } # End of BM types loop
+#      } # End of BM types loop
       
     } # End of nReps loop 
     
@@ -281,11 +272,8 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
       dir.create(outputDir)
     } 
     
-    if ("ThreshAbund_Subpop1000_ST" %in% BMmodelList) {
-      write.csv(output.df, paste(outputDir,"/retroStatus_SPop.obj_",p*100,"_",nCUList[nn],"CUs.csv", sep="")) 
-    } else {
-      write.csv(output.df, paste(outputDir,"/retroStatus_CU.obj_",p*100,"_",nCUList[nn],"CUs.csv", sep=""))
-    }
+    write.csv(output.df, paste(outputDir,"/",RunName,"_",nCUList[nn],"CUs.csv", sep="")) 
+    
     
   } # End of nCUs loop
   
