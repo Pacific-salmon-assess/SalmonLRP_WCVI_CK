@@ -17,7 +17,7 @@
 *.out
 *.snm
 *.nav
-.png
+*.png
 *.synctex.gz*
 knitr-cache
 .RData
