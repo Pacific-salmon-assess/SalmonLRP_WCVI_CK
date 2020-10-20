@@ -22,7 +22,7 @@
 knitr-cache
 .RData
 .RHistory
-.Rproj
+*.Rproj
 
 
 
