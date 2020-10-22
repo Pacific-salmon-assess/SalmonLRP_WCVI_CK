@@ -17,7 +17,10 @@ Code and associated files are organized into the following sub-folders:
 2. **IFCohoStudy**
  * Contains files specific to Interior Fraser Coho case study, including input data, outputs, sensitivity analyses, and master file from which Interior Fraser Coho retrospective analyses are run ("runFraserCoho.r")
 
-3. **Documents**
+3. **SCChumStudy**
+ * Contains files specific to South Coast Chum case study, including input data, outputs, and master file from which South Coast Chum retrospective analyses are run ("runSouthCoastChum.r") along with file that does escapement infilling ("")
+
+4. **Documents**
  * Miscellaneous word documents included for reference or created while formulating case studies 
 
 

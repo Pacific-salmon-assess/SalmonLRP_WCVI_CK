@@ -14,7 +14,7 @@ library(dplyr)
 library(tidyr)
 # Note: this package list has been copied from runFraserCoho.r; may not all be required for chum ... 
 
-setwd('..')
+setwd('..') # This works if working directory is in ~/SalmonLRP_RetroEval/SCChumStudy folder
 rootDir<-getwd()
 codeDir<-paste(rootDir,"/Code",sep="")
 chumDir<-paste(rootDir,"/SCChumStudy",sep="")
@@ -164,5 +164,9 @@ for( i in 1:nsites){
 
 
 write.csv(Btable, "DataOut/SRdatWild.csv")
+
+##################################
+### Start of L. Warkentin Code ###
+##################################
 
 

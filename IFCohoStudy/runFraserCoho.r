@@ -11,6 +11,7 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 library(TMB)
+library(glmmTMB) # testing to see whether this fixes error when optimizing TMB models
 
 setwd('..')
 rootDir<-getwd()
@@ -133,6 +134,12 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 
 
 # Run annual restrospective analyses using CUs ===========================
+
+# # LW: just run one p value (0.9) for one model type, to investigate error message 
+# runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = 0.9,
+#                BMmodel = "SR_HierRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
+#                useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",0.9*100, sep=""),
+#                bootstrapMode = F, plotLRP=T)
 
 # Loop over p values and run annual retrospective analyses for each level of p
   ps <- c(seq(0.6, 0.95,.05), 0.99)
