@@ -54,7 +54,6 @@ CU_raw <- unique(RawDat$CU_Name)
 CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
             "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
 CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
-CUdf$CU_ID <- substr(CUdf$CU_raw, 1,1) # LW added: add a column with just CU ID, match style of IFCoho case study 
 
 
 ## Step 1: Infill Escapement Data ===============================================================
@@ -170,28 +169,29 @@ write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 ##################################
 ### Start of L. Warkentin Code ###
 ##################################
+# Read in data and format for using in retrospective analysis
+
 # Read in chum wild escapement data (infilled) by CU
-ChumEscDat <- read.csv("DataOut/WildEscape_w.Infill_ByCU.csv")
-# Add MU column - FLAG this may not be necessary - can't find MU in any of the function scripts. Check with Kendra
-ChumEscDat$MU_Name <- "SC Chum"
-head(ChumEscDat)
-
-
-# merge escapement data with CU name/id lookup table
-ChumEscDat <- merge(ChumEscDat, CUdf, by.x=(""))
-
+ChumEscpDat <- read.csv("DataOut/WildEscape_w.Infill_ByCU.csv")
+ChumEscpDat$MU <- "SC Chum" # Add MU column - FLAG this may not be necessary - can't find MU in any of the function scripts. Check with Kendra
+ChumEscpDat$CU <- substr(ChumEscpDat$CU_Name, 1,1) # pull out CU ID from raw CU column name
+ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the name of the CU, replace CU_Name with that (remove the CU number)
+colnames(ChumEscpDat)[colnames(ChumEscpDat)=="CU_Name"] <- "CU_raw"
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
-colnames(ChumEscDat)[] <- c("CU", "yr", "Ecsp")
+  colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Year"] <- "yr"
+  colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Escape"] <- "Escp"
 
-  colnames(ChumEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
-  colnames(ChumEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
-  colnames(ChumEscpDat)[colnames(CoEscpDat)=="ReturnYear"] <- "yr"
-  colnames(CoEscpDat)[colnames(CoEscpDat)=="Escapement"] <- "Escp"
-
-
-
-
-
+# Read in chum stock-recruit data
+ChumSRDat <- read.csv("DataOut/SRdatWild.csv")
+# Rename columns to be used in analysis, follow format of IFCohoStudy/DataIn/IFCoho_SRbyCU.csv
+ChumSRDat$CU_ID <- substr(ChumSRDat$CU, 1,1) # make new column with just CU id number
+ChumSRDat$CU_Name <- substr(ChumSRDat$CU, 5,100) # make new column with just CU name
+ChumSRDat <- ChumSRDat[ , !names(ChumSRDat) %in% "CU"] # remove raw CU column
+names(ChumSRDat)[names(ChumSRDat) =="Year"] <- "BroodYear" # FLAG: Check that Year is actually brood year in the infilling code
+names(ChumSRDat)[names(ChumSRDat) =="Escape"] <- "Spawners" # FLAG: Check that Escape column is spawners (as opposed to the Return column)
+names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits" 
+  
+# FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. This may be done automatically, see retroFunctions.r line 20 
 
 
 
