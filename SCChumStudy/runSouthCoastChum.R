@@ -54,6 +54,8 @@ CU_raw <- unique(RawDat$CU_Name)
 CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
             "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
 CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
+CUdf$CU_ID <- substr(CUdf$CU_raw, 1,1) # LW added: add a column with just CU ID, match style of IFCoho case study 
+
 
 ## Step 1: Infill Escapement Data ===============================================================
 
@@ -88,7 +90,7 @@ NoQPDatSumm <- as.data.frame(NoQPDat[[2]][which(NoQPDat[[2]]$CU_Name %in% CUdf$C
 NoQPByCU <- Infill(data=NoQPDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
 
 # Write by CU output
-write.csv(NoQPByCU[[1]], "DataOut/WildEscape_w.Infill_ByCU.csv")
+write.csv(NoQPByCU[[1]], "DataOut/WildEscape_w.Infill_ByCU.csv", row.names = F)
 
 
 ## Step 2: Construct Spawner Recruit Brood Tables =============================================
@@ -163,10 +165,41 @@ for( i in 1:nsites){
 }
 
 
-write.csv(Btable, "DataOut/SRdatWild.csv")
+write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
 ##################################
 ### Start of L. Warkentin Code ###
 ##################################
+# Read in chum wild escapement data (infilled) by CU
+ChumEscDat <- read.csv("DataOut/WildEscape_w.Infill_ByCU.csv")
+# Add MU column - FLAG this may not be necessary - can't find MU in any of the function scripts. Check with Kendra
+ChumEscDat$MU_Name <- "SC Chum"
+head(ChumEscDat)
+
+
+# merge escapement data with CU name/id lookup table
+ChumEscDat <- merge(ChumEscDat, CUdf, by.x=(""))
+
+# Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
+colnames(ChumEscDat)[] <- c("CU", "yr", "Ecsp")
+
+  colnames(ChumEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
+  colnames(ChumEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
+  colnames(ChumEscpDat)[colnames(CoEscpDat)=="ReturnYear"] <- "yr"
+  colnames(CoEscpDat)[colnames(CoEscpDat)=="Escapement"] <- "Escp"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -63,6 +63,7 @@ CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
 
 CoEscpDat_bySubpop<-read.csv("DataIn/IFCoho_escpBySubpop.csv")
 
+# Change column names to yr, CU_Name, Escp, Subpop_Name, CU_ID
   CoEscpDat_bySubpop<-CoEscpDat_bySubpop %>% select(yr=Return.Year, CU_Name=Conservation.Unit, Escp=Natural.Returns, Subpop_Name=Sub.Population)
   tmp.df<-data.frame(CU_Name=unique(CoEscpDat_bySubpop$CU_Name), CU_ID=seq(1,length(unique(CoEscpDat_bySubpop$CU_Name)),by=1))
   CoEscpDat_bySubpop <- left_join(CoEscpDat_bySubpop,tmp.df)
