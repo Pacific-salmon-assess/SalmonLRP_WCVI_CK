@@ -21,7 +21,7 @@ Infill <- function( data, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"),
   if(avg=="GeoMean"){
     #SiteAvg <- data %>% group_by_(.dots=c(unit, groupby, Uid)) %>% mutate(EscAvg = GeoMean(Escape))
     #KH - changed to:
-    SiteAvg <- data %>% group_by(.dots=c(unit, groupby, Uid)) %>% mutate(EscAvg = GeoMean(Escape))
+    SiteAvg <- data %>% group_by(.dots=c(unit, groupby, Uid)) %>% mutate(EscAvg = GeoMean(Escape)) # groups by NME (stream), CU, and Uid (combo of Rabcode and Group name), adds column with geometric mean of escapement across all years
   }
   if(avg=="Amean"){
     #SiteAvg <- data %>% group_by_(.dots=c(unit, groupby, Uid)) %>% mutate(EscAvg = mean(Escape, na.rm=T))
@@ -34,7 +34,7 @@ Infill <- function( data, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"),
   # proportion of the group that this unit average makes up
   #GroupAvg <- SiteAvg %>% group_by_(.dots=c(groupby, Year)) %>% mutate(GroupSum = sum(EscAvg))
   # KH - change to:
-  GroupAvg <- SiteAvg %>% group_by(.dots=c(groupby, Year)) %>% mutate(GroupSum = sum(EscAvg))
+  GroupAvg <- SiteAvg %>% group_by(.dots=c(groupby, Year)) %>% mutate(GroupSum = sum(EscAvg)) # groups data frame from above by CU and year, and sums the average escapement
   GroupAvg$Props <- GroupAvg$EscAvg/GroupAvg$GroupSum
   
   #go through and add up all props for sites with counts that aren't NA

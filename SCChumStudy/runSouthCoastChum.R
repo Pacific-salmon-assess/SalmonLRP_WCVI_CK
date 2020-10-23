@@ -176,10 +176,9 @@ ChumEscpDat <- read.csv("DataOut/WildEscape_w.Infill_ByCU.csv")
 ChumEscpDat$MU <- "SC Chum" # Add MU column - FLAG this may not be necessary - can't find MU in any of the function scripts. Check with Kendra
 ChumEscpDat$CU <- substr(ChumEscpDat$CU_Name, 1,1) # pull out CU ID from raw CU column name
 ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the name of the CU, replace CU_Name with that (remove the CU number)
-colnames(ChumEscpDat)[colnames(ChumEscpDat)=="CU_Name"] <- "CU_raw"
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Year"] <- "yr"
-  colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Escape"] <- "Escp"
+  colnames(ChumEscpDat)[colnames(ChumEscpDat)=="SiteEsc"] <- "Escp" # FLAG: check that this is the right column to use (infilled escapement)
 
 # Read in chum stock-recruit data
 ChumSRDat <- read.csv("DataOut/SRdatWild.csv")
@@ -191,15 +190,22 @@ names(ChumSRDat)[names(ChumSRDat) =="Year"] <- "BroodYear" # FLAG: Check that Ye
 names(ChumSRDat)[names(ChumSRDat) =="Escape"] <- "Spawners" # FLAG: Check that Escape column is spawners (as opposed to the Return column)
 names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits" 
   
-# FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. This may be done automatically, see retroFunctions.r line 20 
+# FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
+# This may be done automatically, see retroFunctions.r line 20 
 
 
 
+# ==================================================================================
+# Call functions to plot data availability:
+# ====================================================================================
+plot_CU_DataObs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_DataByCU")
+plot_Num_CUs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_N_CUs") # This one is not working - file is empty
 
-
-
-
-
-
+# Note: these next 2 two escpt plots need to have formatting fixed
+plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc", samePlot = T)
+plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc Separate", samePlot = F)
+# no sub-population analysis for Chum
+#plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
+#plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
 
 

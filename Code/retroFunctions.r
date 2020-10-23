@@ -93,7 +93,15 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     } else if(integratedModel == T){
       # Prep data frame to work with function
-      Dat$yr_num <- group_indices(Dat, BroodYear) - 1
+      Dat$yr_num <- group_indices(Dat, BroodYear) - 1 # life cycle error: <deprecated>
+      # message: The `...` argument of `group_keys()` is deprecated as of dplyr 1.0.0.
+      # Please `group_by()` first
+      # This warning is displayed once every 8 hours.
+      # Call `lifecycle::last_warnings()` to see where this warning was generated.
+      # backtrace:
+      #   1. global::runAnnualRetro(...)
+      #   3. dplyr:::group_indices.data.frame(Dat, BroodYear)
+      # 
       Dat$CU_ID <- group_indices(Dat, CU_ID) - 1
       EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
       
