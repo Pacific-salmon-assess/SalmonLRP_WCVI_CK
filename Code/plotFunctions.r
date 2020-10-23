@@ -28,7 +28,10 @@ plot_Num_CUs_Over_Time<-function(Dat,Dir, plotName) {
   # How many stocks per CU?
   Max_CUs <- Dat %>% group_by(MU) %>% summarise(n=length(unique((CU))))
   
-  Num_CUs_Over_Time <- Dat %>%  filter(is.na(Escp) == F) %>% group_by(MU, yr) %>% summarise(n=length(unique((CU))))
+  # Num_CUs_Over_Time <- Dat %>%  filter(is.na(Escp) == F) %>% group_by(MU, yr) %>% summarise(n=length(unique((CU))))
+  # LW - changed above line to: (is.na(Escp) was giving unexpected results with chum data. Maybe a filter/numeric object thing?)
+  Num_CUs_Over_Time <- Dat %>%  filter(!is.na(Escp)) %>% group_by(MU, yr) %>% summarise(n=length(unique((CU))))
+  
   MUs <- unique(Num_CUs_Over_Time$MU)
   for(mm in 1:length(MUs)){
     Dat <- Num_CUs_Over_Time %>% filter(MU == MUs[mm])
@@ -42,7 +45,6 @@ plot_Num_CUs_Over_Time<-function(Dat,Dir, plotName) {
   }
   
   dev.off()
-  
 }
 
 
