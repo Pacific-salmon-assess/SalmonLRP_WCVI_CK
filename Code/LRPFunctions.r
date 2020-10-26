@@ -38,7 +38,9 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
                mutate(Gen_Mean = rollapply(Agg_Esc, genYrs, gm_mean, fill = NA, align="right"))
   
   # need year as index
-  Logistic_Dat$yr_num <- group_indices(Logistic_Dat, yr) - 1
+  # Logistic_Dat$yr_num <- group_indices(Logistic_Dat, yr) - 1
+  # LW - replaced line above with below. Reason: ... argument of group_indices() deprecated
+  Logistic_Dat$yr_num <- group_by(Logistic_Dat, yr) %>% group_indices() - 1
   
  if(useGenMean == T){
    GenMean_DF <- EscDat %>% group_by(CU_ID) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right")) %>%
@@ -284,7 +286,9 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   Agg_Abund <- Agg_Abund %>% filter(yr %in% Mod_Yrs)
 
    # need year as index
-  Logistic_Dat$yr_num <- group_indices(as.data.frame(Logistic_Dat), yr) - 1
+  # Logistic_Dat$yr_num <- group_indices(as.data.frame(Logistic_Dat), yr) - 1
+  # LW - replaced line above with below. Reason: ... argument of group_indices() deprecated
+  Logistic_Dat$yr_num <- group_by(as.data.frame(Logistic_Dat), yr) %>% group_indices() - 1
   
   if (Mod == "ThreshAbund_Subpop1000_ST") data$LM_CU_Status <- Logistic_Dat$HalfGrThresh
   if (Mod == "ThreshAbund_Subpop1000_LT") data$LM_CU_Status <- Logistic_Dat$AllGrThresh
