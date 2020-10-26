@@ -80,7 +80,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
 
       # 2) Call specified LRP function:
         
-        LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
+        LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU, Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
                          useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
         
         # This version with dum2=dum2 as an input was created to test consistency with M. Arbeider code; 
@@ -93,16 +93,15 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     } else if(integratedModel == T){
       # Prep data frame to work with function
-      Dat$yr_num <- group_indices(Dat, BroodYear) - 1 # life cycle error: <deprecated>
-      # message: The `...` argument of `group_keys()` is deprecated as of dplyr 1.0.0.
-      # Please `group_by()` first
-      # This warning is displayed once every 8 hours.
-      # Call `lifecycle::last_warnings()` to see where this warning was generated.
-      # backtrace:
-      #   1. global::runAnnualRetro(...)
-      #   3. dplyr:::group_indices.data.frame(Dat, BroodYear)
-      # 
-      Dat$CU_ID <- group_indices(Dat, CU_ID) - 1
+      
+      # Dat$yr_num <- group_indices(Dat, BroodYear) -1 
+      # LW - changed above line to below. Reason: ... argument of group_keys() is deprecated
+      Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1
+      
+      # Dat$CU_ID <- group_indices(Dat, CU_ID) - 1
+      # LW - changed above line to below. Reason: ... argument of group_keys() is deprecated
+      Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1
+      
       EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
       
       LRP_Mod <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BM_Mod = BMmodel, Bern_Logistic = useBern_Logistic, 
