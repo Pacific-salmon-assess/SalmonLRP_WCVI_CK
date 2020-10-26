@@ -110,19 +110,19 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
 
 TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                    logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                   cap_mean=cap_priorMean, cap_sig=sqrt(2))
+                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean, cap_sig=sqrt(2))
+                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
 
 
 TMB_Inputs_Subpop <- list(Scale = 1000)
@@ -135,11 +135,10 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 
 # Run annual restrospective analyses using CUs ===========================
 
-# LW: just run one p value (0.9) for one model type, to investigate error message
-runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = 0.9,
-               BMmodel = "SR_HierRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",0.9*100, sep=""),
-               bootstrapMode = F, plotLRP=T)
+# Note: if .cpp files are already compiled (.dll and .o files are present in SalmonLRP_RetroEval/Code/TMB_Files ), 
+# code below will run and produce figures, but will give this error message: 
+# "Error in .Call("FreeADFunObject", ptr, PACKAGE = DLL) : "FreeADFunObject" not available for .Call() for package "<TMB model name>""
+# Deleting the .dll and .o files in /TMB_Files folder and recompiling .cpp files gets rid of this error. 
 
 # Loop over p values and run annual retrospective analyses for each level of p
   ps <- c(seq(0.6, 0.95,.05), 0.99)
@@ -416,4 +415,9 @@ modelFitList<-c("Bin.IndivRickerSurv",
 plotAggStatus_byNCUs_Compare(estYear=2018, nCUList=c(5,4,3), Names=modelFitList, p=0.80, Dir=cohoDir,plotAveLine=TRUE)  
 
 
-
+# Notes on comparing LW results run (2020-10-26) with results on dropbox https://www.dropbox.com/sh/otiku88jc2eu8cx/AACagLQd85blX7jc8-yBYs4Na?dl=0 
+#   1. DataOut/ModelFits/AllEsts_Hier_Ricker_Surv.csv: 
+#         sigmaA estimate is 0.321763 vs. -1.133939234 on dropbox
+#         other values look the same
+#   2. DataOut/AnnualRetrospective/annualRetro_LRPs.csv:
+#         values are identical
