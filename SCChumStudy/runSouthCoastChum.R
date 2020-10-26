@@ -252,9 +252,15 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 ps <- 0.95 # for now just use one p value
 # ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
-# Choosing values:
-#   BroodYrLag: runFraserCoho.r uses 2. Should I use 3 for chum? 
-#   genYrs:     runFraserCoho.r uses 3. I think I should use 4 (because there are 3, 4, 5, and 6 year-old recruits)
+# LW Notes
+# 1. Choosing values for runAnnualRetro function:
+#     BroodYrLag: runFraserCoho.r uses 2. Should I use 3 for chum? 
+#     genYrs:     runFraserCoho.r uses 3. I think I should use 4 (because there are 3, 4, 5, and 6 year-old recruits)
+# 2. The Chum data doesn't have smolt to adult survival (STAS) data, like the coho data does.
+#     This means that a new TMB model file needs to be written (e.g., SR_IndivRicker.cpp) that doesn't have the 
+#     STAS_Age_<return age> input from <species>SRDat, muLSurv variable (in LRPFunctions.r), and muLSurv parameter 
+#     in SR_IndivRicker_Surv.cpp and other TMB models.
+
 
 for(pp in 1:length(ps)){
   # # Run with Binomial LRP model with hierarchical Ricker 
