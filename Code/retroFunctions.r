@@ -104,7 +104,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       
       EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
       
-      LRP_Mod <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BM_Mod = BMmodel, Bern_Logistic = useBern_Logistic, 
+      LRP_Mod <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
                      useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
       
       # Compile Ricker parameters from TMB outputs
