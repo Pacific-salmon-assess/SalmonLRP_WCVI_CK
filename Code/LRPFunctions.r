@@ -2,8 +2,8 @@ library(zoo)
 
 # ===== Functions for fitting logistic regression models to data =========================================
 #
-# Run_Ricker_LRP()    - Run TMB Ricker and LRP estimation, either Hier Ricker or regular
-# Run_LRP()           - Run TMB LRP estimation 
+# Run_Ricker_LRP()    - Run TMB Ricker and LRP estimation, either Hier Ricker or regular (integratedModel = T)
+# Run_LRP()           - Run TMB LRP estimation (no Ricker data or estimation) (integratedModel = F)
 # Run_LRP_Logistic_inR() - 
 # ================================================================================
 

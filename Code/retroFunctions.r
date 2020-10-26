@@ -1,5 +1,13 @@
-# This code will include functions that loop over different subsets of data (either via annual retrospective analyses or bootstrap of years or CUs).
+# ==================================================================
+
+# Functions that loop over different subsets of data (either via annual retrospective analyses or bootstrap of years or CUs).
 ### For each subset of data tested, functions from LRPFunctions.r will be called and results will be saved.
+#
+# runAnnualRetro    -  Runs retrospective analysis using specified model type. Calls Run_LRP or Run_Ricker_LRP functions from LRPFunctions.r (latter if integratedModel=T) 
+# runNCUsRetro      -  Runs retrospective analysis using specified model type. Calls runAnnualRetro function
+#
+# ==================================================================
+
 
 
 
@@ -205,7 +213,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
 
   out
   
-} # end of function
+} # end of function 
 
 
 
