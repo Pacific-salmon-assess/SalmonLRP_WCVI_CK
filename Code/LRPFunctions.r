@@ -30,7 +30,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   data$p <- p    # specify p level to use for LRP calculation from logistic regression
   data$Sgen_sig <- TMB_Inputs$Sgen_sig  # set variance to be used for likelihood for estimating Sgen
   
-  Num_CUs_Over_Time <- EscDat %>%  filter(is.na(Escp) == F) %>% group_by(yr) %>% summarise(n=length(unique((CU_Name))))
+  Num_CUs_Over_Time <- EscDat %>%  filter(is.na(Escp) == FALSE) %>% group_by(yr) %>% summarise(n=length(unique((CU_Name))))
   Mod_Yrs <- Num_CUs_Over_Time$yr[Num_CUs_Over_Time$n == max(Num_CUs_Over_Time$n)]
   Logistic_Dat <- EscDat %>% filter(yr %in% Mod_Yrs)
   
@@ -44,12 +44,12 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   
  if(useGenMean == T){
    GenMean_DF <- EscDat %>% group_by(CU_ID) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right")) %>%
-                           filter(is.na(Gen_Mean) == F) %>% ungroup() %>% mutate(yr_num = yr - min(yr))
+                           filter(is.na(Gen_Mean) == FALSE) %>% ungroup() %>% mutate(yr_num = yr - min(yr))
    
    data$LM_S <- GenMean_DF$Gen_Mean / Scale
    data$LM_yr <- GenMean_DF$yr_num
    data$LM_stk <- GenMean_DF$CU_ID
-   Agg_Abund <- Agg_Abund %>% filter(is.na(Gen_Mean) == F) 
+   Agg_Abund <- Agg_Abund %>% filter(is.na(Gen_Mean) == FALSE) 
    data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale
  } else {
    data$LM_S <- Logistic_Dat$Escp / Scale
@@ -374,14 +374,14 @@ Run_LRP_Logistic_inR <- function(Dat, LBenchmark_byCU, genYrs, useBern_Logistic,
   # Specify CU-level status metric to be compared to Sgen
   if(useGenMean == T){
     Dat <- Dat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
-               filter(is.na(Dat$Gen_Mean) == F)
+               filter(is.na(Dat$Gen_Mean) == FALSE)
     Status <-  "Gen_Mean" # compare generational average escapement calculated as a geometric mean
   } else {
     Status <- "Escp" # compare annual escapement
   }
   
   # Calculate proportion above LBM using generational averages (note: CUs with no LBM will be deleted from proportion calc)
-  ModDat <- Dat %>% group_by(yr) %>% filter(is.na(LBM)==F) %>% summarise(CUs_Above_LBM = sum(!!as.name(Status) > LBM),
+  ModDat <- Dat %>% group_by(yr) %>% filter(is.na(LBM)==FALSE) %>% summarise(CUs_Above_LBM = sum(!!as.name(Status) > LBM),
                                                                 n_CUs = n(), Prop_Above_LBM = sum(!!as.name(Status) > LBM)/n(),
                                                                 Agg_Escp= sum(Escp))
   

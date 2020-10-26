@@ -24,7 +24,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
   for (yy in 1:length(yearList)) {
   
       # Only use SR data for brood years that have recruited by current year yy 
-       # (note: most recent brood year is calculated by substracting brood year lag (e.g. 2 years) from current year)
+       # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
       if (!is.null(SRDat)) {
         Dat <- SRDat %>%  filter(BroodYear <= (yearList[yy])-BroodYrLag)
       }
@@ -197,18 +197,18 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     
     # Save annual retrospective outputs as csv files =========================
-    if (integratedModel == TRUE) write.csv(outSR.df, paste(outputDir,"/annualRetro__SRparsByCU.csv", sep=""))
+    if (integratedModel == T) write.csv(outSR.df, paste(outputDir,"/annualRetro__SRparsByCU.csv", sep=""))
     write.csv(outLRP.df, paste(outputDir,"/annualRetro_LRPs.csv", sep=""))
   
     # in final year also plot geometric mean of aggregate abundance + LRPs
       # (Note: set her to always plot reference points relative to geometric mean)
-    plotAnnualRetro(Dat = EscpDat.yy, Name  = RunName ,outDir = outDir, useGenMean = TRUE, genYrs = genYrs)
+    plotAnnualRetro(Dat = EscpDat.yy, Name  = RunName ,outDir = outDir, useGenMean = T, genYrs = genYrs)
   
     
   }
     
   out <- list()
-  if (integratedModel == TRUE) out$SRparsByCU <- outSR.df
+  if (integratedModel == T) out$SRparsByCU <- outSR.df
   out$LRPs <- outLRP.df
 
   out

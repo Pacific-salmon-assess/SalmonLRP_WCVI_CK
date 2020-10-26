@@ -252,6 +252,10 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 ps <- 0.95 # for now just use one p value
 # ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
+# Choosing values:
+#   BroodYrLag: runFraserCoho.r uses 2. Should I use 3 for chum? 
+#   genYrs:     runFraserCoho.r uses 3. I think I should use 4 (because there are 3, 4, 5, and 6 year-old recruits)
+
 for(pp in 1:length(ps)){
   # # Run with Binomial LRP model with hierarchical Ricker 
   # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
@@ -266,7 +270,7 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
   # 
   # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1960, endYr=2013, BroodYrLag=2, genYrs=3, p = ps[pp], # What to use for BroodYrLag and genYrs FLAG
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1960, endYr=2017, BroodYrLag=3, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)

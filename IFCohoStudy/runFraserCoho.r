@@ -131,14 +131,14 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 #                           logMuA_sig = 2, Tau_dist = 0.1, Tau_A_dist = 0.1, 
 #                           gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
 
-
-
 # Run annual restrospective analyses using CUs ===========================
 
 # Note: if .cpp files are already compiled (.dll and .o files are present in SalmonLRP_RetroEval/Code/TMB_Files ), 
 # code below will run and produce figures, but will give this error message: 
 # "Error in .Call("FreeADFunObject", ptr, PACKAGE = DLL) : "FreeADFunObject" not available for .Call() for package "<TMB model name>""
 # Deleting the .dll and .o files in /TMB_Files folder and recompiling .cpp files gets rid of this error. 
+
+# Note: BroodYrLag = the number of years to subract from the current year to get to the most recent brood year
 
 # Loop over p values and run annual retrospective analyses for each level of p
   ps <- c(seq(0.6, 0.95,.05), 0.99)
