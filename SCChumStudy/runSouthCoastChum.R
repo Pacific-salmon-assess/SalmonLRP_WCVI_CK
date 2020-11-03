@@ -253,10 +253,20 @@ ps <- 0.95 # for now just use one p value
 # ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
-# 1. Choosing values for runAnnualRetro function:
-#     BroodYrLag: runFraserCoho.r uses 2. Should I use 3 for chum? 
-#     genYrs:     runFraserCoho.r uses 3. I think I should use 4 (because there are 3, 4, 5, and 6 year-old recruits)
-# 2. The Chum data doesn't have smolt to adult survival (STAS) data, like the coho data does.
+# Choosing values for runAnnualRetro function:
+# - genYrs: average age of return.  runFraserCoho.r uses 3. I think I should use 4 for chum (but check)
+# - BroodYrLag: How many years will it take between a fish returning and when you can construct the full recruitment.
+#     The BroodYrLag parameter used when prepping for the LRP calculations represents the number of years 
+#     it will take to reconstruct recruitment from a single brood year  (i.e., how many years of recruitment 
+#     do you need to observe to estimate recruitment from a brood year).  Another way of defining it is the 
+#     number of age classes that recruitment (maturation) occurs over. 
+#     For the coho example, fish mostly return at age 3 or 4, so BroodYrLag is 2.
+#     For the chum example, it looks like fish return at ages 3,4,5,6, so BroodYrLag is 4.
+#     This parameter gets used in the runAnnualRetro() function to remove the first few years of data for 
+#     which recruitment is NA because the BY has not yet been fully observed.  So, basically it's automating
+#     the step that you just mentioned you were doing when prepping the data for model fitting.
+#
+# The Chum data doesn't have smolt to adult survival (STAS) data, like the coho data does.
 #     This means that a new TMB model file needs to be written (e.g., SR_IndivRicker.cpp) that doesn't have the 
 #     STAS_Age_<return age> input from <species>SRDat, muLSurv variable (in LRPFunctions.r), and muLSurv parameter 
 #     in SR_IndivRicker_Surv.cpp and other TMB models.
@@ -276,7 +286,7 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
   # 
   # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1960, endYr=2017, BroodYrLag=3, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1960, endYr=2017, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)

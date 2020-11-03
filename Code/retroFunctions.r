@@ -104,11 +104,11 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       
       # Dat$yr_num <- group_indices(Dat, BroodYear) -1 
       # LW - changed above line to below. Reason: ... argument of group_keys() is deprecated
-      Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1
+      Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
       
       # Dat$CU_ID <- group_indices(Dat, CU_ID) - 1
       # LW - changed above line to below. Reason: ... argument of group_keys() is deprecated
-      Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1
+      Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
       
       EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
       

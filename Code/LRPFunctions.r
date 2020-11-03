@@ -288,7 +288,7 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
    # need year as index
   # Logistic_Dat$yr_num <- group_indices(as.data.frame(Logistic_Dat), yr) - 1
   # LW - replaced line above with below. Reason: ... argument of group_indices() deprecated
-  Logistic_Dat$yr_num <- group_by(as.data.frame(Logistic_Dat), yr) %>% group_indices() - 1
+  Logistic_Dat$yr_num <- group_by(as.data.frame(Logistic_Dat), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
   
   if (Mod == "ThreshAbund_Subpop1000_ST") data$LM_CU_Status <- Logistic_Dat$HalfGrThresh
   if (Mod == "ThreshAbund_Subpop1000_LT") data$LM_CU_Status <- Logistic_Dat$AllGrThresh
