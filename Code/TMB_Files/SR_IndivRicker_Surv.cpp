@@ -128,10 +128,10 @@ Type objective_function<Type>::operator() ()
   
   // Get estimates for plotting SR model fit with CIs =========
   int N_SpwnPreds = Pred_Spwn.size();
-  vector<Type> LogRec_Preds(N_SpwnPreds);
+  vector<Type> LogRec_Preds(N_SpwnPreds); // create vector of predicted log(recruits)
   vector<Type> Rec_Preds(N_SpwnPreds);
   
-  for(int i=0; i<N_SpwnPreds; i++){
+  for(int i=0; i<N_SpwnPreds; i++){  // predict recruitment based on Ricker equation with stock-specific parameters
     LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv[stk_predS(i)] + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i);
   }
   Rec_Preds = exp(LogRec_Preds);

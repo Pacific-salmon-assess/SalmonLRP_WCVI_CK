@@ -60,10 +60,10 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
  # range of agg abund to predict from
  data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
  # range of spawner abundance to predict recruitment from
- data$Pred_Spwn <- rep(seq(0,max(data$S)*1.1,length=100), N_Stocks)
- for (i in 1:N_Stocks) {
+ data$Pred_Spwn <- rep(seq(0,max(data$S)*1.1,length=100), N_Stocks) # vectors of spawner abundance to use for predicted recruits, one vector of length 100 for each stock
+ for (i in 1:N_Stocks) { # make a vector of same length as Pred_Spwn with CU ids
    if (i == 1) {
-     data$stk_predS <- rep(unique(SRDat$CU_ID)[1],100)
+     data$stk_predS <- rep(unique(SRDat$CU_ID)[1],100) 
    } else {
     data$stk_predS<-c(data$stk_predS,rep(unique(SRDat$CU_ID)[i],100))
    }
@@ -82,7 +82,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
     data$logSurv_3 <- log(SRDat$STAS_Age_3)
     data$logSurv_4 <- log(SRDat$STAS_Age_4)
-    muSurv <- SRDat %>% group_by(CU_ID) %>% 
+    muSurv <- SRDat %>% group_by(CU_ID) %>% # get average smolt to adult survival 
        summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
     data$muLSurv <- log(muSurv$muSurv)
     data$Tau_dist <- TMB_Inputs$Tau_dist
@@ -123,7 +123,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Parameter estimate after phase 1 optimization:
-  pl <- obj$env$parList(opt$par) # Parameter estimate after phase 1
+  pl <- obj$env$parList(opt$par) # Parameter estimates after phase 1
   
   
   # pull out SMSY values
@@ -255,7 +255,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
 
 # ==============================================================================================================
 
-# Run TMB estimation for logitic regression fit only ========================================================
+# Run TMB estimation for logistic regression fit only ========================================================
 Run_LRP <- function(EscDat, Mod, useBern_Logistic, 
                            useGenMean, genYrs, p, TMB_Inputs) {
 
