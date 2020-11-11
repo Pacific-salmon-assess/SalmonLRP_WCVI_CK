@@ -76,6 +76,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   param$logSgen <-  log((SRDat %>% group_by(CU_Name) %>%  summarise(x=quantile(Spawners, 0.5)))$x/Scale) 
   param$B_0 <- 2
   param$B_1 <- 0.1
+  data$Tau_dist <- TMB_Inputs$Tau_dist
   
   # add data and parameters specific to Ricker model with survival co-variate
   if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_HierRicker_SurvCap","SR_IndivRicker_SurvCap")){
@@ -85,7 +86,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     muSurv <- SRDat %>% group_by(CU_ID) %>% # get average smolt to adult survival 
        summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
     data$muLSurv <- log(muSurv$muSurv)
-    data$Tau_dist <- TMB_Inputs$Tau_dist
     data$gamma_mean <- TMB_Inputs$gamma_mean 
     data$gamma_sig <- TMB_Inputs$gamma_sig
     param$gamma <- 0

@@ -192,6 +192,7 @@ names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits"
   
 # FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
 # This may be done automatically, see retroFunctions.r line 20 
+# This is done automatically using the BroodYrLag variable
 
 # ==================================================================================
 # Call functions to plot data availability:
