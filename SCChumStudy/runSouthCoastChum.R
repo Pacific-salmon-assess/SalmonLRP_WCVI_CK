@@ -7,6 +7,7 @@
 library(rsample)
 library(tidyverse)
 library(ggplot2)
+options(scipen=1000000)
 library(gridExtra)
 library(reshape2)
 library(TMB)
@@ -50,10 +51,15 @@ source("chumDataFunctions.r")
 # Create look-up table for CU names
 RawDat <- read.csv("DataIn/Chum Escapement Data With Areas_2013.csv", check.names=F)
 
+CU_short <- c("SCS", "NEVI", "UK", "LB", "BI", "GS", "HSBI")
+CU_raw <- unique(RawDat$CU_Name)
+CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
+            "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
+CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
+
 #-----------#
 # Look at raw escapement data - LTW----------
 #-----------#
-
 
 yrcols <- grep("[[:digit:]]{4}", names(RawDat)) # get position of yr columns
 rdl <- RawDat %>% pivot_longer( cols= yrcols, names_to="year", values_to="escapement") # wide to long format for plotting
@@ -73,42 +79,36 @@ rdl <- RawDat %>% pivot_longer( cols= yrcols, names_to="year", values_to="escape
 
 rdl <- rdl[rdl$Source=="Wild", ] # remove non-wild fish
 rdl <- rdl[!(rdl$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")), ] # FLAG - why? remove three rivers removed from analysis below
-#rdl <- rdl[ rdl$SummerRun==FALSE, ] # remove summer run fish
+rdl <- rdl[ rdl$SummerRun==FALSE, ] # remove summer run fish
 
 
 # Plot raw escapement, 1 page per CU)
-options(scipen = 100000)
-CUs <- unique(rdl$CU_Name)
-make_CU_figs <- function(CU) {
-rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
-  geom_point() +
-  geom_path() +
-  scale_y_log10() +
-  #facet_grid(NME~.) +
-  scale_colour_manual(values=c("black", "red")) +
-  ggtitle(CU) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle=90, vjust=0.5))
-}
-fig_list <- as.list(CUs)
-fig_list <- lapply(fig_list, make_CU_figs)
-fig_list[[1]] # check
-pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
-for (i in 1:length(fig_list)){
-  print(fig_list[[i]])
-}
-dev.off()
+# options(scipen = 100000)
+# CUs <- unique(rdl$CU_Name)
+# make_CU_figs <- function(CU) {
+# rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
+#   geom_point() +
+#   geom_path() +
+#   scale_y_log10() +
+#   #facet_grid(NME~.) +
+#   scale_colour_manual(values=c("black", "red")) +
+#   ggtitle(CU) +
+#   theme_bw() +
+#   theme(axis.text.x = element_text(angle=90, vjust=0.5))
+# }
+# fig_list <- as.list(CUs)
+# fig_list <- lapply(fig_list, make_CU_figs)
+# fig_list[[1]] # check
+# pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
+# for (i in 1:length(fig_list)){
+#   print(fig_list[[i]])
+# }
+# dev.off()
 
 
 #------------
 
 
-
-CU_short <- c("SCS", "NEVI", "UK", "LB", "BI", "GS", "HSBI")
-CU_raw <- unique(RawDat$CU_Name)
-CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
-            "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
-CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
 
 
 ## Step 1: Infill Escapement Data ===============================================================
@@ -168,6 +168,48 @@ for (i in 1:length(fig_list)){
 }
 dev.off()
 
+# Plot observed and infilled escapement for each CU, one panel per stream
+CUs <- unique(infill_by_stream$CU_Name)
+make_stream_figs <- function(CU) {
+infill_by_stream[infill_by_stream$CU_Name==CU,] %>% 
+  ggplot( aes(y=SiteEsc, x=Year, group=NME)) +
+  geom_point(colour="dodgerblue") +
+  geom_path() +
+  geom_point(aes(y=Escape, x=Year), colour="black") +
+  #scale_y_log10() +
+  facet_wrap(~NME, scales="free_y") +
+  scale_x_discrete(breaks=seq(1960,2010,10)) +
+  ggtitle(CU) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=90, vjust=0.5))
+}
+fig_list <- as.list(CUs)
+fig_list <- lapply(fig_list, make_stream_figs)
+fig_list[[1]] # check
+pdf("Figures/fig_by-stream_infill_escapement_streams.pdf", width=18, height=12, pointsize=8)
+for (i in 1:length(fig_list)){
+  print(fig_list[[i]])
+}
+dev.off()
+
+# Plot correlations between actual stream escapements by CU. 
+# Infilling by stream assumes escapements in streams within a CU have correlation. 
+# change campbell river duplicate
+rdl$NME[which(rdl$NME=="CAMPBELL RIVER" & rdl$GU_Name=="5 - Fraser")] <- "LITTLE CAMPBELL RIVER"
+corCU <- function(CU) {
+  df1 <- rdl %>% filter(CU_Name==CU) %>% select(NME, year, escapement) %>%
+  pivot_wider(names_from=NME, values_from=escapement)
+  cormat <- cor(df1[,-1], use="pairwise.complete.obs")
+  cormat1 <- cormat[upper.tri(cormat, diag=FALSE)]
+  hist(cormat1, main=CU, xlim=c(-1,1), xlab="Correlations between observed stream escapements")
+  #PerformanceAnalytics::chart.Correlation(cor(df1[,-1], use="pairwise.complete.obs") )
+}
+png("Figures/fig_observed_spawners_by_stream_correlations.png", width=10, height=6, units="in", res=300)
+layout(matrix(seq_along(CUs), ncol=3, byrow = TRUE))
+for ( i in seq_along(CUs)) {
+  corCU(CUs[i])
+}
+dev.off()
 
 #------------#
 
@@ -276,9 +318,8 @@ for( i in 1:nsites){
 write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
 # ====================================================================
-# Start of L. Warkentin Code 
-# ====================================================================
 # Read in data and format for using in retrospective analysis
+# ====================================================================
 
 # Read in chum wild escapement data (infilled) by CU
 ChumEscpDat <- read.csv("DataOut/WildEscape_w.Infill_ByCU.csv")
