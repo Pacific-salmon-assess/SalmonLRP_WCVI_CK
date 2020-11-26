@@ -67,49 +67,43 @@ rdl <- RawDat %>% pivot_longer( cols= yrcols, names_to="year", values_to="escape
 # Appears that GroupName and GU_Name are not nested within CUs, but different categories that overlap irregularly
 
 # Check "QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER"
-# rdl[rdl$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER"),] %>% 
-#   ggplot( aes(y=escapement, x=year, shape=Source, colour=NME, group=NME)) +
-#   geom_point() +
-#   geom_path() +
-#   scale_y_log10() +
-#   #facet_grid(NME~.) +
-#   guides(colour="none") +
-#   theme_bw() +
-#   theme(axis.text.x = element_text(angle=90, vjust=0.5))
+rdl[rdl$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER"),] %>%
+  ggplot( aes(y=escapement, x=year, colour=Source, colour=NME, group=Source)) +
+  geom_point() +
+  geom_path() +
+  scale_y_log10() +
+  facet_wrap(~NME) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=90, vjust=0.5))
 
 rdl <- rdl[rdl$Source=="Wild", ] # remove non-wild fish
 rdl <- rdl[!(rdl$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")), ] # FLAG - why? remove three rivers removed from analysis below
 rdl <- rdl[ rdl$SummerRun==FALSE, ] # remove summer run fish
 
-
-# Plot raw escapement, 1 page per CU)
-# options(scipen = 100000)
-# CUs <- unique(rdl$CU_Name)
-# make_CU_figs <- function(CU) {
-# rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
-#   geom_point() +
-#   geom_path() +
-#   scale_y_log10() +
-#   #facet_grid(NME~.) +
-#   scale_colour_manual(values=c("black", "red")) +
-#   ggtitle(CU) +
-#   theme_bw() +
-#   theme(axis.text.x = element_text(angle=90, vjust=0.5))
-# }
-# fig_list <- as.list(CUs)
-# fig_list <- lapply(fig_list, make_CU_figs)
-# fig_list[[1]] # check
-# pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
-# for (i in 1:length(fig_list)){
-#   print(fig_list[[i]])
-# }
-# dev.off()
-
+# Plot raw escapement, normal vs. summer run, 1 page per CU
+options(scipen = 100000)
+CUs <- unique(rdl$CU_Name)
+make_CU_figs <- function(CU) {
+rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
+  geom_point() +
+  geom_path() +
+  scale_y_log10() +
+  #facet_grid(NME~.) +
+  scale_colour_manual(values=c("black", "red")) +
+  ggtitle(CU) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle=90, vjust=0.5))
+}
+fig_list <- as.list(CUs)
+fig_list <- lapply(fig_list, make_CU_figs)
+fig_list[[1]] # check
+pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
+for (i in 1:length(fig_list)){
+  print(fig_list[[i]])
+}
+dev.off()
 
 #------------
-
-
-
 
 ## Step 1: Infill Escapement Data ===============================================================
 
@@ -136,25 +130,19 @@ LongDatNoQP <- NoQPDatBySite2 %>% gather( "Year", "Escape", 10:70)
 #Now Infill. Gives a list of 2 data frames. First is infilling by stream, second is a summary that is summarized by CU. 
 NoQPDat <- Infill(data = LongDatNoQP, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 
-# -----------#
+#------------#
 # Look at by-stream infilled data
 #------------#
 # Plot actual vs. infilled data by stream, one page per CU
 infill_by_stream <- NoQPDat[[1]] # get by-steam infilled data
-infill_by_stream %>% filter(!(CU_Name %in% c("8 - Lower Fraser", "9 - Fraser Canyon"))) %>% 
-  ggplot( aes(y=Escape, x=ContrEsc, colour=NME)) +
-  geom_point() +
-  guides(colour=FALSE) +
-  facet_wrap(~CU_Name, scales="free")
 
 CUs <- unique(infill_by_stream$CU_Name)
 make_CU_figs <- function(CU) {
   infill_by_stream[infill_by_stream$CU_Name==CU,] %>% ggplot( aes(y=SiteEsc, x=Year, group=NME)) +
-    geom_point(colour="dodgerblue") +
+    geom_point(colour="dodgerblue", shape=1) +
     #geom_path() +
     #geom_point(aes(y=ContrEsc, x=Year), colour="dodgerblue") +
-    geom_point(aes(y=Escape, x=Year), colour="black") +
-    scale_y_log10() +
+    geom_point(aes(y=Escape, x=Year), colour="black", shape=1) +
     ggtitle(CU) +
     theme_bw() +
     theme(axis.text.x = element_text(angle=90, vjust=0.5))
@@ -162,7 +150,7 @@ make_CU_figs <- function(CU) {
 fig_list <- as.list(CUs)
 fig_list <- lapply(fig_list, make_CU_figs)
 fig_list[[1]] # check
-pdf("Figures/fig_by-stream_infill_escapement.pdf", width=7, height=4, pointsize=8)
+pdf("Figures/fig_by-CU_infill_escapement.pdf", width=7, height=4, pointsize=8)
 for (i in 1:length(fig_list)){
   print(fig_list[[i]])
 }
@@ -242,13 +230,12 @@ ggplot(data=NoQPByCU[[1]], aes(y= SiteEsc, x=Year ), aes(y=, x=Year)) + # raw da
   theme(axis.text.x = element_text(angle=90, vjust=0.5))
 dev.off()
 
-
 ## Step 2: Construct Spawner Recruit Brood Tables =============================================
 
 # Prep infilled escapement data
 WildEsc <- NoQPByCU[[1]]
   WildEsc$CUinfill <- ifelse(is.na(WildEsc$Escape), TRUE, FALSE) # Flag 'Escape = NA' sites
-  
+
 # Read in Return data from P.V.W received 3/7/2016
 WildRetWide <- read.csv("DataIn/WildReturnsPVW_2013.csv", check.names=F)
   # Need to get PVW return data into long form:
@@ -353,10 +340,6 @@ plot_Num_CUs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_N_CUs")
 # Note: these next 2 two escpt plots need to have formatting fixed
 plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc", samePlot = T)
 plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc Separate", samePlot = F)
-# no sub-population analysis for Chum
-#plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
-#plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
-
 
 # ==================================================================================================================
 # Run retrospective analyses:
