@@ -8,7 +8,7 @@ library(sf)
 
 bc <- bc_bound() # get 
 rivers <- watercourses_5M
-chum_cu <- st_read("C:/Users/WarkentinL/Desktop/Chum_Salmon_CU_Boundary/Chum Salmon CU Boundary_En.shp")
+chum_cu <- st_read("spatial/Chum Salmon CU Boundary_En.shp")
 # get south coast chum CUs 
 sc_cus <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Upper Knight", "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet")
 scc <- chum_cu[chum_cu$CU_name %in% sc_cus, ] # get sf object of just south coast chum CUs 
