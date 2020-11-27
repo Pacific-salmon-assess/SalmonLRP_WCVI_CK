@@ -31,7 +31,6 @@ sourceAll <- function(){
 }
 sourceAll()
 
-
 # ===========================================================================================
 # Read-in Chum Data & Run Data Prep Functions:  
 # ===========================================================================================
@@ -131,7 +130,7 @@ LongDatNoQP <- NoQPDatBySite2 %>% gather( "Year", "Escape", 10:70)
 NoQPDat <- Infill(data = LongDatNoQP, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 
 #------------#
-# Look at by-stream infilled data
+# Look at by-stream infilled data - LTW
 #------------#
 # Plot actual vs. infilled data by stream, one page per CU
 infill_by_stream <- NoQPDat[[1]] # get by-steam infilled data
@@ -213,7 +212,7 @@ write.csv(NoQPByCU[[1]], "DataOut/WildEscape_w.Infill_ByCU.csv", row.names = F)
 
 
 # ----------#
-# Plot infilling by CU, to compare actual, infilled by stream, and infilling by CU
+# Plot infilling by CU, to compare actual, infilled by stream, and infilling by CU - LTW
 # ----------#
 infill_by_stream_no_fraser <- NoQPDat[[2]] %>% filter(!(CU_Name %in% c("8 - Lower Fraser", "9 - Fraser Canyon"))) 
 png("Figures/fig_compare_actual_infill_by_stream_and_CU.png", height=5, width=10, res=300, units="in")
@@ -281,7 +280,7 @@ nages<-length(ages)
 # go through years and calculate recruits by brood year
 # Same age comp used for each CU
 # will not get recruit estimate for first two years due to missing age comp data (NAs)
-# will not get recruit estiamate for last 
+# will not get recruit estimate for last 
 Btable$Recruit <- rep(NA, dim(Btable)[1])
 for( i in 1:nsites){
   Sdat<- Btable[which(Btable$CU==sites[i]),]
@@ -300,7 +299,6 @@ for( i in 1:nsites){
     Btable$Recruit[which(Btable$Year==years[j] & Btable$CU==sites[i])] <- Rsum
   }
 }
-
 
 write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
