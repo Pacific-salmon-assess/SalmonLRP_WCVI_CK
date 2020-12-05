@@ -325,6 +325,17 @@ ggplot(Btable_max_escp, aes(x=RS)) +
   facet_wrap(~CU) 
 
 
+# Look at difference between recruits and escapement (Fisheries harvest)
+png("Figures/fig_escapement_returns_harvest.png", height=8, width=12, units="in", res=300)
+ggplot(Btable, aes(x=Year, y=Return)) +
+  geom_point() +
+  geom_path() +
+  geom_linerange(aes(x=Year, ymin=Escape, ymax=Return), colour="red", lwd=1.3) +
+  geom_ribbon(aes(x=Year, ymin=0, ymax=Escape), fill="dodgerblue", colour="dodgerblue") +
+  #geom_text(aes(x=Year, y=Return+5000, label=round((Return-Escape)/Return*100,0)), size=4) +
+  facet_wrap(~CU, scales="free_y")
+dev.off()
+
 # How would an alternative to Sgen that is spawners required to get to 
 # a benchmark like 50% of max observed spawners compare to Sgen?
 # incorporates alpha. 
