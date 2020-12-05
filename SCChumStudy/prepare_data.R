@@ -325,8 +325,47 @@ ggplot(Btable_max_escp, aes(x=RS)) +
   facet_wrap(~CU) 
 
 
+# How would an alternative to Sgen that is spawners required to get to 
+# a benchmark like 50% of max observed spawners compare to Sgen?
+# incorporates alpha. 
+# read in alpha and beta estimates from LRP integrated model
+ests <- read.csv("DataIn/ricker_est_to_compare_with_beta.csv")
+head(ests)
+sum_escp <- sum_escp[1:7, ]
+
+CUs <- unique(ests$CU_name)
+
+
+curve( ests$A[1] * x * exp( - ests$B[1] * x), xlim=c(0,100000))
+abline(h=sum_escp$sum_max_escape[1]*0.2 )
+abline(h=sum_escp$sum_max_escape[1]*0.2 )
+abline(v= ests$Sgen[1], col="grey")
+
+
+function()
+
+layout(mat= matrix(1:9, byrow=TRUE))
+for (i in seq_along(CUs)) {
+  plot(x=0,y=0,xlim=c(0, sum_escp$sum_max_escape[sum_escp$CU_Name==i]*1.1), ylim=c(0,sum_escp$sum_max_escape[sum_escp$CU_Name==i]*6))
+  abline(v=sum_escp$sum_max_escape[sum_escp$CU_Name==i], col="dodgerblue")
+  abline(v=sum_escp$sum_min_escape[sum_escp$CU_Name==i], col="firebrick")
+  abline(v= ests$Sgen[sum_escp$CU_Name==i], col="grey")
+  curve( ests$A[sum_escp$CU_Name==i] * x * exp( - ests$B[sum_escp$CU_Name==i] * x))
+  main(i) 
+}
+
 # ----------#
 # Look at age composition - LW
 # ----------#
 head(ACdat)
+
+ACdat %>% pivot_longer(cols=grep("Age", names(ACdat)), names_to="Age", values_to="proportion") %>%
+  ggplot(., aes(y=proportion, x=Year, fill=Age)) +
+  geom_col()
+
+
+
+
+
+
 
