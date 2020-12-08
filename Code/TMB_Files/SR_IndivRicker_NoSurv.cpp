@@ -45,6 +45,7 @@ px[0] = DW * py[0];                 // Reverse mode chain rule
 template<class Type>
 Type objective_function<Type>::operator() ()
 {
+  DATA_INTEGER(Bayes);
   DATA_VECTOR(S);
   DATA_VECTOR(logR);
   DATA_IVECTOR(stk);

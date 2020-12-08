@@ -38,26 +38,23 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       if(integratedModel == F){
         
         # 1) Call specified benchmark function:
-      
-        # Case 1: BM Model == basic Ricker in R 
-        # if (BMmodel == "basicRicker_R") {
-        # 
-        #   output<-GetRickerParams(Dat)
-        #   # add a row with retrospective year
-        #   output<-add_column(output,retroYr=rep(yearList[yy],nrow(output)), .before="est_A")
-        #   output <- cbind(output, RunInfo)
-        # 
-        #   if (yy == 1) {
-        #     outSR.df<-output
-        #   } else {
-        #    outSR.df<-rbind(outSR.df, output)
-        #   }
-        # 
-        #   # Compile data for current retro year for LRP calculation
-        #   LBenchmark_byCU <- outSR.df %>% filter(retroYr == yearList[yy]) %>% dplyr::select(CU_Name, CU_ID, retroYr, LBM=est_Sgen) 
-        #   add_column(LBenchmark_byCU, LBM_type="Sgen")
-        # 
-        # } # end of Case 1
+
+        
+        # Case 1: LRP model is based on projections
+        if (LRPmodel == "Proj_BinLogistic" | LRPmodel == "Proj_BernLogistic" ) {
+          
+          if (LRPmodel == "Proj_BernLogistic") useBern_Logistic <- TRUE
+          if (LRPmodel == "Proj_BinLogistic") useBern_Logistic <- FALSE
+          
+          Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+          Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+          EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
+          
+          LRP_Mod<-Run_ProjRicker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, LRPmodel = LRPmodel, 
+                                      useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, outDir=outDir)
+          
+        }
+        
       
         # Case 2: BM Model == 1000 fish threshold at sub-population level
         
@@ -84,7 +81,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           #dum<-EscpDat.yy %>% group_by(Subpop_Name,yr) %>% summarise(Escp.sp = sum(Escp)) %>% mutate(Gen_Mean = rollapply(Escp.sp, genYrs, gm_mean, fill = NA, align="right"))
           #dum2<- dum %>% group_by(yr) %>% summarise(AggEscp.gm=sum(Gen_Mean))
           
-        }
+
 
       # 2) Call specified LRP function:
         
@@ -95,6 +92,11 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         # ---- if wanting to run with geometric means calculated at subpopulation lvel, will beed to add AggEscp_gmBySP arguement to LRP_Mod function
         #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
         #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
+        
+        
+        }
+        
+        
         
         
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================

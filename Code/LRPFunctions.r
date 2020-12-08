@@ -354,104 +354,333 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
 }
 
 
-
-
-
-
-
-
-#============================================================================================
-
-# Fit a logistic model to a binomial response variable that indicates whether all CUs were above their CU-level lower benchmarks
-Run_LRP_Logistic_inR <- function(Dat, LBenchmark_byCU, genYrs, useBern_Logistic, useGenMean, p = 0.95) {
+Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYrs, p, TMB_Inputs, outDir) {
   
-  Dat<-left_join(Dat, LBenchmark_byCU, by="CU_Name")
+  # Run MCMC SR analysis to parameterize projections using available data
   
-  # Add generational running average
-  # this isn't grouped by stock though!
-  #Dat$Gen_Mean <- rollapply(Dat$Escp, genYrs, gm_mean, fill=NA, align="right")
+  Mod <- paste(BMmodel,"noLRP",sep="_")
   
-  # Specify CU-level status metric to be compared to Sgen
-  if(useGenMean == T){
-    Dat <- Dat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
-               filter(is.na(Dat$Gen_Mean) == FALSE)
-    Status <-  "Gen_Mean" # compare generational average escapement calculated as a geometric mean
-  } else {
-    Status <- "Escp" # compare annual escapement
+  # Set-up for call to TMB
+  Scale <- TMB_Inputs$Scale
+  
+  data <- list()
+  data$Bayes <- 1
+  data$S <- SRDat$Spawners/Scale
+  data$logR <- log(SRDat$Recruits/Scale)
+  data$stk <- as.numeric(SRDat$CU_ID)
+  N_Stocks <- length(unique(SRDat$CU_Name))
+  data$N_Stks <- N_Stocks
+  data$yr <- SRDat$yr_num
+  data$Sgen_sig <- TMB_Inputs$Sgen_sig # set variance to be used for likelihood for estimating Sgen
+
+  # set-up init params
+  param <- list()
+  param$logA <- rep(TMB_Inputs$logA_Start, N_Stocks)
+  param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
+  param$logSigma <- rep(-2, N_Stocks)
+  param$logSgen <-  log((SRDat %>% group_by(CU_Name) %>%  summarise(x=quantile(Spawners, 0.5)))$x/Scale)
+  param$B_0 <- 2
+  param$B_1 <- 0.1
+  data$Tau_dist <- TMB_Inputs$Tau_dist
+  param$gamma <- 0
+
+  # specify data
+  data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
+  data$logSurv_3 <- log(SRDat$STAS_Age_3)
+  data$logSurv_4 <- log(SRDat$STAS_Age_4)
+  muSurv <- SRDat %>% group_by(CU_ID) %>%
+    summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+  data$muLSurv <- log(muSurv$muSurv)
+  data$Tau_dist <- TMB_Inputs$Tau_dist
+  data$gamma_mean <- TMB_Inputs$gamma_mean
+  data$gamma_sig <- TMB_Inputs$gamma_sig
+  #data$logMuA_mean <- TMB_Inputs$logMuA_mean
+  #data$logMuA_sig <- TMB_Inputs$logMuA_sig
+  #data$Tau_A_dist <- TMB_Inputs$Tau_A_dist
+
+  # range of agg abund to predict from
+  #data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
+  # range of spawner abundance to predict recruitment from
+  data$Pred_Spwn <- rep(seq(0,max(data$S)*1.1,length=100), N_Stocks) # vectors of spawner abundance to use for predicted recruits, one vector of length 100 for each stock
+  for (i in 1:N_Stocks) { # make a vector of same length as Pred_Spwn with CU ids
+    if (i == 1) {
+      data$stk_predS <- rep(unique(SRDat$CU_ID)[1],100)
+    } else {
+      data$stk_predS<-c(data$stk_predS,rep(unique(SRDat$CU_ID)[i],100))
+    }
+  }
+
+  # Phase 1 estimate SR params ============
+  map <- list(logSgen=factor(rep(NA, data$N_Stks))) # Fix Sgen
+  obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
+
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
+  pl <- obj$env$parList(opt$par) # Parameter estimate after phase 1
+
+
+  # -- pull out SMSY values
+  All_Ests <- data.frame(summary(sdreport(obj)))
+  All_Ests$Param <- row.names(All_Ests)
+  SMSYs <- All_Ests[grepl("SMSY", All_Ests$Param), "Estimate" ]
+
+  pl$logSgen <- log(0.3*SMSYs)
+
+
+  # Phase 2 get Sgen, SMSY etc. =================
+  obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
+
+
+  # Create upper bounds vector that is same length and order as start vector that will be given to nlminb
+  upper<-unlist(obj$par)
+  upper[1:length(upper)]<-Inf
+  upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy (To do: confirm with Brooke)
+  upper<-unname(upper)
+
+  lower<-unlist(obj$par)
+  lower[1:length(lower)]<--Inf
+  lower[names(lower) =="logSgen"] <- log(0.001)
+  lower<-unname(lower)
+
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
+                upper = upper, lower=lower )
+
+  pl2 <- obj$env$parList(opt$par) # Parameter estimate after phase 2
+
+
+
+
+  All_Ests <- data.frame(summary(sdreport(obj)))
+  All_Ests$Param <- row.names(All_Ests)
+
+  # Calculate correlation matrix in MPD recruitment residuals ========================
+  resids<-as_tibble(data.frame(stock=data$stk,year=data$yr, resid=obj$report()$R_Resid))
+
+  cor_matrix <- resids %>% pivot_wider(names_from = stock, names_prefix="stock",values_from = resid)  %>%
+    select(-year) %>% cor()
+
+  projDir <- paste(outDir,"DataOut/ProjectPars", sep="/")
+  if (file.exists(projDir) == FALSE){
+    dir.create(projDir)
+  }
+
+  write.table(cor_matrix, paste(projDir,"cohoCorrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
+
+  # # Fit mcmc with STAN to get parameter estimates for projections ===============================
+  # fitmcmc <- tmbstan(obj, chains=3, iter=100000, init=opt$par,
+  #                    control = list(adapt_delta = 0.95),upper=upper, lower=lower)
+  # 
+  # ## Can get ESS and Rhat from rstan::monitor
+  # mon <- monitor(fitmcmc)
+  # max(mon$Rhat)
+  # min(mon$Tail_ESS)
+  # 
+  # # pull out posterior vals
+  # post<-as.matrix(fitmcmc)
+  # post<-as_tibble(post)
+  # post<-post %>% add_column(iteration=as.numeric(row.names(post)))
+  # 
+  # post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
+  # post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
+  # 
+  # post_long_beta<-post %>% select(starts_with("logB"), iteration, gamma) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
+  # post_long_beta$stock<-rep(1:5,length=nrow(post_long_beta))
+  # 
+  # post_long_sigma<-post %>% select(starts_with("logSigma") & !starts_with("logSigmaA"), iteration, gamma) %>%
+  #   pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
+  # post_long_sigma$stock<-rep(1:5,length=nrow(post_long_sigma))
+  # 
+  # post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_beta$gamma)
+  # 
+  # write.csv(post_long, paste(projDir,"cohoRickerSurv_mcmc.csv", sep="/"), row.names=F)
+
+ #  
+ #  
+ #  # Run projections ===============================
+ #  
+ #  
+  ## Check if necessary packages are available and install if necessary
+  listOfPackages <- c("here", "parallel", "doParallel", "foreach",
+                      "tidyverse", "tictoc", "samSim")
+  newPackages <- listOfPackages[!(listOfPackages %in%
+                                    installed.packages()[ , "Package"])]
+  if (length(newPackages)) {
+    install.packages(newPackages)
+  }
+  lapply(listOfPackages, require, character.only = TRUE)
+ #  
+ #  ## Load relevant input data (will move later to runFraserCoho.r, and input to function)
+ #  
+   # Simulation run parameters describing different scenarios
+   simPar <- read.csv(paste(outDir, "DataIn/ProjPars/cohoSimPar.csv", sep="/"),
+                      stringsAsFactors = F)
+  # CU-specific parameters
+  cuPar <- read.csv(paste(outDir, "DataIn/ProjPars/cohoCUPars_rickerSurv.csv", sep="/"),
+                    stringsAsFactors=F)
+
+  # Stock-recruit and catch data that are used to populate the simulation priming
+  # period
+  srDat <- read.csv(paste(outDir, "DataIn/ProjPars/cohoRecDatTrim.csv", sep="/"),
+                    stringsAsFactors=F)
+
+
+  # Posterior values of  CU-specific stock recruitment parameters for Ricker model; when available, passed and used to calculate alpha, beta and
+  # sigma parameters rather than passing point values
+  ricPars <- read.csv(paste(projDir,"cohoRickerSurv_mcmc.csv", sep="/"),
+                      stringsAsFactors=F)
+
+  #ricPars<-as.data.frame(post_long)
+
+  dimnames(cor_matrix)=NULL
+  corMatrix <- cor_matrix
+
+  scenNames <- unique(simPar$scenario)
+  dirNames <- sapply(scenNames, function(x) paste(x, unique(simPar$species),
+                                                  sep = "_"))
+# 
+#   genericRecoverySim(simPar[1, ], cuPar=cuPar, srDat=srDat,
+#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+#   genericRecoverySim(simPar[2, ], cuPar=cuPar, srDat=srDat,
+#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+#   genericRecoverySim(simPar[3, ], cuPar=cuPar, srDat=srDat,
+#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+#   genericRecoverySim(simPar[4, ], cuPar=cuPar, srDat=srDat,
+#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+#   genericRecoverySim(simPar[5, ], cuPar=cuPar, srDat=srDat,
+#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+
+
+  # Read-in projection outputs to create spawner abundance plots
+  
+  for (i in 1:nrow(simPar)) {
+    filename<-paste(simPar[i, "nameOM"],simPar[i, "nameMP"],"CUspwnDat.csv",sep="_" )
+    dat.i<-read.csv(here("outputs", "SimData", "test.co", filename))
+    dat.i$expRate<-simPar[i, "canER"] + simPar[i, "usER"] 
+    if (i == 1) projSpwnDat<-dat.i
+    if (i > 1) projSpwnDat<-rbind(projSpwnDat,dat.i)
   }
   
-  # Calculate proportion above LBM using generational averages (note: CUs with no LBM will be deleted from proportion calc)
-  ModDat <- Dat %>% group_by(yr) %>% filter(is.na(LBM)==FALSE) %>% summarise(CUs_Above_LBM = sum(!!as.name(Status) > LBM),
-                                                                n_CUs = n(), Prop_Above_LBM = sum(!!as.name(Status) > LBM)/n(),
-                                                                Agg_Escp= sum(Escp))
   
-  # And add generational geometric mean of aggregate escaoement
-  ModDat$Gen_Agg_Escp <- rollapply(ModDat$Agg_Escp, genYrs, gm_mean, fill=NA, align="right")
+     makeSpawnerPlot<- function(i, plotDat, CUNames) {
+        
+      plotDat<-projSpwnDat %>% filter(CU==i) %>% group_by(year, expRate) %>% 
+        summarise(medSpawn=median(spawners), lwr=quantile(spawners,0.10),upr=quantile(spawners,0.90))
+  
+      p <- ggplot(data=plotDat, mapping=aes(x=year,y=medSpawn, colour=factor(expRate))) +
+       geom_ribbon(data=plotDat, aes(ymin = lwr, ymax = upr, x=year, fill=factor(expRate)), alpha=0.2) +
+       geom_line(mapping=aes(x=year, y=medSpawn)) +
+       geom_line(data=plotDat %>% filter(year < 18), col="black", size=1) +
+       ggtitle(CUNames[i]) +
+       xlab("Year") + ylab("Spawners") +
+       theme_classic()  
+      
+     }
+     
+     ps<-lapply(1:N_Stocks, makeSpawnerPlot, CUNames=unique(SRDat$CU_Name))
+     
+     pdf(paste(cohoDir,"/Figures/", "IndivSRModel_projections.pdf", sep=""), 
+         width=9, height=6)
+     do.call(grid.arrange,  ps)
+     dev.off()
+     
 
-  # Calculate proportion above LBM
-  if(useBern_Logistic == T){   
-     ModDat$yy <- ModDat$Prop_Above_LBM
-     ModDat$yy[ModDat$Prop_Above_LBM < 1] <- 0
-  } else {
-     ModDat$yy <- ModDat$Prop_Above_LBM
+  # Read in projection outputs to create input lists for logistic regression
+  
+  for (i in 1:nrow(simPar)) {
+    filename<-paste(simPar[i, "nameOM"],simPar[i, "nameMP"],"lrpDat.csv",sep="_" )
+    dat.i<-read.csv(paste("C:/github/SalmonLRP_RetroEval/outputs/simData/test.co", filename, sep="/"))
+    dat.i<-dat.i %>% filter(year > max(SRDat$yr_num)+4)
+    dat.i$expRate<-simPar[i, "canER"] + simPar[i, "usER"] 
+    if (i == 1) projDat<-dat.i
+    if (i > 1) projDat<-rbind(projDat,dat.i)
+  }
+ 
+     # Test alternative method of calculating CIs based on distribution of sAg
+     projDat.pp<-projDat %>% group_by(ppnCUsLowerBM) %>% 
+       summarise(LRP.50=median(sAg), LRP.95=quantile(sAg,0.95),LRP.05=quantile(sAg,0.05))
+     write.csv(projDat.pp, paste(cohoDir,"/Figures/", "Distbased_projLRP.csv", sep=""))
+     
+     
+  # Subset projDat to get equal sized
+  nSub<-50
+  propList<-seq(0,1, by=1/N_Stocks)
+  for (pp in 1:length(propList)) {
+    projDat.pp<-projDat %>% filter(ppnCUsLowerBM == as.factor(propList[pp]))
+    projDat.pp <- projDat.pp %>% slice_sample(n=nSub)
+    if (pp == 1) projDatStrat<-projDat.pp
+    if (pp > 1) projDatStrat<-rbind(projDatStrat, projDat.pp)
   }
   
-  if(useGenMean == T){
-    ModDat$xx <- ModDat$Gen_Agg_Escp
-  } else {
-    ModDat$xx <- ModDat$Agg_Escp
-  }
-  # Fit model
-  ModDat <-ModDat %>% drop_na()
-  if(useBern_Logistic == T){
-       Fit_Mod = glm(yy ~ xx, family = binomial, data = ModDat)
-  } else {
-       Success_Failure <- as.matrix(data.frame(ModDat$CUs_Above_LBM, ModDat$n_CUs - ModDat$CUs_Above_LBM))
-       Fit_Mod = glm( Success_Failure ~ xx, family = binomial, data = ModDat)
-  }
+  # # Replace projDat with stratified
+   projDat<-projDatStrat
   
-  #Get LRP (calculated as aggregate Escap number associated with 95% probability of all > LRP)
-  # Note: this is done by re-arraranging the standard logisitic equation to solve for LRP when p(x) = p
-  LRP <- (log(p/(1-p)) - Fit_Mod$coefficients[[1]])/ Fit_Mod$coefficients[[2]]
-  # use MASS function to get "dose" 
-  Dose <- dose.p(Fit_Mod, p=p)
-      
-  #  - Make x vector to predict with this model, for plotting
-  xx <- data.frame(xx = seq(0, max(ModDat$xx*1.25), by=(max(ModDat$xx*1.25)/1000)))
+  Scale<-1000
+  nStocks<-length(unique(SRDat$CU_Name))
   
-  # - Create model predictions that include standard error fit
-  preds <- predict(Fit_Mod, newdata = xx, type = "link", se.fit = TRUE)
-      
-  # Create a confidence interval (lwr, upr) on the link scale as the fitted value plus or minus 1.96 times the standard error
-  critval <- 1.96 ## approx 95% CI
-  upr <- preds$fit + (critval * preds$se.fit)
-  lwr <- preds$fit - (critval * preds$se.fit)
-  fit <- preds$fit
-      
-  # Transform confidene interval using the inverse of the link function to map the fitted values and the upper and lower limits of the interval back on to the response scale
-  fit2 <- Fit_Mod$family$linkinv(fit)
-  upr2 <- Fit_Mod$family$linkinv(upr)
-  lwr2 <- Fit_Mod$family$linkinv(lwr)
-      
-  # Load predicted data on response scale into dataframe
-  preddata<-xx
-  preddata$fit<-fit2
-  preddata$lwr <- lwr2 
-  preddata$upr <- upr2 
-      
-  ### Calculate confidence intervals for LRP 
-  LRP_lwr <- LRP - critval*attr(Dose, "SE")[[1]]
-  LRP_upr <- LRP + critval*attr(Dose, "SE")[[1]]
-  # These seem much tighter than other method?
+  data<-list()
+  data$AggAbund<-projDat$sAg / Scale
+  data$N_Above_BM<-projDat$ppnCUsLowerBM * nStocks
+  data$Bern_Logistic<-0
+  data$N_Stks<-nStocks
+  data$p<-p
+  
+  param<-list()
+  param$B_0 <- 2
+  param$B_1 <- 0.1
+  
+  # range of agg abund to predict from
+  data$Pred_Abund <- seq(0, max(data$AggAbund), length.out = 100)
+ 
+  obj <- MakeADFun(data, param, DLL="Proj_LRP", silent=TRUE)
+    
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
+  
+  
+  # Create Table of outputs
+  All_Ests <- data.frame(summary(sdreport(obj)))
+  All_Ests$Param <- row.names(All_Ests)
   
 
+  # Put together readable data frame of values
+  All_Ests$Param <- sapply(All_Ests$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
+   
+  All_Ests[All_Ests$Param == "Agg_LRP", ] <-  All_Ests %>% filter(Param == "Agg_LRP") %>% 
+    mutate(Estimate = Estimate*Scale) %>% mutate(Std..Error = Std..Error*Scale)
+  Preds <- All_Ests %>% filter(Param == "Logit_Preds")
+  All_Ests <- All_Ests %>% filter(!(Param == "Logit_Preds")) 
   
-    list.out<-list()
-    list.out$Logistic_Data <- ModDat
-    list.out$model <- Fit_Mod
-    list.out$Preds <- preddata
-    list.out$LRP<-data.frame(fit = LRP, lwr = LRP_lwr, upr = LRP_upr)
-
-
-  list.out
+  out <- list()
+  out$All_Ests <- All_Ests
+  
+  # also return agg abundance and num CUs over Sgen
+  # depending on whether bernoulli or prop, grab correct N
+  #if(useBern_Logistic == T){
+  #  N_CUs <- obj$report()$All_Above_BM
+  #} else {
+   # N_CUs <- obj$report()$N_Above_BM/N_Stocks
+  #}
+  
+  Logistic_Data <- data.frame(yy = data$N_Above_BM/nStocks, xx = data$AggAbund*Scale)
+  
+  out$Logistic_Data <- Logistic_Data
+  
+  Logistic_Fits <- data.frame(xx = data$Pred_Abund*Scale, fit = inv_logit(Preds$Estimate),
+                              lwr = inv_logit(Preds$Estimate - 1.96*Preds$Std..Error),
+                              upr = inv_logit(Preds$Estimate + 1.96*Preds$Std..Error))
+  
+  out$Preds <- Logistic_Fits
+  
+  out$LRP <- data.frame(fit = All_Ests %>% filter(Param == "Agg_LRP") %>% pull(Estimate), 
+                        lwr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate - 1.96*Std..Error) %>% pull(xx),
+                        upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
+  
+  out
+  
+  
 }
+
+

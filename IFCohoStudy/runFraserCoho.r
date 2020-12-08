@@ -11,6 +11,8 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 library(TMB)
+library(tmbstan)
+library(here)
 
 setwd('..')
 rootDir<-getwd()
@@ -45,6 +47,11 @@ dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap"))
 compile("TMB_Files/SR_IndivRicker_SurvCap.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap"))
 
+compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
+
+compile("TMB_Files/Proj_LRP.cpp")
+dyn.load(dynlib("TMB_Files/Proj_LRP"))
 
 # ======================================================================
 # Read-in Coho data:  
@@ -131,6 +138,17 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 #                           logMuA_sig = 2, Tau_dist = 0.1, Tau_A_dist = 0.1, 
 #                           gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
 
+
+# Test projected LRP
+devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
+ps <- 0.80
+runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2018, endYr=2018, BroodYrLag=2, genYrs=3, p = ps,
+               BMmodel = "SR_IndivRicker_Surv", LRPmodel="Proj_BinLogistic", integratedModel=F,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("ProjBin.IndivRickerSurv_",ps*100, sep=""),
+               bootstrapMode = F, plotLRP=T)
+
+
+
 # Run annual restrospective analyses using CUs ===========================
 
 # Note: if .cpp files are already compiled (.dll and .o files are present in SalmonLRP_RetroEval/Code/TMB_Files ), 
@@ -148,7 +166,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
                    BMmodel = "SR_HierRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""),
                   bootstrapMode = F, plotLRP=T)
-  
+    
     # Run with Bernoulli LRP model with hierarchical Ricker 
     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
                    BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
@@ -195,6 +213,8 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
     
     
   }
+
+
 
 # Run annual restrospective analyses using subpopulations ===========================
 
