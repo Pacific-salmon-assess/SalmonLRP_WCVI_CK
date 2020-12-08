@@ -135,6 +135,8 @@ for( i in 1:nsites){
 write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
 
+
+
 # =====================================#
 # Explore data with figures - LW
 # =====================================#
