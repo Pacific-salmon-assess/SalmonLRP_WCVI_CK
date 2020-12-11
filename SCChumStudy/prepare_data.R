@@ -1,6 +1,9 @@
 # Read in raw Chum data, infill and prepare for LRP Analysis, save as csv files
 # Plot data 
 
+library(ggplot2)
+
+
 # Only need if running independently from runSouthCoastChum.R
 setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 
@@ -264,7 +267,7 @@ dev.off()
 # ----------#
 infill_by_stream_no_fraser <- NoQPDat[[2]] %>% filter(!(CU_Name %in% c("8 - Lower Fraser", "9 - Fraser Canyon"))) 
 png("Figures/fig_compare_actual_infill_by_stream_and_CU.png", height=5, width=10, res=300, units="in")
-ggplot(data=NoQPByCU[[1]], aes(y= SiteEsc, x=Year ), aes(y=, x=Year)) + # raw data is black
+ggplot(data=NoQPByCU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   geom_point( colour="red") + # infill by CU is in red
   geom_point(data = infill_by_stream_no_fraser, aes(y=GroupEsc, x=Year), colour="dodgerblue") + # infill by stream is blue
   geom_point(data = infill_by_stream_no_fraser, aes(y=SumRawEsc, x=Year)) + # raw escapement data
@@ -275,6 +278,48 @@ ggplot(data=NoQPByCU[[1]], aes(y= SiteEsc, x=Year ), aes(y=, x=Year)) + # raw da
   theme_classic() +
   scale_x_discrete(breaks=seq(1960,2010,10)) +
   theme(axis.text.x = element_text(angle=90, vjust=0.5))
+dev.off()
+
+# Plot escapement and R/S time series on same x axis for each CU --------
+# Merge escapement and recruitment data by CU and year
+cdat <- merge(NoQPByCU[[1]], Btable, by.x=c("CU_Name", "Year"), by.y=c("CU", "Year"), all=TRUE)
+str(cdat)
+cdat$Year <- as.numeric(cdat$Year)
+cdat$RS <- cdat$Recruit/cdat$SiteEsc
+
+# cdat$RS_pos <- ifelse(cdat$RS >1, 1, 2) # binary colours
+# cols <- c("dodgerblue", "firebrick")
+ncols <- 20
+# get colours
+colors <- paletteer::paletteer_c( palette = "scico::roma", n = ncols)
+#colors <- paletteer::paletteer_c( palette = "pals::warmcool", n = ncols)
+
+# Transform the numeric variable in bins
+rank <- as.factor( as.numeric( cut(log(cdat$RS), ncols)))
+
+
+options(scipen = 100000)
+
+png("Figures/fig_escapement_RS.png", height=10, width=18, res=200, pointsize=20, units="in")
+layout(mat=matrix(1:16, nrow=4, byrow=FALSE))
+  yrs <- range(cdat$Year)
+  CUs <- unique(cdat$CU_Name)
+for(i in 1:14) {
+  dat <- cdat[cdat$CU_Name==CUs[i], ] 
+  par(mar=c(1,4,1,0)+0.3, bty="l", las=1)
+  plot(y=dat$SiteEsc/1000, x=dat$Year, type="b", xlab="year", pch=16, ylab="Escapement (thousands)", 
+       main=CUs[i], xlim =c(yrs[1], yrs[2]))
+     grid(ny=0)
+  par(mar=c(2,4,1,0)+0.3, bty="l", las=1)
+  plot(y=dat$RS, x=dat$Year, log="y", type="l", ylab="Recruits/Spawner", xlim =c(yrs[1], yrs[2]), 
+      xlab="Year", ylim=c(min(cdat$RS, na.rm=TRUE), max(cdat$RS, na.rm=TRUE)), yaxt="n")
+  axis(side=2, at=c(0.01, 0.1, 1, 10, 100), labels=c(0.01, 0.1, 1, 10, 100))
+  points(y=dat$RS, x=dat$Year, pch=16, col= colors[ rank[cdat$CU_Name==CUs[i]] ])
+    grid(ny=0)
+    abline(h=1, lty=3)
+    abline(h=median(dat$RS, na.rm=TRUE),lty=2, col="orange")
+    text(x=2013, y= median(dat$RS, na.rm=TRUE), col="orange", label=paste0("Median\nR/S=", round(median(dat$RS, na.rm=TRUE), 1)), adj=c(1,-0.5))
+}
 dev.off()
 
 
