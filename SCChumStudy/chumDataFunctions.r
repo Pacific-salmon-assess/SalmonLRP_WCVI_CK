@@ -3,7 +3,6 @@
 #    written by B. Davis for Holt et al. 2018 Chum CSAS paper
 
 
-
 ##################
 ###  Infill   ###
 #################
@@ -38,9 +37,9 @@ Infill <- function( data, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"),
   # go through each group and calculate 1/(present proportions) for that year. Value = 1 if all streams were counted, increases with number of uncounted streams
   AllDat <- GroupAvg %>% group_by(.dots=c(groupby, Year)) %>% mutate(inverse_prop=1/sum(PresentProps)) # Note that if there are no steams counted within a CU in a year, this becomes infinity
   
-  # Now for each group total is F*(total Escapement)
+  # Now for each group total is inverse_prop*(total Escapement)
   AllDat2 <- AllDat %>% group_by(.dots=c(groupby, Year)) %>% mutate(GroupCount=sum(Escape, na.rm=TRUE)) # add column with sum of escapement by group (CU) and year
-  AllDat3 <- AllDat2 %>% group_by(.dots=c(groupby, Year)) %>% mutate(GroupEsc=inverse_prop*sum(Escape, na.rm=TRUE)) # multiply factor (1/PresentProps) by group:year escapement total. Expands CU escapement by the missing proportion of streams. If all streams were counted, it is the same as the sum of escapement. 
+  AllDat3 <- AllDat2 %>% group_by(.dots=c(groupby, Year)) %>% mutate(GroupEsc=inverse_prop*sum(Escape, na.rm=TRUE)) # multiply inverse_prop factor (1/PresentProps) by group:year escapement total. Expands CU escapement by the missing proportion of streams. If all streams were counted, it is the same as the sum of escapement. 
   # calculate estimated contributions for missing data by multiplying the expanded group escapement by the stream-specific proportion
   AllDat4 <- AllDat3 %>% group_by(.dots=c(groupby, Year)) %>% mutate(ContrEsc=GroupEsc*Props)
   #fill in NA's with ContrEsc

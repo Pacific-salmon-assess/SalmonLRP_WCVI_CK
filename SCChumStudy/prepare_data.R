@@ -156,6 +156,7 @@ rdl <- rdl[ rdl$SummerRun==FALSE, ] # remove summer run fish
 #-----------#
 # Look at raw escapement data - LW
 #-----------#
+
 # Appears that GroupName and GU_Name are not nested within CUs, but different categories that overlap irregularly
 
 # Check "QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER"
