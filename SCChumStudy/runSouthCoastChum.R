@@ -31,9 +31,15 @@ sourceAll <- function(){
 }
 sourceAll()
 
+# Load TMB models
+compile("TMB_Files/SR_IndivRicker_NoSurv.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv"))
+
+# Switch to chum directory
 setwd(chumDir)
 
 source("prepare_data.r") 
+
 
 # ====================================================================
 # Read in data and format for using in retrospective analysis
@@ -76,40 +82,9 @@ plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc Separate", sam
 # Run retrospective analyses:
 # =====================================================================================================================
 
-# TMB input parameters:
-TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-                      logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
-
-TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
-
-TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
-
-
-TMB_Inputs_Subpop <- list(Scale = 1000)
-
-# TMB_Inputs_Subpop <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-#                           logMuA_sig = 2, Tau_dist = 0.1, Tau_A_dist = 0.1, 
-#                           gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
 
 # Run annual restrospective analyses using CUs ===========================
 
@@ -119,7 +94,7 @@ ps <- 0.95 # for now just use one p value
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
-# - genYrs: average age of return.  runFraserCoho.r uses 3. I think I should use 4 for chum (but check)
+# - genYrs: average age of return.  runFraserCoho.r uses 3. I use 4 for chum (age 4 returns made up 69% of returns based on 2013 data). Update for 2018 age composition data.
 # - BroodYrLag: How many years will it take between a fish returning and when you can construct the full recruitment.
 #     The BroodYrLag parameter used when prepping for the LRP calculations represents the number of years 
 #     it will take to reconstruct recruitment from a single brood year  (i.e., how many years of recruitment 
@@ -128,8 +103,7 @@ ps <- 0.95 # for now just use one p value
 #     For the coho example, fish mostly return at age 3 or 4, so BroodYrLag is 2.
 #     For the chum example, it looks like fish return at ages 3,4,5,6, so BroodYrLag is 4.
 #     This parameter gets used in the runAnnualRetro() function to remove the first few years of data for 
-#     which recruitment is NA because the BY has not yet been fully observed.  So, basically it's automating
-#     the step that you just mentioned you were doing when prepping the data for model fitting.
+#     which recruitment is NA because the BY has not yet been fully observed.
 #
 # The Chum data doesn't have smolt to adult survival (STAS) data, like the coho data does.
 #     This means that a new TMB model file needs to be written (e.g., SR_IndivRicker.cpp) that doesn't have the 
@@ -151,9 +125,9 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
   # 
   # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1960, endYr=2017, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "SR_IndivRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=2006, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
   # 
   # # Run with Bernoulli LRP model with individual model Ricker 
@@ -190,3 +164,7 @@ for(pp in 1:length(ps)){
   # 
   # 
 }
+
+
+
+

@@ -2,7 +2,8 @@
 # Plot data 
 
 library(ggplot2)
-
+library(dplyr)
+library(tidyr)
 
 # Only need if running independently from runSouthCoastChum.R
 setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
@@ -20,16 +21,15 @@ setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 # All code in this section (including code in chumDataFunctions.r) was written by B. Davis (DFO) for the  
 # above paper, and provided to us by Carrie Holt in October 2020 as part of "Retrospective Analysis BD" folder.
 
+# With changes by Luke Warkentin
+
 source("chumDataFunctions.r")
 
 # Create look-up table for CU names
 RawDat <- read.csv("DataIn/Chum Escapement Data With Areas_2013.csv", check.names=F)
-
-CU_short <- c("SCS", "NEVI", "UK", "LB", "BI", "GS", "HSBI")
+# CUs without Fraser River CUs
 CU_raw <- unique(RawDat$CU_Name)
-CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
-            "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
-CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
+CUdf <- data.frame("CU_raw"=CU_raw[1:7])
 
 ## Step 1: Infill Escapement Data ===============================================================
 
