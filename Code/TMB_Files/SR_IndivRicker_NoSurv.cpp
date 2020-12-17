@@ -61,14 +61,7 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(Pred_Spwn);
   DATA_SCALAR(p);
   DATA_SCALAR(Sgen_sig);
-  //DATA_VECTOR(P_3);
-  //DATA_VECTOR(logSurv_3);
-  //DATA_VECTOR(logSurv_4);    
-  //DATA_VECTOR(muLSurv);
   DATA_SCALAR(Tau_dist); // FLAG: what is Tau_dist? it gets created for survival models (prior distribution for gamma prior)
-  //DATA_SCALAR(gamma_mean);
-  //DATA_SCALAR(gamma_sig);
-  
   PARAMETER_VECTOR(logA);
   PARAMETER_VECTOR(logB);
   PARAMETER_VECTOR(logSigma);
@@ -88,8 +81,6 @@ Type objective_function<Type>::operator() ()
   vector <Type> B = exp(logB);
   vector <Type> logProd(N_Stks);
   vector <Type> A(N_Stks);
-  //vector<Type> LogR_Pred_3(N_Obs);
-  //vector<Type> LogR_Pred_4(N_Obs);
   
   // Ricker likelihood based on Arbeider et al. 2020 Interior Fraser Coho RPA res. doc.
   for(int i=0; i<N_Obs; i++){
@@ -97,31 +88,25 @@ Type objective_function<Type>::operator() ()
     //LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i);
     LogR_Pred(i) = logA(stk(i)) + log(S(i)) - exp(logB(stk(i))) * S(i); // predicted log(recruits), no survival covariate
     // get same answer whether put likelihood on log(R/S) or R_pred
-    ans += -dnorm(LogR_Pred(i) - log(S(i)), logR(i) - log(S(i)),  sigma(stk(i)), true); // FLAG: why is log(S(i)) subtracted from first 2 arguments?
+    ans += -dnorm(LogR_Pred(i) - log(S(i)), logR(i) - log(S(i)),  sigma(stk(i)), true); // log(R) - log(S) = log(R/S)
   }
   
   // Calculate SMSY using Lambert's W function
   // Approach from Scheurell 2016
   for(int i=0; i<N_Stks; i++){
-	ans += -dgamma(pow(sigma(i),-2), Tau_dist, 1/Tau_dist, true); // FLAG: what is Tau_dist?
+	ans += -dgamma(pow(sigma(i),-2), Tau_dist, 1/Tau_dist, true); // FLAG: what is Tau_dist? Seems like parameter for distribution of sigma.
   // Jacobian adjustment for prior on sigma (add for TMBstan runs)
   // ans -= log(2) - 2*logSigma(i);
-  // Mu-survival adjusted productivity for SMSY, Sgen calcs
-  //logProd[i] = logA[i] + gamma*muLSurv[i]; // LW removed
-  //A[i] = exp(logProd[i]); // LW removed
-  A[i] = exp(logA[i]); // LW added. Don't need to adjust log(A) for survival
+  A[i] = exp(logA[i]); 
   // Calculate SMSY using Lambert W function
   //SMSY[i] =  (1 - LambertW(exp(1-logProd[i])) ) / B[i] ; // LW removed
-  SMSY[i] = (1 - LamberW(exp(1-logA[i]))); // LW added
+  SMSY[i] = (1 - LambertW(exp(1-logA[i]))); // LW added
   }
   
   // Add priors ====================
-  // Gamma prior
-  ans += -dnorm(gamma, gamma_mean, gamma_sig, true);
-  
+
   // Estimate Sgen =========================
-  //LogSMSY = logProd + logSgen - B * Sgen; // LW removed
-  LogSMSY = logA + logSgen - B * Sgen; // LW added
+  LogSMSY = logA + logSgen - B * Sgen;
   vector <Type> Diff = exp(LogSMSY)-SMSY;
   ans += -sum(dnorm(Diff, 0, Sgen_sig, true ));
   
@@ -134,7 +119,8 @@ Type objective_function<Type>::operator() ()
   vector<Type> Rec_Preds(N_SpwnPreds);
   
   for(int i=0; i<N_SpwnPreds; i++){  // predict recruitment based on Ricker equation with stock-specific parameters
-    LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv[stk_predS(i)] + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i);
+    //LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv[stk_predS(i)] + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i); // LW removed
+    LogRec_Preds(i) = logA(stk_predS(i)) + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i); // LW added
   }
   Rec_Preds = exp(LogRec_Preds);
   
