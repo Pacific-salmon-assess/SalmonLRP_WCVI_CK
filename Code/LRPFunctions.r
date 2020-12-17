@@ -38,8 +38,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
                mutate(Gen_Mean = rollapply(Agg_Esc, genYrs, gm_mean, fill = NA, align="right"))
   
   # need year as index
-  # Logistic_Dat$yr_num <- group_indices(Logistic_Dat, yr) - 1
-  # LW - replaced line above with below. Reason: ... argument of group_indices() deprecated
   Logistic_Dat$yr_num <- group_by(Logistic_Dat, yr) %>% group_indices() - 1
   
  if(useGenMean == T){
@@ -79,8 +77,9 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   data$Tau_dist <- TMB_Inputs$Tau_dist
   
   # add data and parameters specific to Ricker model without a survival covariate
-  #if(Mod %in% c("SR_IndivRicker_NoSurv")) {
-  #  }
+  if(Mod %in% c("SR_IndivRicker_NoSurv")) {
+        param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
+    }
   
   # add data and parameters specific to Ricker model with survival covariate
   if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_HierRicker_SurvCap","SR_IndivRicker_SurvCap")){
@@ -109,7 +108,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
        data$cap_sig<-TMB_Inputs$cap_sig
      }
      # add parameter specific to model without cap on carrying capacity (model parameterized for B):
-     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_IndivRicker_NoSurv")) {
+     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv")) {
        param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
      }
   }
@@ -368,7 +367,7 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
   Scale <- TMB_Inputs$Scale
   
   data <- list()
-  data$Bayes <- 1
+  data$Bayes <- 1 # What is this for?
   data$S <- SRDat$Spawners/Scale
   data$logR <- log(SRDat$Recruits/Scale)
   data$stk <- as.numeric(SRDat$CU_ID)

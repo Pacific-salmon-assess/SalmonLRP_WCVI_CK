@@ -38,8 +38,8 @@ dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv"))
 # Switch to chum directory
 setwd(chumDir)
 
-source("prepare_data.r") 
-
+# Run to re-do infilling and brood table
+# source("prepare_data.r") 
 
 # ====================================================================
 # Read in data and format for using in retrospective analysis
@@ -104,26 +104,8 @@ ps <- 0.95 # for now just use one p value
 #     For the chum example, it looks like fish return at ages 3,4,5,6, so BroodYrLag is 4.
 #     This parameter gets used in the runAnnualRetro() function to remove the first few years of data for 
 #     which recruitment is NA because the BY has not yet been fully observed.
-#
-# The Chum data doesn't have smolt to adult survival (STAS) data, like the coho data does.
-#     This means that a new TMB model file needs to be written (e.g., SR_IndivRicker.cpp) that doesn't have the 
-#     STAS_Age_<return age> input from <species>SRDat, muLSurv variable (in LRPFunctions.r), and muLSurv parameter 
-#     in SR_IndivRicker_Surv.cpp and other TMB models.
-
 
 for(pp in 1:length(ps)){
-  # # Run with Binomial LRP model with hierarchical Ricker 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_HierRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # 
-  # # Run with Bernoulli LRP model with hierarchical Ricker 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # 
   # Run with Binomial LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=2006, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
@@ -135,34 +117,6 @@ for(pp in 1:length(ps)){
   #                BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T)
-  # 
-  # # Run with Binomial LRP model with hierarchical Ricker, with prior on capacity 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BinLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # 
-  # 
-  # # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # 
-  # # Run with Binomial LRP model with individual model Ricker, with prior on capacity 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BinLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # 
-  # 
-  # # Run with Bernoulli LRP model with individual model Ricker, with prior on capacity 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # 
-  # 
 }
 
 
