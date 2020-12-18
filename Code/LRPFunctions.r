@@ -121,21 +121,23 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
   }
+  
 
   # Call optimization:
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10)) # LW: increased eval.max and iter.max from 1e5 to 1e10; helped model converge
   
   # Parameter estimate after phase 1 optimization:
   pl <- obj$env$parList(opt$par) # Parameter estimates after phase 1
   
-  
   # pull out SMSY values
   All_Ests <- data.frame(summary(sdreport(obj)))
   All_Ests$Param <- row.names(All_Ests)
-  SMSYs <- All_Ests[grepl("SMSY", All_Ests$Param), "Estimate" ]
+  SMSYs <- All_Ests[grepl("SMSY", All_Ests$Param), "Estimate" ] # FLAG: Currently this is giving negative SMSY values. Why? 
   # set initial Sgen param as a function of Smsy
-  pl$logSgen <- log(0.3*SMSYs)
+  pl$logSgen <- log(0.3*SMSYs) # FLAG: Currently this is returning NaN values, taking log of negative SMSY values
   
+  #write.csv(All_Ests, "2020-12-18_estimates_phase1_debugging.csv", row.names=FALSE)
+
   #Phase 2: get Sgen, SMSY
   map2 <- list(B_0=factor(NA), B_1=factor(NA))
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv")){
@@ -214,10 +216,9 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] <- exp(All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] )
     #All_Ests$Param[All_Ests$Param == "logA"] <- "A"
     All_Ests$Param[All_Ests$Param == "logB"] <- "B"
-    All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% mutate(Std..Error = Std..Error/Scale)
+    All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% mutate(Std..Error = Std..Error/Scale) # LW deleted a duplicate of this row
     All_Ests$Param[All_Ests$Param == "logSigma"] <- "sigma"
     All_Ests$Param[All_Ests$Param == "SMSY"] <- "Smsy"
-    All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% mutate(Std..Error = Std..Error/Scale)
     All_Ests[All_Ests$Param %in% c("Sgen", "SMSY", "SRep", "cap", "Agg_LRP"), ] <-  All_Ests %>% filter(Param %in% c("Sgen", "SMSY", "SRep","cap","Agg_LRP")) %>% 
            mutate(Estimate = Estimate*Scale) %>% mutate(Std..Error = Std..Error*Scale)
     Preds <- All_Ests %>% filter(Param == "Logit_Preds")

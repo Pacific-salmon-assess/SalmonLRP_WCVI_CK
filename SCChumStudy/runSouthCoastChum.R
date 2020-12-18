@@ -89,8 +89,8 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 # Run annual restrospective analyses using CUs ===========================
 
 # Loop over p values and run annual retrospective analyses for each level of p
-ps <- 0.95 # for now just use one p value
-# ps <- c(seq(0.6, 0.95,.05), 0.99) 
+ps <- 0.90 # for now just use one p value
+#ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
@@ -105,9 +105,16 @@ ps <- 0.95 # for now just use one p value
 #     This parameter gets used in the runAnnualRetro() function to remove the first few years of data for 
 #     which recruitment is NA because the BY has not yet been fully observed.
 
+# not sure if this step is needed
+ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
+ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
+
+source(paste0(codeDir, "/LRPFunctions.r"))
+
+undebug(runAnnualRetro)
 for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=2006, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
@@ -120,5 +127,40 @@ for(pp in 1:length(ps)){
 }
 
 
+# Debugging
+# Look at outputs after phase 1 fitting
+# Note these are scaled
+# read in estimates
+All_Ests <- read.csv("2020-12-18_estimates_phase1_debugging.csv", stringsAsFactors = FALSE)
+Scale <- 1000
+# Plot to see what is going on with ricker parameters
+N_Stocks <- length(unique(ChumEscpDat$CU_Name))
 
+All_Ests$Param <- sapply(All_Ests$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
+All_Ests$CU_ID[!(All_Ests$Param %in% c("logMuA", "logSigmaA", "B_0", "B_1", "Agg_LRP", "gamma", "logsigma", "prod", "Rec_Preds", "Logit_Preds"))] <- rep(1:(N_Stocks)) 
+
+All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] <- exp(All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] )
+#All_Ests$Param[All_Ests$Param == "logA"] <- "A"
+All_Ests$Param[All_Ests$Param == "logB"] <- "B"
+All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% mutate(Std..Error = Std..Error/Scale)
+All_Ests$Param[All_Ests$Param == "logSigma"] <- "sigma"
+All_Ests$Param[All_Ests$Param == "SMSY"] <- "Smsy"
+All_Ests[All_Ests$Param %in% c("Sgen", "SMSY", "SRep", "cap", "Agg_LRP", "^A$"), ] <-  All_Ests %>% filter(Param %in% c("Sgen", "SMSY", "SRep","cap","Agg_LRP")) %>% 
+  mutate(Estimate = Estimate*Scale) %>% mutate(Std..Error = Std..Error*Scale)
+Preds <- All_Ests %>% filter(Param == "Logit_Preds")
+Preds_Rec <- All_Ests %>% filter(Param == "Rec_Preds")
+All_Ests <- All_Ests %>% filter(!(Param %in% c( "logSgen", "Logit_Preds", "Rec_Preds"))) 
+
+ests_l <- All_Ests %>% filter(!is.na(CU_ID)) %>% select(Estimate, Param, CU_ID) %>% pivot_wider(names_from=Param, values_from=Estimate)
+
+t <- merge(ChumSRDat, ests_l, by="CU_ID")
+
+png("Figures/fig_debug_integrated_model_ricker_phase1.png", width=8, height=8, res=300, units="in")
+layout(mat=matrix(1:9, byrow = TRUE, ncol=3))
+for(i in 1:N_Stocks) {
+  dat <- t[t$CU_ID==i,]
+  plot(dat$Recruits ~ dat$Spawners, type="p", main=i)
+  curve(dat$A * x * exp(- dat$B * x), add=TRUE) 
+}
+dev.off()
 

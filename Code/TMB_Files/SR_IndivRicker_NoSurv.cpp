@@ -60,7 +60,7 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(Pred_Spwn);
   DATA_SCALAR(p);
   DATA_SCALAR(Sgen_sig);
-  DATA_SCALAR(Tau_dist); // FLAG: what is Tau_dist? it gets created for survival models (prior distribution for gamma prior)
+  DATA_SCALAR(Tau_dist); // FLAG: what is Tau_dist?
   PARAMETER_VECTOR(logA);
   PARAMETER_VECTOR(logB);
   PARAMETER_VECTOR(logSigma);

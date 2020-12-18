@@ -9,8 +9,6 @@
 # ==================================================================
 
 
-
-
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
                          BMmodel, LRPmodel=NULL, integratedModel=F, useGenMean=T, 
                          TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T) {
