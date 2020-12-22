@@ -158,7 +158,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   lower<-unname(lower)
   
  # Call optimization:
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5), 
                 upper = upper, lower=lower )
   
   # Parameter estimate after phase 2 optimization:
@@ -214,13 +214,15 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     # don't want logged param values
     # need to unlog A,B,Sigma -- took A off this list for now
     All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] <- exp(All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] )
-    #All_Ests$Param[All_Ests$Param == "logA"] <- "A"
-    All_Ests$Param[All_Ests$Param == "logB"] <- "B"
-    All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% mutate(Std..Error = Std..Error/Scale) # LW deleted a duplicate of this row
     All_Ests$Param[All_Ests$Param == "logSigma"] <- "sigma"
-    All_Ests$Param[All_Ests$Param == "SMSY"] <- "Smsy"
-    All_Ests[All_Ests$Param %in% c("Sgen", "SMSY", "SRep", "cap", "Agg_LRP"), ] <-  All_Ests %>% filter(Param %in% c("Sgen", "SMSY", "SRep","cap","Agg_LRP")) %>% 
+    All_Ests$Param[All_Ests$Param == "logB"] <- "B"
+    #All_Ests$Param[All_Ests$Param == "logA"] <- "A" 
+    All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% 
+      mutate(Std..Error = Std..Error/Scale) # LW deleted a duplicate of this row. B gets divided by scale to unscale
+    All_Ests[All_Ests$Param %in% c("Sgen", "SMSY", "SRep", "cap", "Agg_LRP"), ] <-  All_Ests %>% 
+      filter(Param %in% c("Sgen", "SMSY", "SRep","cap","Agg_LRP")) %>% 
            mutate(Estimate = Estimate*Scale) %>% mutate(Std..Error = Std..Error*Scale)
+    All_Ests$Param[All_Ests$Param == "SMSY"] <- "Smsy" # LW: moved this below the multiply by scale line, because SMSY wasn't getting scaled
     Preds <- All_Ests %>% filter(Param == "Logit_Preds")
     Preds_Rec <- All_Ests %>% filter(Param == "Rec_Preds")
     All_Ests <- All_Ests %>% filter(!(Param %in% c( "logSgen", "Logit_Preds", "Rec_Preds"))) 

@@ -96,10 +96,11 @@ Type objective_function<Type>::operator() ()
 	ans += -dgamma(pow(sigma(i),-2), Tau_dist, 1/Tau_dist, true); // FLAG: what is Tau_dist? Seems like parameter for distribution of sigma.
   // Jacobian adjustment for prior on sigma (add for TMBstan runs)
   // ans -= log(2) - 2*logSigma(i);
+  //logProd[i] = logA[i] + gamma*muLSurv[i]; // LW removed
   A[i] = exp(logA[i]); 
   // Calculate SMSY using Lambert W function
   //SMSY[i] =  (1 - LambertW(exp(1-logProd[i])) ) / B[i] ; // LW removed
-  SMSY[i] = (1 - LambertW(exp(1-logA[i]))); // LW added
+  SMSY[i] = (1 - LambertW(exp(1-logA[i]))) / B[i]; // LW added
   }
   
   // Add priors ====================
