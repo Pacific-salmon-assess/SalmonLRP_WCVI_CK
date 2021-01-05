@@ -13,7 +13,6 @@ options(scipen=1000000)
 library(gridExtra)
 library(reshape2)
 library(TMB)
-# Note: this package list has been copied from runFraserCoho.r; may not all be required for chum ... 
 
 setwd('..') # This works if working directory is in ~/SalmonLRP_RetroEval/SCChumStudy folder
 rootDir<-getwd()
@@ -89,8 +88,8 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 # Run annual restrospective analyses using CUs ===========================
 
 # Loop over p values and run annual retrospective analyses for each level of p
-ps <- 0.90 # for now just use one p value
-#ps <- c(seq(0.6, 0.95,.05), 0.99) 
+#ps <- 0.90 # for now just use one p value
+ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
@@ -136,6 +135,7 @@ t <- merge(ests1, ChumSRDat[, names(ChumSRDat) %in% c("BroodYear", "Spawners", "
 
 CUs <- unique(t$CU_Name)
 
+# Plot recruits~spawner with ricker and Sgen and SMSY
 png("Figures/fig_ricker_integrated_model.png", width=10, height=6, res=300, units="in")
 layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
 par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
@@ -150,4 +150,96 @@ for(i in 1:length(unique(ests$CU_ID))) {
   legend(x=1,y=5, lty=2, col=c("orange", "dodgerblue"), legend=c("Sgen", "SMSY"))
 dev.off()
 
+# Plot log(recruits/spawner)~spawner with linear ricker and Sgen and SMSY
+png("Figures/fig_linear_ricker_integrated_model.png", width=10, height=6, res=300, units="in")
+layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
+par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
+for(i in 1:length(unique(ests$CU_ID))) {
+  dat <- t[t$CU_Name==CUs[i],]
+  plot(log(dat$Recruits/dat$Spawners) ~ dat$Spawners, type="p", main=CUs[i], xlab="Spawners", ylab="log(Recruits/Spawner)")
+  curve( log(dat$est_A[1]) - dat$est_B[1] * x, add=TRUE, lty=2)
+  abline(v=dat$est_Sgen, lty=2, col="orange")
+  abline(v=dat$est_Smsy, lty=2, col="dodgerblue")
+}
+plot(x=1:10, y=1:10, type='n', ann = FALSE, xaxt = 'n', yaxt = 'n', bty = 'n')
+legend(x=1,y=5, lty=2, col=c("black", "orange", "dodgerblue"), legend=c("linear Ricker", "Sgen", "SMSY"))
+dev.off()
 
+# get residuals
+t$pred_rec <- t$Spawners * t$est_A * exp(-t$est_B * t$Spawners) 
+t$resid_rec <- t$Recruits - pred_rec
+
+t$pred_RS <- t$est_A * exp(-t$est_B * t$Spawners) 
+t$resid_RS <- t$Recruits/t$Spawners - t$pred_RS
+
+t$pred_logRS <- log(t$est_A) - t$est_B * t$Spawners
+t$resid_logRS <- log(t$Recruits/t$Spawners) - t$pred_logRS
+
+# Plot residuals recruits ~ spawners
+layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
+par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
+for(i in 1:length(unique(ests$CU_ID))) {
+  dat <- t[t$CU_Name==CUs[i],]
+  plot(dat$resid_rec ~ dat$Spawners, type="p", main=CUs[i], xlab="Spawners", ylab="Recruits, obs-preds")
+  abline(v=dat$est_Sgen, lty=2, col="orange")
+  abline(v=dat$est_Smsy, lty=2, col="dodgerblue")
+  abline(h=0, lty=2)
+}
+plot(x=1:10, y=1:10, type='n', ann = FALSE, xaxt = 'n', yaxt = 'n', bty = 'n')
+legend(x=1,y=5, lty=2, col=c("orange", "dodgerblue"), legend=c("Sgen", "SMSY"))
+
+# Plot residuals recruits/spawner ~ spawners
+layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
+par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
+for(i in 1:length(unique(ests$CU_ID))) {
+  dat <- t[t$CU_Name==CUs[i],]
+  plot( (dat$Recruits/dat$Spawners - dat$pred_rec/dat$Spawners) ~ dat$Spawners, type="p", main=CUs[i], xlab="Spawners", ylab="R/S, obs-preds")
+  abline(v=dat$est_Sgen, lty=2, col="orange")
+  abline(v=dat$est_Smsy, lty=2, col="dodgerblue")
+  abline(h=0, lty=2)
+}
+plot(x=1:10, y=1:10, type='n', ann = FALSE, xaxt = 'n', yaxt = 'n', bty = 'n')
+legend(x=1,y=5, lty=2, col=c("orange", "dodgerblue"), legend=c("Sgen", "SMSY"))
+
+# # Plot residuals recruits/spawner ~ recruits/spawner
+# layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
+# par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
+# for(i in 1:length(unique(ests$CU_ID))) {
+#   dat <- t[t$CU_Name==CUs[i],]
+#   plot( y= dat$resid_RS, x= dat$Recruits/dat$Spawners, type="p", main=CUs[i], xlab="observed R/S", ylab="resid R/S")
+#   abline(h=1, lty=2)
+# }
+# plot(x=1:10, y=1:10, type='n', ann = FALSE, xaxt = 'n', yaxt = 'n', bty = 'n')
+
+# Plot resid log(R/S) ~ spawners
+layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
+par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
+for(i in 1:length(unique(ests$CU_ID))) {
+  dat <- t[t$CU_Name==CUs[i],]
+  plot(dat$resid_logRS ~ dat$Spawners, type="p", main=CUs[i], xlab="Spawners", ylab="resid log(R/S)")
+  abline(h=0, lty=2)
+  abline(v=dat$est_Sgen, lty=2, col="orange")
+  abline(v=dat$est_Smsy, lty=2, col="dodgerblue")
+}
+plot(x=1:10, y=1:10, type='n', ann = FALSE, xaxt = 'n', yaxt = 'n', bty = 'n')
+legend(x=1,y=5, lty=2, col=c("orange", "dodgerblue"), legend=c("Sgen", "SMSY"))
+
+# Plot residuals ~ observed recruits
+layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
+par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
+for(i in 1:length(unique(ests$CU_ID))) {
+  dat <- t[t$CU_Name==CUs[i],]
+  plot(dat$resid_rec ~ dat$Recruits, type="p", main=CUs[i], xlab="Recruits", ylab="Recruits, obs-pred")
+  abline(a=0, b=1, lty=2, col="orange")
+}
+
+# Plot residuals  
+
+# Plot log(R/S) residuals ~ observed recruits
+layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
+par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
+for(i in 1:length(unique(ests$CU_ID))) {
+  dat <- t[t$CU_Name==CUs[i],]
+  plot(dat$resid_logRS ~ dat$Recruits, type="p", main=CUs[i])
+  abline(a=0, b=1, lty=2, col="orange")
+}

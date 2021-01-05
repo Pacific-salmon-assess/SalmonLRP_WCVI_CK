@@ -216,7 +216,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] <- exp(All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] )
     All_Ests$Param[All_Ests$Param == "logSigma"] <- "sigma"
     All_Ests$Param[All_Ests$Param == "logB"] <- "B"
-    #All_Ests$Param[All_Ests$Param == "logA"] <- "A" 
     All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% 
       mutate(Std..Error = Std..Error/Scale) # LW deleted a duplicate of this row. B gets divided by scale to unscale
     All_Ests[All_Ests$Param %in% c("Sgen", "SMSY", "SRep", "cap", "Agg_LRP"), ] <-  All_Ests %>% 
