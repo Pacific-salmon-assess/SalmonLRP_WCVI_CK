@@ -34,6 +34,9 @@ sourceAll()
 compile("TMB_Files/SR_IndivRicker_NoSurv.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv"))
 
+compile("TMB_Files/SR_IndivRicker_NoSurv_LowAggPrior.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv_LowAggPrior"))
+
 # Switch to chum directory
 setwd(chumDir)
 
@@ -67,7 +70,7 @@ names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits"
 # This may be done automatically, see retroFunctions.r line 20 
 # This is done automatically using the BroodYrLag variable
 
-# ==================================================================================
+# ====================================================================================
 # Call functions to plot data availability:
 # ====================================================================================
 plot_CU_DataObs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_DataByCU")
@@ -77,9 +80,12 @@ plot_Num_CUs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_N_CUs")
 plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc", samePlot = T)
 plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc Separate", samePlot = F)
 
-# ==================================================================================================================
+# =====================================================================================================================
 # Run retrospective analyses:
 # =====================================================================================================================
+
+# Get priors for likelihood penalty on aggregate abundance at low probability
+
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
@@ -88,8 +94,8 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 # Run annual restrospective analyses using CUs ===========================
 
 # Loop over p values and run annual retrospective analyses for each level of p
-#ps <- 0.90 # for now just use one p value
-ps <- c(seq(0.6, 0.95,.05), 0.99) 
+ps <- 0.90 # for now just use one p value
+#ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
@@ -110,6 +116,8 @@ ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without ful
 
 source(paste0(codeDir, "/LRPFunctions.r"))
 
+
+# Run retrospective analysis
 for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
@@ -124,6 +132,20 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
 }
 
+# Run with penalty on low aggregate abundance
+for(pp in 1:length(ps)){
+  # Run with Binomial LRP model with individual model Ricker
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+  # 
+  # # Run with Bernoulli LRP model with individual model Ricker 
+  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+  #                BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T)
+}
 
 # ----------------#
 # Examine output  

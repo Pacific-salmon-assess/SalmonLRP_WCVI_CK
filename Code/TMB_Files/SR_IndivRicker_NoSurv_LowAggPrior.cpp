@@ -61,6 +61,8 @@ Type objective_function<Type>::operator() ()
   DATA_SCALAR(p);
   DATA_SCALAR(Sgen_sig);
   DATA_SCALAR(Tau_dist); // FLAG: what is Tau_dist?
+  DATA_SCALAR(B_penalty_mu); // for likelihood penalty on low aggregate abundance; average value of aggregate abundance at low p
+  DATA_SCALAR(B_penalty_sigma); // for likelihood penalty on low aggregate abundnace; sd of value of aggregate abundance at low p
   PARAMETER_VECTOR(logA);
   PARAMETER_VECTOR(logB);
   PARAMETER_VECTOR(logSigma);
@@ -166,6 +168,10 @@ Type objective_function<Type>::operator() ()
   
   //Get final BM
   Type Agg_LRP = (log(p/(1-p)) - B_0)/(B_1);
+  
+  // Add prior penalty on Aggregate abbundance at low proportion of CUs above benchmark
+  Type p_min = 0.01; // value p_min = low proportion of CUs greater than benchmark (Sgen)
+  ans += -dnorm(  (log(p_min/(1-p_min)) - B_0) / B_1, B_penalty_mu , B_penalty_sigma, true ); // likelihood penalty on aggregate abundance
   
   // Get estimates for plotting CIs
   int N_Preds = Pred_Abund.size();
