@@ -91,7 +91,9 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
 
+# ========================================================================
 # Run annual restrospective analyses using CUs ===========================
+# ========================================================================
 
 # Loop over p values and run annual retrospective analyses for each level of p
 ps <- 0.90 # for now just use one p value
@@ -132,13 +134,40 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
 }
 
-# Run with penalty on low aggregate abundance
+
+# Get values for low aggregate likelihood penalty model
+# Idea is to parameterize (mu and sigma) the aggregate abundnace associated with a very low proportion (essentially 0; p=0.01) of
+# CUs being above their benchmark. The idea is to have 95% of this estimate between the lowest CU abundance (e.g., all CUs are gone
+# except one) and the sum of all their benchmarks (e.g., all CUs are just below their lower benchmarks). The mean of this
+# distribution is halfway between these lower and upper values.
+
+# first get mean size of smallest CU
+low_lim <- ChumSRDat %>% group_by(CU_Name) %>% summarise(mean_by_CU = mean(Spawners, na.rm=TRUE)) %>% pull(mean_by_CU) %>% min(., na.rm=TRUE) # FLAG: check that I should use spawners here 
+# get sum of CU benchmarks
+# get Sgen estimates from running integrated model without penalty
+ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
+ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
+hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
+# make mu of penalty value mean of these two values
+B_penalty_mu <- mean(c(low_lim, hi_lim))/TMB_Inputs_IM$Scale
+# get sd for prior penalty
+sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = 56800)) # FLAG: Should give 95% density.
+# plot to check
+plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=56800), xlim=c(0, max(ChumSRDat$Spawners)), type="l")
+abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim)))) # plot upper and lower values and mean
+B_penalty_sigma <- 56800/TMB_Inputs_IM$Scale # FLAG: This gives weird results, logistic curve flipped 
+
+
+
+# Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
+#       (to bring logistic curve intercept down)
+
 for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T)
+                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   # 
   # # Run with Bernoulli LRP model with individual model Ricker 
   # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
