@@ -81,7 +81,7 @@ plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc", samePlot = T
 plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc Separate", samePlot = F)
 
 # =====================================================================================================================
-# Run retrospective analyses:
+# Setup for retrospective analysis
 # =====================================================================================================================
 
 # Get priors for likelihood penalty on aggregate abundance at low probability
@@ -91,13 +91,24 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
 
+# make data frames that do not include CU-level infilling 
+
+missing_yrs <- which(is.na(ChumEscpDat$Escape))
+# check
+ChumEscpDat[missing_yrs, c(1,2)]
+ChumSRDat[missing_yrs, c(11,1)]
+ChumEscpDat_no_CU_infill <- ChumEscpDat[-missing_yrs, ]
+ChumSRDat_no_CU_infill <- ChumSRDat[-missing_yrs, ]
+
+
+
 # ========================================================================
-# Run annual restrospective analyses using CUs ===========================
+# Run annual restrospective analysis using CUs
 # ========================================================================
 
 # Loop over p values and run annual retrospective analyses for each level of p
-ps <- 0.90 # for now just use one p value
-#ps <- c(seq(0.6, 0.95,.05), 0.99) 
+#ps <- 0.90 # for now just use one p value
+ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
@@ -116,8 +127,8 @@ ps <- 0.90 # for now just use one p value
 ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
 ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
+# reload LRPFunctions.r to update changes (for active working)
 source(paste0(codeDir, "/LRPFunctions.r"))
-
 
 # Run retrospective analysis
 for(pp in 1:length(ps)){
@@ -125,6 +136,11 @@ for(pp in 1:length(ps)){
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+  # Same but with years with CU-level infilling removed
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
   # 
   # # Run with Bernoulli LRP model with individual model Ricker 
@@ -134,8 +150,9 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
 }
 
-
+# -----------------------------------------------------
 # Get values for low aggregate likelihood penalty model
+# -----------------------------------------------------
 # Idea is to parameterize (mu and sigma) the aggregate abundnace associated with a very low proportion (essentially 0; p=0.01) of
 # CUs being above their benchmark. The idea is to have 95% of this estimate between the lowest CU abundance (e.g., all CUs are gone
 # except one) and the sum of all their benchmarks (e.g., all CUs are just below their lower benchmarks). The mean of this
@@ -158,7 +175,6 @@ abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim)))) # plot upper and lower va
 B_penalty_sigma <- 56800/TMB_Inputs_IM$Scale # FLAG: This gives weird results, logistic curve flipped 
 
 
-
 # Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
 #       (to bring logistic curve intercept down)
 
@@ -166,14 +182,13 @@ for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior",ps[pp]*100, sep=""),
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
-  # 
-  # # Run with Bernoulli LRP model with individual model Ricker 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
+  # Without CU-level infilling
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
 }
 
 # ----------------#
