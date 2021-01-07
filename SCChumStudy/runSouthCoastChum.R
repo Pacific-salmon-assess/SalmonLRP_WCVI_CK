@@ -165,14 +165,14 @@ low_lim <- ChumSRDat %>% group_by(CU_Name) %>% summarise(mean_by_CU = mean(Spawn
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
 hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
-# make mu of penalty value mean of these two values
+# make mu of penalty value mean of these two values, divide by scale
 B_penalty_mu <- mean(c(low_lim, hi_lim))/TMB_Inputs_IM$Scale
-# get sd for prior penalty
+# get SD for prior penalty so that 95% density is between lower and upper limits
 sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = 56800)) # FLAG: Should give 95% density.
 # plot to check
 plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=56800), xlim=c(0, max(ChumSRDat$Spawners)), type="l")
 abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim)))) # plot upper and lower values and mean
-B_penalty_sigma <- 56800/TMB_Inputs_IM$Scale # FLAG: This gives weird results, logistic curve flipped 
+B_penalty_sigma <- 56800/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
 
 
 # Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
