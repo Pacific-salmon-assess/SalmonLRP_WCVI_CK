@@ -151,29 +151,29 @@ for(pp in 1:length(ps)){
 }
 
 # -----------------------------------------------------
-# Get values for low aggregate likelihood penalty model
+# Get values for low aggregate likelihood penalty model FLAG: need to redo this for the 5 CUs without CU-level infilling.
 # -----------------------------------------------------
-# Idea is to parameterize (mu and sigma) the aggregate abundnace associated with a very low proportion (essentially 0; p=0.01) of
-# CUs being above their benchmark. The idea is to have 95% of this estimate between the lowest CU abundance (e.g., all CUs are gone
-# except one) and the sum of all their benchmarks (e.g., all CUs are just below their lower benchmarks). The mean of this
-# distribution is halfway between these lower and upper values.
+# Idea is to parameterize (mu and sigma) the aggregate abundance associated with a very low proportion (essentially 0; p=0.01) of
+# CUs being above their benchmark. The idea is to have 95% of this estimate between the CU Sgen and the sum of all their Sgen 
+# benchmarks (e.g., all CUs are just below their lower benchmarks). The mean of this distribution is halfway between these 
+# lower (2.5% quantile) and upper (97.5% quantile) values. 
 
-# first get mean size of smallest CU
-low_lim <- ChumSRDat %>% group_by(CU_Name) %>% summarise(mean_by_CU = mean(Spawners, na.rm=TRUE)) %>% pull(mean_by_CU) %>% min(., na.rm=TRUE) # FLAG: check that I should use spawners here 
-# get sum of CU benchmarks
 # get Sgen estimates from running integrated model without penalty
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
+# make lower limit the lowest CU Sgen (this gives essentially the same results as using the average abundance of the smallest CU)
+low_lim <- min(ests1$est_Sgen) 
+# make upper limit the sum of CU benchmarks
 hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
 # make mu of penalty value mean of these two values, divide by scale
 B_penalty_mu <- mean(c(low_lim, hi_lim))/TMB_Inputs_IM$Scale
 # get SD for prior penalty so that 95% density is between lower and upper limits
-sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = 56800)) # FLAG: Should give 95% density.
+sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = 58300)) # FLAG: Should give 95% density.
 # plot to check
 plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=56800), xlim=c(0, max(ChumSRDat$Spawners)), type="l")
 abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim)))) # plot upper and lower values and mean
-B_penalty_sigma <- 56800/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
-
+B_penalty_sigma <- 58300/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
+#B_penalty_sigma <- 56800/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
 
 # Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
 #       (to bring logistic curve intercept down)
@@ -182,7 +182,7 @@ for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_",ps[pp]*100, sep=""),
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_low_lim_min_Sgen_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   # Without CU-level infilling
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
