@@ -1,14 +1,10 @@
-# Code by L. Warkentin & K. Holt
-# Started on: October 16, 2020
+# Code by Luke Warkentin & Kendra Holt
 
 # This file contains the code required to explore South Coast Chum escapement datasets and run retrospective analyses of 
 #   data-based LRPs that use logistic regressions
 
 library(rsample)
 library(tidyverse)
-#library(ggplot2)
-#library(tidyr)
-#library(dplyr)
 options(scipen=1000000)
 library(gridExtra)
 library(reshape2)
@@ -91,15 +87,16 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
 
-# make data frames that do not include CU-level infilling 
+# Data prep
 
-missing_yrs <- which(is.na(ChumEscpDat$Escape))
-# check
-ChumEscpDat[missing_yrs, c(1,2)]
-ChumSRDat[missing_yrs, c(11,1)]
-ChumEscpDat_no_CU_infill <- ChumEscpDat[-missing_yrs, ]
-ChumSRDat_no_CU_infill <- ChumSRDat[-missing_yrs, ]
+# remove years without full recruitment - not sure if this step is needed
+ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
+ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
+# make data frames that do not include any observations from CUs with CU-level infilling (Upper Knight and Bute Inlet)
+CUs_not_use <- unique(ChumEscpDat$CU_Name[which(is.na(ChumEscpDat$Escape))]) # get CUs that have NA values for escapement in some years (means that they were infilled at CU level)
+ChumEscpDat_no_CU_infill <- ChumEscpDat[!(ChumEscpDat$CU_Name %in% CUs_not_use), ]
+ChumSRDat_no_CU_infill <- ChumSRDat[!(ChumSRDat$CU_Name %in% CUs_not_use), ]
 
 
 # ========================================================================
@@ -123,12 +120,10 @@ ps <- c(seq(0.6, 0.95,.05), 0.99)
 #     This parameter gets used in the runAnnualRetro() function to remove the first few years of data for 
 #     which recruitment is NA because the BY has not yet been fully observed.
 
-# not sure if this step is needed
-ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
-ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
 # reload LRPFunctions.r to update changes (for active working)
 source(paste0(codeDir, "/LRPFunctions.r"))
+
 
 # Run retrospective analysis
 for(pp in 1:length(ps)){
@@ -137,11 +132,11 @@ for(pp in 1:length(ps)){
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
-  # Same but with years with CU-level infilling removed
+  # Same but with CUs with CU-level infilling removed
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T)
+                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
+                bootstrapMode = F, plotLRP=T)
   # 
   # # Run with Bernoulli LRP model with individual model Ricker 
   # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
@@ -149,6 +144,7 @@ for(pp in 1:length(ps)){
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T)
 }
+
 
 # -----------------------------------------------------
 # Get values for low aggregate likelihood penalty model FLAG: need to redo this for the 5 CUs without CU-level infilling.
@@ -170,25 +166,37 @@ B_penalty_mu <- mean(c(low_lim, hi_lim))/TMB_Inputs_IM$Scale
 # get SD for prior penalty so that 95% density is between lower and upper limits
 sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = 58300)) # FLAG: Should give 95% density.
 # plot to check
-plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=56800), xlim=c(0, max(ChumSRDat$Spawners)), type="l")
+plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=58300), 
+      xlim=c(0, max(ChumSRDat$Spawners)), type="l", ylab="density", xlab="aggregate adundance")
 abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim)))) # plot upper and lower values and mean
 B_penalty_sigma <- 58300/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
-#B_penalty_sigma <- 56800/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
+
+B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2) # test with 1.5 and 2 times SD
+# Effect of increasing SD:
+#   Without CUs with CU infilling:
+#       SD times 1.5 and 2 make very minor differences in LRP (very small increases). NO flipping of logistic curve
+#   With using CUs with CU infilling:
+#    Using 1.5 times SD makes logistic curve flip in one year, and 2 times SD makes it flip several years (with p=0.9)
+
+
+
 
 # Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
 #       (to bring logistic curve intercept down)
 
 for(pp in 1:length(ps)){
+  for (i in 1:length(B_penalty_sigmas)){
   # Run with Binomial LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_low_lim_min_Sgen_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_", "sigma", i, "_", ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
   # Without CU-level infilling
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", "sigma", i, "_", ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
+  }
 }
 
 # ----------------#
