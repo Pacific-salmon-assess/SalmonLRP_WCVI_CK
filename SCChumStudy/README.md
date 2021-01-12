@@ -43,17 +43,22 @@ Folder containing output data .csv files from LRP retrospective analysis
 Folder containing output figures
 
 ### spatial
-Folder containing shapefiles for mapping Conservation Units
-
-### chumDataFunctions.r
-
-### infillling_for_reconstruction.R
-
-### make_map.R
-
-### prepare_data.R
+* Shapefile of Conservation Units for Chum, from https://open.canada.ca/data/en/dataset/f86c0867-d38d-4072-bd08-57cbbcbafa46
 
 ### runSouthCoastChum.R
+Master script to run LRP Retrospective Analyses. 
+
+### prepare_data.R
+Prepares data for retrospective analysis, including infilling of raw escapement data and creation of stock-recruit brood table. 
+
+### chumDataFunctions.r
+Functions specifically for chum case study, including infilling
+
+### infillling_for_reconstruction.R
+This code takes the raw escapement data and infills by stream and CU. The outputs of this code were sent to Pieter Van Will to do the run reconstruction, which uses percent wild spawners, and catch to give wild returns (WildReturnsPVW_2013 **NEED TO UPDATE TO 2018**). Does not need to be run to do LRP retrospective analysis.
+
+### make_map.R
+Make a map of the Conservation Unit areas.
 
 ### SRdata.csv ???? 
 
