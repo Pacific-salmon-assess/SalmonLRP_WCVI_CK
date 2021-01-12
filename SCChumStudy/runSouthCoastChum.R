@@ -168,13 +168,13 @@ sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = 58300)
 # plot to check
 plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=58300), 
       xlim=c(0, max(ChumSRDat$Spawners)), type="l", ylab="density", xlab="aggregate adundance")
-abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim)))) # plot upper and lower values and mean
+abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2,2,1)) # plot upper and lower values and mean
 B_penalty_sigma <- 58300/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
 
-B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2) # test with 1.5 and 2 times SD
+#B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2) # test with 1.5 and 2 times SD
 # Effect of increasing SD:
 #   Without CUs with CU infilling:
-#       SD times 1.5 and 2 make very minor differences in LRP (very small increases). NO flipping of logistic curve
+#       SD times 1.5 and 2 make very minor differences in LRP (very small increases). No flipping of logistic curve
 #   With using CUs with CU infilling:
 #    Using 1.5 times SD makes logistic curve flip in one year, and 2 times SD makes it flip several years (with p=0.9)
 
@@ -185,18 +185,18 @@ B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2
 #       (to bring logistic curve intercept down)
 
 for(pp in 1:length(ps)){
-  for (i in 1:length(B_penalty_sigmas)){
+  #for (i in 1:length(B_penalty_sigmas)){
   # Run with Binomial LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_", "sigma", i, "_", ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
   # Without CU-level infilling
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", "sigma", i, "_", ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
-  }
+  #runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #               BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+  #               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", "sigma", i, "_", ps[pp]*100, sep=""),
+  #               bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
+  #}
 }
 
 # ----------------#
