@@ -8,7 +8,7 @@ Primary contacts: Luke Warkentin (Luke.Warkentin@dfo-mpo.gc.ca), Kendra Holt (Ke
 
 ## Contents
 
-### DataIn
+### DataIn  
 _(input data - read only)_  
 Pieter Van Will (Pieter.VanWill@dfo-mpo.gc.ca) supplied data
 
@@ -44,7 +44,8 @@ Folder containing output figures
 * Shapefile of Conservation Units for Chum, from https://open.canada.ca/data/en/dataset/f86c0867-d38d-4072-bd08-57cbbcbafa46
 
 ### runSouthCoastChum.R
-Master script to run LRP Retrospective Analyses. 
+Master script to run LRP Retrospective Analyses.  
+Set working directory to SalmonLRP_RetroEval/SCCChumStudy folder to run (or make an .Rproj file in this folder).
 
 ### prepare_data.R
 Prepares data for retrospective analysis, including infilling of raw escapement data and creation of stock-recruit brood table. 
