@@ -4,17 +4,17 @@ Primary contacts: Luke Warkentin (Luke.Warkentin@dfo-mpo.gc.ca), Kendra Holt (Ke
 
 ### Overview
 
-The SCChumCaseStudy folder contains the files that are specific to the Limit Reference Point retrospective analysis for Inside South Coast Chum (non-Fraser) Stock Management Unit. This includes raw input data, code to prepare data and run analysis, case study-specific functions, and outputs (data and figures). 
+> The SCChumStudy folder contains the files that are specific to the Limit Reference Point retrospective analysis for the Inside South Coast Chum (non-Fraser) Stock Management Unit. This includes raw input data, code to prepare data and run analyses, case study-specific functions, and outputs (data and figures). 
 
-The folder contains:
+### Contents
 
-#### **DataIn**: input data (read only)
+#### **DataIn**: _input data (read only)_
 
 * AgeComp_2018.csv  
 Age composition data from Johnstone Strait fishery aggregate  
 Pieter Van Will (DFO)
 
-* Chum Escapement Data With Areas_2018.xlsx
+* Chum Escapement Data With Areas_2018.xlsx  
 Raw escapement data (spawner counts) with updated 2018 tab
 Pieter Van Will (DFO)
 
