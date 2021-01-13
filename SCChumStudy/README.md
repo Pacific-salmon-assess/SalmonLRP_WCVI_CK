@@ -41,7 +41,8 @@ Folder containing output data .csv files from LRP retrospective analysis
 Folder containing output figures
 
 ### spatial
-* Shapefile of Conservation Units for Chum, from https://open.canada.ca/data/en/dataset/f86c0867-d38d-4072-bd08-57cbbcbafa46
+* Chum Salmon CU Boundary_En  
+Shapefile of Conservation Units for Chum, from https://open.canada.ca/data/en/dataset/f86c0867-d38d-4072-bd08-57cbbcbafa46
 
 ### runSouthCoastChum.R
 Master script to run LRP Retrospective Analyses.  
