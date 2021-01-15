@@ -31,6 +31,9 @@ RawDat <- read.csv("DataIn/Chum Escapement Data With Areas_2013.csv", stringsAsF
 CU_raw <- unique(RawDat$CU_Name)
 CUdf <- data.frame("CU_raw"=CU_raw[1:7])
 
+# Get number of summer vs fall run streams for each CU (for reference)
+table(RawDat$CU_Name, RawDat$SummerRun)
+
 ## Step 1: Infill Escapement Data ===============================================================
 
 # Infill missing values using only wild fish 

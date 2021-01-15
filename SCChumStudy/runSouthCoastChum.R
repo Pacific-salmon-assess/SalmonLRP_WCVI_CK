@@ -104,8 +104,8 @@ ChumSRDat_no_CU_infill <- ChumSRDat[!(ChumSRDat$CU_Name %in% CUs_not_use), ]
 # ========================================================================
 
 # Loop over p values and run annual retrospective analyses for each level of p
-#ps <- 0.90 # for now just use one p value
-ps <- c(seq(0.6, 0.95,.05), 0.99) 
+ps <- 0.90 # for now just use one p value
+#ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
@@ -123,6 +123,7 @@ ps <- c(seq(0.6, 0.95,.05), 0.99)
 
 # reload LRPFunctions.r to update changes (for active working)
 source(paste0(codeDir, "/LRPFunctions.r"))
+source(paste0(codeDir, "/plotFunctions.r"))
 
 
 # Run retrospective analysis
@@ -185,17 +186,21 @@ B_penalty_sigma <- 58300/TMB_Inputs_IM$Scale # Use SD value that gives 95% densi
 #       (to bring logistic curve intercept down)
 
 for(pp in 1:length(ps)){
-  #for (i in 1:length(B_penalty_sigmas)){
+  #for (i in 1:length(B_penalty_sigmas)){ # for testing sensitivity to B_penalty_sigma
   # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_", "sigma", i, "_", ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
+  # runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=2010, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_", ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   # Without CU-level infilling
   #runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
   #               BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
   #               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", "sigma", i, "_", ps[pp]*100, sep=""),
   #               bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
+                bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   #}
 }
 

@@ -11,7 +11,7 @@ library(zoo)
 # Run TMB Ricker and LRP estimation, either Hier Ricker or regular ========================================================
 Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic, 
                            useGenMean, genYrs, p,
-                           TMB_Inputs) {
+                           TMB_Inputs, B_penalty_mu, B_penalty_sigma) {
   
   # Specify Mod (i.e., TMB model name) specific to each benchmark model type
   Mod <- BMmodel
@@ -36,19 +36,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   
   Agg_Abund <- Logistic_Dat %>% group_by(yr) %>% summarise(Agg_Esc = sum(Escp)) %>%
                mutate(Gen_Mean = rollapply(Agg_Esc, genYrs, gm_mean, fill = NA, align="right"))
-  
-  # Get values for low aggregate prior penalty model: FLAG: Should these be set using only years in retrospective analysis or all years? If all years, should do it outside of this function.
-  # first get mean size of smallest CU
-  mean_smallest_CU <- SRDat %>% group_by(CU_Name) %>% summarise(mean_by_CU = mean(Spawners, na.rm=TRUE)) %>% pull(mean_by_CU) %>% min(., na.rm=TRUE) # FLAG: check that I should use spawners here 
-  # now get mean of abundances summed for each year
-  mean_agg <- SRDat %>% group_by(BroodYear) %>% summarise(sum_by_year = sum(Spawners, na.rm=TRUE)) %>% pull(sum_by_year) %>% mean(., na.rm=TRUE)
-  # make mu of penalty value mean of these two values
-  B_penalty_mu <- mean(c(mean_smallest_CU, mean_agg))/Scale
-  # get sd for prior penalty
-  # sum(dnorm(seq(mean_smallest_CU , mean_agg, 1), mean=mean(c(mean_smallest_CU, mean_agg)), sd=114000)) # FLAG: Should give 95% density. For this year, it does. but what about others?
-  #B_penalty_sigma <- 114000/Scale # FLAG: This gives weird results, logistic curve flipped 
-  B_penalty_sigma <- 50000/Scale # Values of 80,000 and higher give weird results with logistic curve flipped, so that p decreases with increasing aggregrate abundance
-  
+
   # need year as index
   Logistic_Dat$yr_num <- group_by(Logistic_Dat, yr) %>% group_indices() - 1
   
@@ -139,7 +127,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
   }
   
-
   # Call optimization:
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10)) # LW: increased eval.max and iter.max from 1e5 to 1e10; helped model converge
   

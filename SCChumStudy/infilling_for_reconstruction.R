@@ -1,5 +1,5 @@
 # Infill Inside South Coast Chum escapement data, to supply Pieter Van Will
-# for him to do run reconstruction
+# for him to do run reconstruction separately (using catch data and proportion wild)
 
 # This code infills at multiple levels 
 # Total Spawners - by CU, area and stream
@@ -14,7 +14,7 @@
 # All code in this section (including code in chumDataFunctions.r) was written by B. Davis (DFO) for the  
 # above paper, and provided to us by Carrie Holt in October 2020 as part of "Retrospective Analysis BD" folder.
 
-# Some modifications by Luke Warkentin (DFO)
+# Some modifications by Luke Warkentin (DFO) in 2020-2021
 
 setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 

@@ -323,7 +323,10 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
     geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
     geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
     geom_point(data=Data, aes(x = xx, y = yy)) +
+    #geom_segment(aes(y=0.01, yend=0.01, x=2200, xend=230873), colour="dodgerblue") + # add in likelihood penalty SD
+    #geom_point(aes(y=0.01, x=mean(c(2200, 230873))), colour="dodgerblue") + # add in likelihood penalty mean
     xlab(Xlab) + ylab(Ylab) +
+    coord_cartesian(ylim=c(0,1)) +
     #  ggtitle(paste("Retrospective Year", max(Dat.LRP$yr), sep=" ")) +
     theme_classic()
   
