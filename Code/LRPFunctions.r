@@ -8,10 +8,10 @@ library(zoo)
 # ================================================================================
 
 
-# Run TMB RIcker and LRP estimation, either Hier Ricker or regular ========================================================
+# Run TMB Ricker and LRP estimation, either Hier Ricker or regular ========================================================
 Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic, 
                            useGenMean, genYrs, p,
-                           TMB_Inputs) {
+                           TMB_Inputs, B_penalty_mu, B_penalty_sigma) {
   
   # Specify Mod (i.e., TMB model name) specific to each benchmark model type
   Mod <- BMmodel
@@ -36,7 +36,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   
   Agg_Abund <- Logistic_Dat %>% group_by(yr) %>% summarise(Agg_Esc = sum(Escp)) %>%
                mutate(Gen_Mean = rollapply(Agg_Esc, genYrs, gm_mean, fill = NA, align="right"))
-  
+
   # need year as index
   Logistic_Dat$yr_num <- group_by(Logistic_Dat, yr) %>% group_indices() - 1
   
@@ -77,7 +77,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   data$Tau_dist <- TMB_Inputs$Tau_dist
   
   # add data and parameters specific to Ricker model without a survival covariate
-  if(Mod %in% c("SR_IndivRicker_NoSurv")) {
+  if(Mod %in% c("SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")) {
         param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
     }
   
@@ -112,17 +112,21 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
        param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
      }
   }
-
+  
+  # add values for B_penalty mu and sd
+  if(Mod %in% c("SR_IndivRicker_NoSurv_LowAggPrior")) {
+    data$B_penalty_mu <- B_penalty_mu
+    data$B_penalty_sigma <- B_penalty_sigma
+  }
   
   # Phase 1: estimate SR params
   map <- list(logSgen=factor(rep(NA, data$N_Stks)), B_0=factor(NA), B_1=factor(NA)) # Determine which parameters to fix
-  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv")){
+  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, map=map)
   } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
   }
   
-
   # Call optimization:
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10)) # LW: increased eval.max and iter.max from 1e5 to 1e10; helped model converge
   
@@ -140,7 +144,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
 
   #Phase 2: get Sgen, SMSY
   map2 <- list(B_0=factor(NA), B_1=factor(NA))
-  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv")){
+  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")){
     obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, map=map2)
   } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
     obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map2)
@@ -165,7 +169,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   pl2 <- obj$env$parList(opt$par) 
   
   # Phase 3: fit logistic model; hold other estimates constant
-  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv")){
+  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")){
     obj <- MakeADFun(data, pl2, DLL=Mod, silent=TRUE)
   } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
     map3 = list(logMuA = as.factor(NA), logSigmaA = as.factor(NA))
@@ -216,7 +220,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] <- exp(All_Ests$Estimate[All_Ests$Param %in% c( "logB", "logSigma")] )
     All_Ests$Param[All_Ests$Param == "logSigma"] <- "sigma"
     All_Ests$Param[All_Ests$Param == "logB"] <- "B"
-    #All_Ests$Param[All_Ests$Param == "logA"] <- "A" 
     All_Ests[All_Ests$Param == "B",] <- All_Ests %>% filter(Param == "B") %>% mutate(Estimate = Estimate/Scale) %>% 
       mutate(Std..Error = Std..Error/Scale) # LW deleted a duplicate of this row. B gets divided by scale to unscale
     All_Ests[All_Ests$Param %in% c("Sgen", "SMSY", "SRep", "cap", "Agg_LRP"), ] <-  All_Ests %>% 

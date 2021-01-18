@@ -83,11 +83,9 @@ Type objective_function<Type>::operator() ()
   
   // Ricker likelihood based on Arbeider et al. 2020 Interior Fraser Coho RPA res. doc.
   for(int i=0; i<N_Obs; i++){
-    //LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i);  // need to reduce to no survival terms
-    //LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i);
     LogR_Pred(i) = logA(stk(i)) + log(S(i)) - exp(logB(stk(i))) * S(i); // predicted log(recruits), no survival covariate
     // get same answer whether put likelihood on log(R/S) or R_pred
-    ans += -dnorm(LogR_Pred(i) - log(S(i)), logR(i) - log(S(i)),  sigma(stk(i)), true); // log(R) - log(S) = log(R/S)
+    ans += -dnorm(LogR_Pred(i) - log(S(i)), logR(i) - log(S(i)),  sigma(stk(i)), true); // note: log(R) - log(S) = log(R/S)
   }
   
   // Calculate SMSY using Lambert's W function
@@ -96,10 +94,8 @@ Type objective_function<Type>::operator() ()
 	ans += -dgamma(pow(sigma(i),-2), Tau_dist, 1/Tau_dist, true); // FLAG: what is Tau_dist? Seems like parameter for distribution of sigma.
   // Jacobian adjustment for prior on sigma (add for TMBstan runs)
   // ans -= log(2) - 2*logSigma(i);
-  //logProd[i] = logA[i] + gamma*muLSurv[i]; // LW removed
   A[i] = exp(logA[i]); 
   // Calculate SMSY using Lambert W function
-  //SMSY[i] =  (1 - LambertW(exp(1-logProd[i])) ) / B[i] ; // LW removed
   SMSY[i] = (1 - LambertW(exp(1-logA[i]))) / B[i]; // LW added
   }
   
@@ -119,7 +115,6 @@ Type objective_function<Type>::operator() ()
   vector<Type> Rec_Preds(N_SpwnPreds);
   
   for(int i=0; i<N_SpwnPreds; i++){  // predict recruitment based on Ricker equation with stock-specific parameters
-    //LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv[stk_predS(i)] + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i); // LW removed
     LogRec_Preds(i) = logA(stk_predS(i)) + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i); // LW added
   }
   Rec_Preds = exp(LogRec_Preds);

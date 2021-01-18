@@ -26,10 +26,13 @@ setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 source("chumDataFunctions.r")
 
 # Create look-up table for CU names
-RawDat <- read.csv("DataIn/Chum Escapement Data With Areas_2013.csv", check.names=F)
+RawDat <- read.csv("DataIn/Chum Escapement Data With Areas_2013.csv", stringsAsFactors = FALSE, check.names=FALSE, strip.white = TRUE) # strip.white helps with SummerRun values with spaces
 # CUs without Fraser River CUs
 CU_raw <- unique(RawDat$CU_Name)
 CUdf <- data.frame("CU_raw"=CU_raw[1:7])
+
+# Get number of summer vs fall run streams for each CU (for reference)
+table(RawDat$CU_Name, RawDat$SummerRun)
 
 ## Step 1: Infill Escapement Data ===============================================================
 
@@ -39,14 +42,6 @@ CUdf <- data.frame("CU_raw"=CU_raw[1:7])
 
 NoQPDatBySite <- RawDat[which(RawDat$Source=="Wild" & RawDat$NME %notin% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")),]
 
-#need to change to character to preserve names
-NoQPDatBySite$NME <- as.character(NoQPDatBySite$NME)
-NoQPDatBySite$CU_Name <- as.character(NoQPDatBySite$CU_Name)
-NoQPDatBySite$GroupName <- as.character(NoQPDatBySite$GroupName)
-NoQPDatBySite$GU_Name <- as.character(NoQPDatBySite$GU_Name)
-NoQPDatBySite$Rabcode <- as.character(NoQPDatBySite$Rabcode)
-#SummerRun not registering True false arghhhhh 
-NoQPDatBySite$SummerRun[which(is.na(NoQPDatBySite$SummerRun))] <- FALSE
 # Remove summer run fish
 NoQPDatBySite2 <- NoQPDatBySite[which(!NoQPDatBySite$SummerRun), ]
 
