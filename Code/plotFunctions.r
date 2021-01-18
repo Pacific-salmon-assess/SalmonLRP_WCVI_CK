@@ -840,3 +840,32 @@ plotLRPCompare<-function(LRP_estYr, modelFitList,  pList, outDir, fName) {
   
   
 }
+
+
+
+plotProjected<-function(Data, LRP, plotName, outDir, p) {
+ 
+  g <- ggplot(data=Data, mapping=aes(x=as.factor(ppnCUs),y=AggSpawners, fill = as.factor(ppnCUs))) + geom_violin()
+  
+  # g <- g + stat_summary(
+  #  fun.min = function(z) { quantile(z,0.05) },
+  #  fun.max = function(z) { quantile(z,0.95) },
+  #  fun = median, col="navy")
+  
+  p.ind<-which(sort(unique(Data$ppnCUs)) == p)
+  
+  g <- g  + theme_light() + scale_fill_manual(values=rep("grey80", length(unique(Data$ppnCUs)))) +
+    labs(y="Aggregate Escapement",
+         x="Prop. CUs > Lower Benchmark") + theme(legend.position = "none") +
+          geom_hline(yintercept=LRP$fit, linetype="dashed", color="orange", size = 1) +
+          geom_vline(xintercept= p.ind, linetype="dashed", color="red", size = 1) +
+          geom_hline(yintercept = LRP$lwr, linetype = "dotted", color = "orange", size = 1) +
+          geom_hline(yintercept = LRP$upr, linetype = "dotted", color = "orange", size = 1) 
+  
+  g <- g + coord_flip()
+  
+  # Save plot
+  ggsave(paste(outDir, "/",plotName,".pdf",sep=""), plot = g,
+         width = 4, height = 3, units = "in")      
+  
+}

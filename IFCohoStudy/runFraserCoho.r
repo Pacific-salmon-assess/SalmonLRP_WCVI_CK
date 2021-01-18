@@ -50,8 +50,8 @@ dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap"))
 compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
 
-compile("TMB_Files/Proj_LRP.cpp")
-dyn.load(dynlib("TMB_Files/Proj_LRP"))
+#compile("TMB_Files/Proj_LRP.cpp")
+#dyn.load(dynlib("TMB_Files/Proj_LRP"))
 
 # ======================================================================
 # Read-in Coho data:  
@@ -141,11 +141,15 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 
 # Test projected LRP
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
-ps <- 0.80
-runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2018, endYr=2018, BroodYrLag=2, genYrs=3, p = ps,
-               BMmodel = "SR_IndivRicker_Surv", LRPmodel="Proj_BinLogistic", integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("ProjBin.IndivRickerSurv_",ps*100, sep=""),
+ps <- c(0.6, 0.8, 1.0)
+
+for(pp in 1:length(ps)){
+
+  runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+               BMmodel = "SR_IndivRicker_Surv", LRPmodel="Proj", integratedModel=F,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Proj.IndivRickerSurv_",ps[pp]*100, sep=""),
                bootstrapMode = F, plotLRP=T)
+}
 
 
 
