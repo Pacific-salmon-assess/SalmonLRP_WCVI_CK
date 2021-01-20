@@ -39,10 +39,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
 
         
         # Case 1: LRP model is based on projections
-        if (LRPmodel == "Proj_BinLogistic" | LRPmodel == "Proj_BernLogistic" ) {
-          
-          if (LRPmodel == "Proj_BernLogistic") useBern_Logistic <- TRUE
-          if (LRPmodel == "Proj_BinLogistic") useBern_Logistic <- FALSE
+        if (LRPmodel == "Proj") {
           
           Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
           Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
@@ -147,7 +144,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     }
     
     # If plotLRP=T, plot model fit and data  
-    if (plotLRP == T) {
+    if (plotLRP == T & LRPmodel != "Proj") {
       
       figDir <- paste(outDir, "Figures/AnnualRetrospective", sep="/")
       if (file.exists(figDir) == FALSE){
@@ -165,6 +162,25 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
                    p = p, useBern_Logistic = useBern_Logistic)
     }
     
+    
+    if (plotLRP == T & LRPmodel == "Proj") {
+      
+      figDir <- paste(outDir, "Figures/AnnualRetrospective", sep="/")
+      if (file.exists(figDir) == FALSE){
+        dir.create(figDir)
+      } 
+      
+      figDir <- paste(figDir, RunName, sep="/")
+      if (file.exists(figDir) == FALSE){
+        dir.create(figDir)
+      }
+      
+      plotProjected(Data = LRP_Mod$Proj, LRP = LRP_Mod$LRP,
+                   plotName = paste("ProjMod", yearList[yy], sep ="_"), 
+                   outDir = figDir, p = p)
+      
+      
+    }
     
 
   } # end of year loop

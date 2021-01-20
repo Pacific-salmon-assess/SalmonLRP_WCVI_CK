@@ -455,9 +455,6 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
 
   pl2 <- obj$env$parList(opt$par) # Parameter estimate after phase 2
 
-
-
-
   All_Ests <- data.frame(summary(sdreport(obj)))
   All_Ests$Param <- row.names(All_Ests)
 
@@ -475,38 +472,37 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
   write.table(cor_matrix, paste(projDir,"cohoCorrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
 
   # # Fit mcmc with STAN to get parameter estimates for projections ===============================
-  # fitmcmc <- tmbstan(obj, chains=3, iter=100000, init=opt$par,
-  #                    control = list(adapt_delta = 0.95),upper=upper, lower=lower)
-  # 
-  # ## Can get ESS and Rhat from rstan::monitor
-  # mon <- monitor(fitmcmc)
-  # max(mon$Rhat)
-  # min(mon$Tail_ESS)
-  # 
-  # # pull out posterior vals
-  # post<-as.matrix(fitmcmc)
-  # post<-as_tibble(post)
-  # post<-post %>% add_column(iteration=as.numeric(row.names(post)))
-  # 
-  # post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
-  # post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
-  # 
-  # post_long_beta<-post %>% select(starts_with("logB"), iteration, gamma) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
-  # post_long_beta$stock<-rep(1:5,length=nrow(post_long_beta))
-  # 
-  # post_long_sigma<-post %>% select(starts_with("logSigma") & !starts_with("logSigmaA"), iteration, gamma) %>%
-  #   pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
-  # post_long_sigma$stock<-rep(1:5,length=nrow(post_long_sigma))
-  # 
-  # post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_beta$gamma)
-  # 
-  # write.csv(post_long, paste(projDir,"cohoRickerSurv_mcmc.csv", sep="/"), row.names=F)
+  fitmcmc <- tmbstan(obj, chains=3, iter=10000, init=opt$par,
+                     control = list(adapt_delta = 0.95),upper=upper, lower=lower)
 
- #  
- #  
+  ## Can get ESS and Rhat from rstan::monitor
+  mon <- monitor(fitmcmc)
+  max(mon$Rhat)
+  min(mon$Tail_ESS)
+
+  # pull out posterior vals
+  post<-as.matrix(fitmcmc)
+  post<-as_tibble(post)
+  post<-post %>% add_column(iteration=as.numeric(row.names(post)))
+
+  post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
+  post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
+
+  post_long_beta<-post %>% select(starts_with("logB"), iteration, gamma) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
+  post_long_beta$stock<-rep(1:5,length=nrow(post_long_beta))
+
+  post_long_sigma<-post %>% select(starts_with("logSigma") & !starts_with("logSigmaA"), iteration, gamma) %>%
+    pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
+  post_long_sigma$stock<-rep(1:5,length=nrow(post_long_sigma))
+
+  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_beta$gamma)
+
+  write.csv(post_long, paste(projDir,"cohoRickerSurv_mcmc.csv", sep="/"), row.names=F)
+
+   
  #  # Run projections ===============================
- #  
- #  
+ 
+    
   ## Check if necessary packages are available and install if necessary
   listOfPackages <- c("here", "parallel", "doParallel", "foreach",
                       "tidyverse", "tictoc", "samSim")
@@ -531,7 +527,6 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
   srDat <- read.csv(paste(outDir, "DataIn/ProjPars/cohoRecDatTrim.csv", sep="/"),
                     stringsAsFactors=F)
 
-
   # Posterior values of  CU-specific stock recruitment parameters for Ricker model; when available, passed and used to calculate alpha, beta and
   # sigma parameters rather than passing point values
   ricPars <- read.csv(paste(projDir,"cohoRickerSurv_mcmc.csv", sep="/"),
@@ -545,22 +540,25 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
   scenNames <- unique(simPar$scenario)
   dirNames <- sapply(scenNames, function(x) paste(x, unique(simPar$species),
                                                   sep = "_"))
-# 
-#   genericRecoverySim(simPar[1, ], cuPar=cuPar, srDat=srDat,
-#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
-#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
-#   genericRecoverySim(simPar[2, ], cuPar=cuPar, srDat=srDat,
-#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
-#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
-#   genericRecoverySim(simPar[3, ], cuPar=cuPar, srDat=srDat,
-#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
-#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
-#   genericRecoverySim(simPar[4, ], cuPar=cuPar, srDat=srDat,
-#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
-#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
-#   genericRecoverySim(simPar[5, ], cuPar=cuPar, srDat=srDat,
-#                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
-#                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+
+  
+# KH: To Add simPar loop ***************************  
+# Loop over all scenarios [rows] in simPar ================= 
+  genericRecoverySim(simPar[1, ], cuPar=cuPar, srDat=srDat,
+                     variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+                     dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+  genericRecoverySim(simPar[2, ], cuPar=cuPar, srDat=srDat,
+                     variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+                     dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+  genericRecoverySim(simPar[3, ], cuPar=cuPar, srDat=srDat,
+                     variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+                     dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+  genericRecoverySim(simPar[4, ], cuPar=cuPar, srDat=srDat,
+                     variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+                     dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
+  genericRecoverySim(simPar[5, ], cuPar=cuPar, srDat=srDat,
+                     variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
+                     dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
 
 
   # Read-in projection outputs to create spawner abundance plots
@@ -572,7 +570,6 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
     if (i == 1) projSpwnDat<-dat.i
     if (i > 1) projSpwnDat<-rbind(projSpwnDat,dat.i)
   }
-  
   
      makeSpawnerPlot<- function(i, plotDat, CUNames) {
         
@@ -611,84 +608,13 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
      # Test alternative method of calculating CIs based on distribution of sAg
      projDat.pp<-projDat %>% group_by(ppnCUsLowerBM) %>% 
        summarise(LRP.50=median(sAg), LRP.95=quantile(sAg,0.95),LRP.05=quantile(sAg,0.05))
-     write.csv(projDat.pp, paste(cohoDir,"/Figures/", "Distbased_projLRP.csv", sep=""))
+    # write.csv(projDat.pp, paste(cohoDir,"/Figures/", "Distbased_projLRP.csv", sep=""))
      
-     
-  # Subset projDat to get equal sized
-  nSub<-50
-  propList<-seq(0,1, by=1/N_Stocks)
-  for (pp in 1:length(propList)) {
-    projDat.pp<-projDat %>% filter(ppnCUsLowerBM == as.factor(propList[pp]))
-    projDat.pp <- projDat.pp %>% slice_sample(n=nSub)
-    if (pp == 1) projDatStrat<-projDat.pp
-    if (pp > 1) projDatStrat<-rbind(projDatStrat, projDat.pp)
-  }
-  
-  # # Replace projDat with stratified
-   projDat<-projDatStrat
-  
-  Scale<-1000
-  nStocks<-length(unique(SRDat$CU_Name))
-  
-  data<-list()
-  data$AggAbund<-projDat$sAg / Scale
-  data$N_Above_BM<-projDat$ppnCUsLowerBM * nStocks
-  data$Bern_Logistic<-0
-  data$N_Stks<-nStocks
-  data$p<-p
-  
-  param<-list()
-  param$B_0 <- 2
-  param$B_1 <- 0.1
-  
-  # range of agg abund to predict from
-  data$Pred_Abund <- seq(0, max(data$AggAbund), length.out = 100)
- 
-  obj <- MakeADFun(data, param, DLL="Proj_LRP", silent=TRUE)
-    
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
-  
-  
-  # Create Table of outputs
-  All_Ests <- data.frame(summary(sdreport(obj)))
-  All_Ests$Param <- row.names(All_Ests)
-  
-
-  # Put together readable data frame of values
-  All_Ests$Param <- sapply(All_Ests$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
-   
-  All_Ests[All_Ests$Param == "Agg_LRP", ] <-  All_Ests %>% filter(Param == "Agg_LRP") %>% 
-    mutate(Estimate = Estimate*Scale) %>% mutate(Std..Error = Std..Error*Scale)
-  Preds <- All_Ests %>% filter(Param == "Logit_Preds")
-  All_Ests <- All_Ests %>% filter(!(Param == "Logit_Preds")) 
-  
   out <- list()
-  out$All_Ests <- All_Ests
-  
-  # also return agg abundance and num CUs over Sgen
-  # depending on whether bernoulli or prop, grab correct N
-  #if(useBern_Logistic == T){
-  #  N_CUs <- obj$report()$All_Above_BM
-  #} else {
-   # N_CUs <- obj$report()$N_Above_BM/N_Stocks
-  #}
-  
-  Logistic_Data <- data.frame(yy = data$N_Above_BM/nStocks, xx = data$AggAbund*Scale)
-  
-  out$Logistic_Data <- Logistic_Data
-  
-  Logistic_Fits <- data.frame(xx = data$Pred_Abund*Scale, fit = inv_logit(Preds$Estimate),
-                              lwr = inv_logit(Preds$Estimate - 1.96*Preds$Std..Error),
-                              upr = inv_logit(Preds$Estimate + 1.96*Preds$Std..Error))
-  
-  out$Preds <- Logistic_Fits
-  
-  out$LRP <- data.frame(fit = All_Ests %>% filter(Param == "Agg_LRP") %>% pull(Estimate), 
-                        lwr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate - 1.96*Std..Error) %>% pull(xx),
-                        upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
+  out$Proj<- data.frame(AggSpawners=projDat[,"sAg"], ppnCUs=projDat[, "ppnCUsLowerBM"])
+  out$LRP <- as.data.frame(projDat.pp %>% filter(ppnCUsLowerBM==p) %>% select(fit=LRP.50, lwr=LRP.05, upr=LRP.95))
   
   out
-  
   
 }
 
