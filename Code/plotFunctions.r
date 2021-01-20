@@ -217,13 +217,14 @@ plotAnnualRetro<-function(Dat, Name ,outDir, useGenMean = F, genYrs = 3) {
     xlab("Year") + ylab(Ylab) +
     scale_color_manual(values = 'steelblue2') +
     labs(color = '') +
+    #coord_cartesian(ylim=c(0,2500000)) + # LW: optional for making all plots have same y limits, for comparisons.
     theme_classic() + 
     theme(legend.position = "none")
-  
-  if(length(LRPs$LRP_lwr[is.na(LRPs$LRP_lwr)=="TRUE"])==0) {
+
+  #if(length(LRPs$LRP_lwr[is.na(LRPs$LRP_lwr)=="TRUE"])==0) { # LW: removed this if statement to plot confidence intervals, even though some will have NA years
     annual_LRP_plot <- annual_LRP_plot + 
       geom_ribbon(aes(ymin = LRP_lwr, ymax = LRP_upr, x=retroYear), fill = "steelblue2", alpha = 0.5)
-  }
+  #}
   
   # Save plot
   ggsave(paste(outDir,"/Figures/AnnualRetrospective/", Name, "/Annual_LRP.pdf",sep=""), plot = annual_LRP_plot,
@@ -323,8 +324,8 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
     geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
     geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
     geom_point(data=Data, aes(x = xx, y = yy)) +
-    #geom_segment(aes(y=0.01, yend=0.01, x=2200, xend=230873), colour="dodgerblue") + # add in likelihood penalty SD
-    #geom_point(aes(y=0.01, x=mean(c(2200, 230873))), colour="dodgerblue") + # add in likelihood penalty mean
+    #geom_segment(aes(y=0.01, yend=0.01, x=2200, xend=230873), colour="dodgerblue") + #LW: add in likelihood penalty SD
+    #geom_point(aes(y=0.01, x=mean(c(2200, 230873))), colour="dodgerblue") + #LW: add in likelihood penalty mean
     xlab(Xlab) + ylab(Ylab) +
     coord_cartesian(ylim=c(0,1)) +
     #  ggtitle(paste("Retrospective Year", max(Dat.LRP$yr), sep=" ")) +

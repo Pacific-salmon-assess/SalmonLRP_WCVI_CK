@@ -104,8 +104,8 @@ ChumSRDat_no_CU_infill <- ChumSRDat[!(ChumSRDat$CU_Name %in% CUs_not_use), ]
 # ========================================================================
 
 # Loop over p values and run annual retrospective analyses for each level of p
-ps <- 0.90 # for now just use one p value
-#ps <- c(seq(0.6, 0.95,.05), 0.99) 
+#ps <- 0.90 # for now just use one p value
+ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
@@ -207,6 +207,30 @@ for(pp in 1:length(ps)){
 # ----------------#
 # Examine output  
 # ----------------#
+
+# Plot Sgen over time
+mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_95/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
+# Plot Sgen estimates over time
+png("Figures/fig_Sgen_annual_retro.png", width=8, height=4, res=300, units="in")
+ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=low_Sgen, ymax=up_Sgen, x=retroYr),colour=NA, alpha=0.2) +
+  facet_wrap(~CU_Name, scales="free_y") +
+  ylab("Sgen") + xlab("Year") +
+  geom_hline(aes(yintercept=0), linetype=2) +
+  theme_bw()
+dev.off()
+# Plot alpha estimates over time
+ggplot(mdat, aes(y=est_A, x=retroYr, colour=CU_Name)) +
+  geom_line() +
+  facet_wrap(~CU_Name, scales="free_y") +
+  theme_bw()
+# Plot beta estimates over time
+ggplot(mdat, aes(y=est_B, x=retroYr, colour=CU_Name)) +
+  geom_line() +
+  facet_wrap(~CU_Name, scales="free_y") +
+  theme_bw()
+
 # Plot ricker, SMSY, Sgen estimates from integrated model
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just one retro year for estimates
