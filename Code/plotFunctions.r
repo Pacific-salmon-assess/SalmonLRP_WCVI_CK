@@ -863,7 +863,8 @@ plotProjected<-function(Data, LRP, plotName, outDir, p) {
           geom_hline(yintercept=LRP$fit, linetype="dashed", color="orange", size = 1) +
           geom_vline(xintercept= p.ind, linetype="dashed", color="red", size = 1) +
           geom_hline(yintercept = LRP$lwr, linetype = "dotted", color = "orange", size = 1) +
-          geom_hline(yintercept = LRP$upr, linetype = "dotted", color = "orange", size = 1) 
+          geom_hline(yintercept = LRP$upr, linetype = "dotted", color = "orange", size = 1) +
+          ylim(0,100000)
   
   g <- g + coord_flip()
   

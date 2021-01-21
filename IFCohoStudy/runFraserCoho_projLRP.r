@@ -87,8 +87,8 @@ TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
 # ===================================================================
 # Run Projections
 # ==================================================================
-setwd(codeDir)
-devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
+ setwd(codeDir)
+ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
  
 BroodYrLag <- 2
 pList <- seq(0.2,1,by=0.2)
@@ -108,45 +108,58 @@ EscDat <- EscpDat.yy %>%  right_join(unique(SRDat[,c("CU_ID", "CU_Name")]))
 
 
 
-# # Create samSim input files for current scenario
-# scenarioName <- "IM.sigER.057"
-# 
-#   
-# projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
-#                            useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-#                           nMCMC=10000, nProj=500, sigER = 0.057, recCorScalar=1)
-#   
+# Create samSim input files for current scenario
+scenarioName <- "IM.sigER.057"
+
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                           useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                          nMCMC=10000, nProj=500, sigER = 0.057, recCorScalar=1)
 
 
 
-# scenarioName <- "IM.sigER.057.corr0.75"
-# 
-# projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
-#                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-#                                 nMCMC=10000, nProj=500, sigER = 0.057, recCorScalar=0.75)
 
-# 
- scenarioName <- "IM.sigER.057.corr0.5"
- 
- 
+ scenarioName <- "IM.sigER.057.corr0.75"
+
  projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                  useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                 nMCMC=10000, nProj=500, sigER = 0.057, recCorScalar=0.5)
- 
-# scenarioName <- "IM.sigER.0855"
-# 
-# 
-# projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
-#                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-#                                 nMCMC=10000, nProj=500, sigER = 0.0855, recCorScalar=1)
+                                 nMCMC=10000, nProj=500, sigER = 0.057, recCorScalar=0.75)
 
+
+  scenarioName <- "IM.sigER.057.corr0.5"
+ 
+ 
+  projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                  useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                  nMCMC=10000, nProj=500, sigER = 0.057, recCorScalar=0.5)
+ 
+ 
+  
+  scenarioName <- "IM.sigER.07125"
+  
+  
+  projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                  useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                  nMCMC=10000, nProj=500, sigER = 0.07125, recCorScalar=1)
+  
+ 
+  
+   scenarioName <- "IM.sigER.0855"
+
+
+ projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                 nMCMC=10000, nProj=500, sigER = 0.0855, recCorScalar=1)
+
+ 
+ 
 # ===================================================================
 # Estimate LRPs
 # ==================================================================
 
 # Read in projection outputs to create input lists for logistic regression
 
-OMsToInclude<-c("IM.sigER.057", "IM.sigER.0855", "IM.sigER.057.corr0.75","IM.sigER.057.corr0.5")
+OMsToInclude<-c("IM.sigER.057", "IM.sigER.07125" ,"IM.sigER.0855", "IM.sigER.057.corr0.75","IM.sigER.057.corr0.5")
 
 
 
@@ -241,7 +254,20 @@ for (i in 1:length(OMsToInclude)) {
 #OMsToInclude<-c("IM.sigER.057", "IM.sigER.0855", "IM.sigER.057.corr0.75","IM.sigER.057.corr0.5")
 
 
-plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% c("IM.sigER.057", "IM.sigER.057.corr0.75", "IM.sigER.057.corr0.5" ))
+plotDat2<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% c("IM.sigER.057", "IM.sigER.057.corr0.75", "IM.sigER.057.corr0.5" ))
 
-g <-ggplot(data=plotDat,mapping=aes(x=OM.Name,y=LRP.50) +
-             geom_point())
+g <-ggplot(data=plotDat2, mapping=aes(x=OM.Name, y=LRP.50)) +
+             geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
+             xlab("Operating Model") + ylab("LRP; p = 0.8") +
+             scale_x_discrete(labels=c("Base", "EscCorr75%", "EscCorr50%"))
+  
+  
+plotDat3<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% c("IM.sigER.057", "IM.sigER.07125", "IM.sigER.0855"))
+
+g2 <-ggplot(data=plotDat3, mapping=aes(x=OM.Name, y=LRP.50)) +
+  geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
+  xlab("Operating Model") + ylab("LRP; p = 0.8") +
+  scale_x_discrete(labels=c("Base", "ERSig125%", "ERSig150%"))
+
+
+
