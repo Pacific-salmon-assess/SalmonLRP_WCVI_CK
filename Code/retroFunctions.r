@@ -84,7 +84,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
                          useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
         
         # This version with dum2=dum2 as an input was created to test consistency with M. Arbeider code; 
-        # ---- if wanting to run with geometric means calculated at subpopulation lvel, will beed to add AggEscp_gmBySP arguement to LRP_Mod function
+        # ---- if wanting to run with geometric means calculated at subpopulation level, will need to add AggEscp_gmBySP arguement to LRP_Mod function
         #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
         #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
         
