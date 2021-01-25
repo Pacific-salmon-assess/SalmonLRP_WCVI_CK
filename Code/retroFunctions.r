@@ -18,6 +18,29 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
   # Put together Run info
   RunInfo <- data.frame(BMmodel, LRPmodel, useGenMean, integratedModel)
   
+  
+  #Create directories to store outputs in
+  retroDir<-paste(outDir, "DataOut/AnnualRetrospective", sep="/")
+  if (file.exists(retroDir) == FALSE){
+    dir.create(retroDir)
+  }
+  
+  outputDir <- paste(retroDir, RunName, sep="/")
+  if (file.exists(outputDir) == FALSE){
+    dir.create(outputDir)
+  }
+  
+  
+  figDir <- paste(outDir, "Figures/AnnualRetrospective", sep="/")
+  if (file.exists(figDir) == FALSE){
+    dir.create(figDir)
+  } 
+  
+  figDir <- paste(figDir, RunName, sep="/")
+  if (file.exists(figDir) == FALSE){
+    dir.create(figDir)
+  }
+  
   # Loop over years ===============================================
   for (yy in 1:length(yearList)) {
   
@@ -132,7 +155,8 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       }
       
     }
-    
+      
+      
     newLRP.df <- data.frame(retroYear = yearList[yy], LRP = LRP_Mod$LRP$fit, 
                                         LRP_lwr = LRP_Mod$LRP$lwr, LRP_upr = LRP_Mod$LRP$upr)
     newLRP.df <- cbind(newLRP.df, RunInfo)
@@ -146,16 +170,6 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     # If plotLRP=T, plot model fit and data  
     if (plotLRP == T & LRPmodel != "Proj") {
       
-      figDir <- paste(outDir, "Figures/AnnualRetrospective", sep="/")
-      if (file.exists(figDir) == FALSE){
-        dir.create(figDir)
-      } 
-      
-      figDir <- paste(figDir, RunName, sep="/")
-      if (file.exists(figDir) == FALSE){
-        dir.create(figDir)
-      }
-      
       plotLogistic(Data = LRP_Mod$Logistic_Data, Preds = LRP_Mod$Preds, 
                    LRP = LRP_Mod$LRP, useGenMean = useGenMean,
                    plotName = paste("LogisticMod", yearList[yy], sep ="_"), outDir = figDir,
@@ -164,16 +178,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     
     if (plotLRP == T & LRPmodel == "Proj") {
-      
-      figDir <- paste(outDir, "Figures/AnnualRetrospective", sep="/")
-      if (file.exists(figDir) == FALSE){
-        dir.create(figDir)
-      } 
-      
-      figDir <- paste(figDir, RunName, sep="/")
-      if (file.exists(figDir) == FALSE){
-        dir.create(figDir)
-      }
+
       
       plotProjected(Data = LRP_Mod$Proj, LRP = LRP_Mod$LRP,
                    plotName = paste("ProjMod", yearList[yy], sep ="_"), 
@@ -182,7 +187,14 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       
     }
     
-
+  
+    # Save rda outputs for binomial model fit
+    if (LRPmodel == "BinLogistic") {
+      input<-LRP_Mod$rda
+      input$dir<-""
+      input$plotName<-"testLRDiagnostics"
+      save(input, file = paste(outputDir,"/",BMmodel, "_p",p,"_",yearList[yy],".rda",sep=""))
+    }
   } # end of year loop
 
 
@@ -190,26 +202,8 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
   # Save outputs and make plots if function is not being run as part of a bootstrap
   if (bootstrapMode == F) {
   
-    #Create directories to store outputs in
-    retroDir<-paste(outDir, "DataOut/AnnualRetrospective", sep="/")
-        if (file.exists(retroDir) == FALSE){
-      dir.create(retroDir)
-    }
     
-    outputDir <- paste(retroDir, RunName, sep="/")
-    if (file.exists(outputDir) == FALSE){
-      dir.create(outputDir)
-    } 
-    
-    figDir <- paste(outDir, "Figures/AnnualRetrospective", sep="/")
-    if (file.exists(figDir) == FALSE){
-      dir.create(figDir)
-    } 
-    
-    figDir <- paste(figDir, RunName, sep="/")
-    if (file.exists(figDir) == FALSE){
-      dir.create(figDir)
-    }
+
    
     
     

@@ -128,7 +128,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   }
   
   # Call optimization:
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10)) # LW: increased eval.max and iter.max from 1e5 to 1e10; helped model converge
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5)) # LW: increased eval.max and iter.max from 1e5 to 1e10; helped model converge
   
   # Parameter estimate after phase 1 optimization:
   pl <- obj$env$parList(opt$par) # Parameter estimates after phase 1
@@ -204,7 +204,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   )   
 
     # Create Table of outputs
-    All_Ests <- data.frame(summary(sdreport(obj)))
+    All_Ests <- data.frame(summary(sdreport(obj),p.value=TRUE))
     All_Ests$Param <- row.names(All_Ests)
     if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
       All_Ests <- full_join(All_Ests, HyperParams)
@@ -241,6 +241,19 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
       N_CUs <- obj$report()$N_Above_BM/N_Stocks
     }
     
+    
+    
+    
+    # Save .rda file for binomial fits
+    if(Bern_Logistic == F){
+      rda<-list()
+      rda$All_Ests<-All_Ests
+      rda$AggAbund<-Agg_Abund$Agg_Esc / Scale
+      rda$obsPpnAboveBM<-N_CUs
+      rda$p <- p
+      rda$nLL<-obj$report()$ans
+    }
+    
     Logistic_Data <- data.frame(Mod = Mod, yr = Agg_Abund$yr, 
                                 yy = N_CUs, xx = Agg_Abund$Agg_Esc)
 
@@ -255,6 +268,8 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     out$LRP <- data.frame(fit = All_Ests %>% filter(Param == "Agg_LRP") %>% pull(Estimate), 
                           lwr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate - 1.96*Std..Error) %>% pull(xx),
                           upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
+    
+    out$rda<-rda
     
     out
     

@@ -199,6 +199,7 @@ Type objective_function<Type>::operator() ()
   ADREPORT(A);
   ADREPORT(Logit_Preds);
   ADREPORT(Rec_Preds);
+  REPORT(ans);
   
   return ans;
   
