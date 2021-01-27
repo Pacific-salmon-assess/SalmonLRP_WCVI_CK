@@ -110,11 +110,14 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
         #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
         
+        }
+        
         # Case 3: Percentile-based benchmark model (e.g., for Inside South Coast Chum)
         if (BMmodel == "ThreshAbund_Percentile" ) { # Note that ST is for short-term threshold, LT is for long-term threshold
           # write in data and model Run_LRP function call
       
         }
+       # end of if(integratedModel == F) statement
         
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================
     
