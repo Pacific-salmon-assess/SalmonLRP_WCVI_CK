@@ -68,7 +68,6 @@ Type objective_function<Type>::operator() ()
   DATA_SCALAR(p);
   DATA_SCALAR(Sgen_sig);
   
-  
   PARAMETER_VECTOR(logA);
   PARAMETER_VECTOR(logB);
   PARAMETER_VECTOR(logSigma);

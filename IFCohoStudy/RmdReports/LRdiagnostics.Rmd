@@ -85,7 +85,7 @@ First input data are loaded.
 Step 1. What are residuals, and are deviance residuals > 2?
 
 ```{r warning=FALSE, message=FALSE, error=FALSE}
-load(here("RmdReports", "DataIn", "SR_IndivRicker_Surv_p0.99_2018.rda"))
+load(here("RmdReports", "DataIn", "SR_IndivRicker_Surv_p0.8_2018.rda"))
 All_Ests <- input$All_Ests
 AggAbund <- input$AggAbund
 obsPpnAboveBM <- input$obsPpnAboveBM

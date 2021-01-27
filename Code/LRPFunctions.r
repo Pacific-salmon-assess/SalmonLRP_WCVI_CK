@@ -11,7 +11,7 @@ library(zoo)
 # Run TMB Ricker and LRP estimation, either Hier Ricker or regular ========================================================
 Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic, 
                            useGenMean, genYrs, p,
-                           TMB_Inputs, B_penalty_mu, B_penalty_sigma) {
+                           TMB_Inputs) {
   
   # Specify Mod (i.e., TMB model name) specific to each benchmark model type
   Mod <- BMmodel
@@ -77,12 +77,12 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   data$Tau_dist <- TMB_Inputs$Tau_dist
   
   # add data and parameters specific to Ricker model without a survival covariate
-  if(Mod %in% c("SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")) {
+  if(Mod %in% c("SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior", "SR_IndivRicker_Surv_LowAggPrior")) {
         param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
     }
   
   # add data and parameters specific to Ricker model with survival covariate
-  if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_HierRicker_SurvCap","SR_IndivRicker_SurvCap")){
+  if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_HierRicker_SurvCap","SR_IndivRicker_SurvCap", "SR_IndivRicker_Surv_LowAggPrior")){
     data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
     data$logSurv_3 <- log(SRDat$STAS_Age_3)
     data$logSurv_4 <- log(SRDat$STAS_Age_4)
@@ -108,21 +108,22 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
        data$cap_sig<-TMB_Inputs$cap_sig
      }
      # add parameter specific to model without cap on carrying capacity (model parameterized for B):
-     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv")) {
+     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_IndivRicker_Surv_LowAggPrior")) {
        param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
      }
   }
   
   # add values for B_penalty mu and sd
-  if(Mod %in% c("SR_IndivRicker_NoSurv_LowAggPrior")) {
-    data$B_penalty_mu <- B_penalty_mu
-    data$B_penalty_sigma <- B_penalty_sigma
+  if(Mod %in% c("SR_IndivRicker_NoSurv_LowAggPrior", "SR_IndivRicker_Surv_LowAggPrior")) {
+    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu
+    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma
   }
-  
+
   # Phase 1: estimate SR params
   map <- list(logSgen=factor(rep(NA, data$N_Stks)), B_0=factor(NA), B_1=factor(NA)) # Determine which parameters to fix
-  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")){
+  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior","SR_IndivRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, map=map)
+  
   } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
   }
@@ -144,7 +145,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
 
   #Phase 2: get Sgen, SMSY
   map2 <- list(B_0=factor(NA), B_1=factor(NA))
-  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")){
+  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior","SR_IndivRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, map=map2)
   } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
     obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map2)
@@ -169,7 +170,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   pl2 <- obj$env$parList(opt$par) 
   
   # Phase 3: fit logistic model; hold other estimates constant
-  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior")){
+  if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior","SR_IndivRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, pl2, DLL=Mod, silent=TRUE)
   } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
     map3 = list(logMuA = as.factor(NA), logSigmaA = as.factor(NA))

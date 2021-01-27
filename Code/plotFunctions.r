@@ -340,7 +340,6 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
       geom_vline(xintercept = LRP$upr, linetype = "dotted", color = "orange", size = 1) 
   }
   
-  
   # Save plot
   ggsave(paste(outDir, "/",plotName,".pdf",sep=""), plot = annual_LRP_plot,
          width = 4, height = 3, units = "in")      
