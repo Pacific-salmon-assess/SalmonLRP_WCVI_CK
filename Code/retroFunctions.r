@@ -76,9 +76,9 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       
         # Case 2: BM Model == 1000 fish threshold at sub-population level
         
-        if (BMmodel == "ThreshAbund_Subpop1000_ST" | BMmodel == "ThreshAbund_Subpop1000_LT") {
+        if (BMmodel == "ThreshAbund_Subpop1000_ST" | BMmodel == "ThreshAbund_Subpop1000_LT") { # Note that ST is for short-term threshold, LT is for long-term threshold
         
-          # Calcualte geomertic means for subpopulation escapements (where, subpopulation is sum of tributaries) 
+          # Calcualte geometric means for subpopulation escapements (where, subpopulation is sum of tributaries) 
           EscpDat.cu <- EscpDat.yy %>% group_by(CU_Name, CU_ID, Subpop_Name, yr)  %>% summarise(SubpopEscp=sum(Escp)) %>%
             mutate(Gen_Mean = rollapply(SubpopEscp, genYrs, gm_mean, fill = NA, align="right"))
           # Add a column indicating whether geometric mean escapement iss > 1000 fish threshold for each subpopulation 
@@ -100,7 +100,6 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           #dum2<- dum %>% group_by(yr) %>% summarise(AggEscp.gm=sum(Gen_Mean))
           
 
-
       # 2) Call specified LRP function:
         
         LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU, Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
@@ -111,11 +110,11 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
         #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
         
-        
+        # Case 3: Percentile-based benchmark model (e.g., for Inside South Coast Chum)
+        if (BMmodel == "ThreshAbund_Percentile" ) { # Note that ST is for short-term threshold, LT is for long-term threshold
+          # write in data and model Run_LRP function call
+      
         }
-        
-        
-        
         
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================
     
