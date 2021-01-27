@@ -32,8 +32,8 @@ sourceAll()
 
 # Load TMB models
 
-compile("TMB_Files/ThreshAbund_Subpop1000.cpp")
-dyn.load(dynlib("TMB_Files/ThreshAbund_Subpop1000"))
+compile("TMB_Files/LRP_Logistic_Only.cpp")
+dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
 
 compile("TMB_Files/SR_HierRicker_Surv.cpp")
 dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv"))

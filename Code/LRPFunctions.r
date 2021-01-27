@@ -333,7 +333,7 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   param$B_1 <- 0.1
 
   # Run TMB code
-  obj <- MakeADFun(data, param, DLL="ThreshAbund_Subpop1000", silent=TRUE) # FLAG: change to updated cpp model name when updated
+  obj <- MakeADFun(data, param, DLL="LRP_Logistic_Only", silent=TRUE) # FLAG: change to updated cpp model name when updated
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Create Table of outputs
