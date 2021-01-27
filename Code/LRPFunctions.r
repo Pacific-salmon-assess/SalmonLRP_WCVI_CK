@@ -279,7 +279,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
 
 # ==============================================================================================================
 
-# Run TMB estimation for logistic regression fit only ========================================================
+# Run TMB estimation for logistic regression fit only (no Ricker fit - used for threshold and percentile based approaches) ==========
 Run_LRP <- function(EscDat, Mod, useBern_Logistic, 
                            useGenMean, genYrs, p, TMB_Inputs) {
 
