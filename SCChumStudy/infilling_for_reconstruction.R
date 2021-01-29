@@ -49,7 +49,20 @@ rawdat <- read.csv("DataIn/Chum Escapement Data With Areas_2018.csv", stringsAsF
 #       these three stocks are 100% enhanced at least since enhancement began at those locations.  
 #       We have little data in the enhanced contribution found in the returns but for the purposes of 
 #       pulling out wild we make the assumption they were 100% enhanced and not included. 
-
+#
+# ------------------#
+# Further data notes - from Pieter Van Will
+# ------------------#
+#   Note that NAs are unobserved creeks.
+#
+#  	Regarding blank escapement count values vs. 0 values, specifically where wild was NA but brood was 0:
+#     Pieter Van Will: I would consider any of those as Blanks and would require infill 
+#     (perhaps if the Escapement is 0, convert that to a blank and I doubt there any real 0 
+#     escapement numbers, even if there are some fish or a 0 in brood stock.)
+#
+#   Little Qualicum, Qualicum, and Puntledge Rivers: assume these are 100% enhanced, and 
+#     remove entirely for infilling for wild escapement
+#
 
 
 # ----------------------------------------------------#
@@ -63,22 +76,19 @@ CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Kn
 CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
 
 
-rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish
+rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish - earlier run timing means they are not intercepted in same fisheries, can't do run reconstruction with them
 
 ## All Data -- wild/enhanced/brood/rack
 # wide to long format. maintain NA values (uncounted streams)
 ldat <- rawdat_f %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(rawdat_f)), names_to="Year", values_to="Escape")
 
-# Note that NAs are unobserved creeks.
-# add column that is TRUE if source is wild and escapement is actually a 0 value (as opposed to NA)
-ldat$true_0_wild <- ifelse(ldat$Source=="Wild" & ldat$Escape==0, TRUE, FALSE)
-ldat$true_0_wild[is.na(ldat$true_0_wild)] <- FALSE # make NA values FALSE
-
 # summarise by stream, to collapse any brood/rack/enhanced/rack etc categories
-ldat_s <- ldat %>% group_by(CU_Name, GroupName, GU_Name, NME, SummerRun, Rabcode, Area, Year, true_0_wild) %>%
+ldat_s <- ldat %>% group_by(CU_Name, GroupName, GU_Name, NME, SummerRun, Rabcode, Area, Year) %>%
   summarise(Escape=sum(Escape, na.rm=TRUE))
-# for sum escapement values that are 0 and not true 0 wild counts, make back into NA
-ldat_s$Escape[ ldat_s$Escape == 0 & ldat_s$true_0_wild == FALSE ] <- NA
+# # for sum escapement values that are 0, make back into NA (unobserved)
+# since na.rm was TRUE, these became 0 values; summing NA values with na.rm=TRUE returns 0
+ldat_s$Escape[ ldat_s$Escape == 0 ] <- NA
+
 
 # Figure out what proportion of sites are actually observed for each CU/year
 ObsDF <- data.frame(CU=character(), Year=numeric(), Nobs=numeric(), Ninfilled=numeric())

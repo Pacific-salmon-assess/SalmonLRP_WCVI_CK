@@ -155,6 +155,7 @@ for(pp in 1:length(ps)){
 # benchmarks (e.g., all CUs are just below their lower benchmarks). The mean of this distribution is halfway between these 
 # lower (2.5% quantile) and upper (97.5% quantile) values. 
 
+# FLAG: LW- Need to put these in TMB_Inputs list now. See Kendra's code in testLogisticPen.r
 # get Sgen estimates from running integrated model without penalty
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
@@ -209,7 +210,7 @@ for(pp in 1:length(ps)){
 # ----------------#
 
 # Plot Sgen over time
-mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_95/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
+mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
 # Plot Sgen estimates over time
 png("Figures/fig_Sgen_annual_retro.png", width=8, height=4, res=300, units="in")
 ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
@@ -232,7 +233,7 @@ ggplot(mdat, aes(y=est_B, x=retroYr, colour=CU_Name)) +
   theme_bw()
 
 # Plot ricker, SMSY, Sgen estimates from integrated model
-ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
+ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_95/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just one retro year for estimates
 t <- merge(ests1, ChumSRDat[, names(ChumSRDat) %in% c("BroodYear", "Spawners", "Recruits", "CU_Name")], by=c("CU_Name"))
 

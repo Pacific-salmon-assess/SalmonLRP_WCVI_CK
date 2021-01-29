@@ -11,7 +11,7 @@
 
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
                          BMmodel, LRPmodel=NULL, integratedModel=F, useGenMean=T, 
-                         TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T, B_penalty_mu, B_penalty_sigma) {
+                         TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T) {
   
   yearList<-startYr:endYr
   
@@ -116,7 +116,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         if (BMmodel == "LRP_Logistic_Only" ) {
           
           
-          # Below is from coho code, needs to be modified
+          # FLAG: LW: Below is from coho code, needs to be modified
         
           # Calcualte geometric means for subpopulation escapements (where, subpopulation is sum of tributaries) 
           EscpDat.cu <- EscpDat.yy %>% group_by(CU_Name, CU_ID, Subpop_Name, yr)  %>% summarise(SubpopEscp=sum(Escp)) %>%
@@ -157,8 +157,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
       
       LRP_Mod <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
-                     useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, B_penalty_mu = B_penalty_mu, 
-                     B_penalty_sigma = B_penalty_sigma)
+                     useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
       
       # Compile Ricker parameters from TMB outputs
       RickerEsts <- LRP_Mod$All_Ests %>% filter(Param %in% c("A", "B" , "Smsy", "Sgen", "sigma"))
