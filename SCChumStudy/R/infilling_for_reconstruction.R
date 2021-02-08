@@ -1,5 +1,6 @@
 # Infill Inside South Coast Chum escapement data, to supply Pieter Van Will
-# for him to do run reconstruction separately (using catch data and proportion wild)
+# for him to do run reconstruction separately (using catch data and proportion wild), 
+# to supply the input returns data for retrospective analysis
 
 # This code infills at multiple levels 
 # Total Spawners - by CU, area and stream
@@ -20,10 +21,11 @@ setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 
 library(dplyr)
 library(tidyr)
+library(readxl)
 library(ggplot2)
 
 # source functions for infilling, etc.
-source("chumDataFunctions.r")
+source("R/chumDataFunctions.r")
 
 # read in raw escapement data, with years up to 2018, from Pieter Van Will
 rawdat <- read.csv("DataIn/Chum Escapement Data With Areas_2018.csv", stringsAsFactors = FALSE, check.names=FALSE, strip.white = TRUE) # strip.white for leading and trailing white spaces in Source and SummerRun columns
@@ -62,8 +64,6 @@ rawdat <- read.csv("DataIn/Chum Escapement Data With Areas_2018.csv", stringsAsF
 #
 #   Little Qualicum, Qualicum, and Puntledge Rivers: assume these are 100% enhanced, and 
 #     remove entirely for infilling for wild escapement
-#
-
 
 # ----------------------------------------------------#
 # Infill total spawners (wild, enhanced, brood, rack)
@@ -78,7 +78,7 @@ CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
 
 rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish - earlier run timing means they are not intercepted in same fisheries, can't do run reconstruction with them
 
-## All Data -- wild/enhanced/brood/rack
+## Infill total spawners (wild/enhanced/brood/rack)
 # wide to long format. maintain NA values (uncounted streams)
 ldat <- rawdat_f %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(rawdat_f)), names_to="Year", values_to="Escape")
 
@@ -111,8 +111,6 @@ AllDat <- Infill(data = ldat_s, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupN
 # Element 1: infilled total escapement, by stream
 # Element 2: results of Element 1, grouped by CU and year and summed (raw escapement and infilled escapement)
 #     For example, for CUs that were not counted in a year, GroupEsc is NA and SumRawEsc = 0.
-AllDat_el1 <- AllDat[[1]]
-AllDat_el2 <- AllDat[[2]]
 
 # # check infilling
 # temp <- AllDat[[2]]
@@ -136,10 +134,6 @@ AllDatSumm <- as.data.frame(AllDat[[2]][which(AllDat[[2]]$CU_Name %in% CUdf$CU_r
 # CU-level infilling: Infill missing values for total escapement by CU (for CUs that did not get counts in certain years)
 AllByCU <- Infill(data=AllDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
 
-AllByCU_el1 <- AllByCU[[1]]
-AllByCU_el2 <- AllByCU[[2]]
-
-
 ## Also want all infilled by site
 # join non-fraser by-stream infilled data with by-CU infilled totals
 xx <- left_join(AllDatAll, data.frame(CU_Name=AllByCU[[1]]$CU_Name, Year=AllByCU[[1]]$Year, CUEsc = AllByCU[[1]]$SiteEsc))
@@ -149,26 +143,26 @@ xx <- left_join(AllDatAll, data.frame(CU_Name=AllByCU[[1]]$CU_Name, Year=AllByCU
 xx$Escape <- ifelse(is.nan(xx$SiteEsc), xx$CUEsc*xx$Props, xx$SiteEsc)
 #xx$CU <- CUdf$CU_short[match(xx$CU_Name, CUdf$CU_raw)] # don't need CU abbreviation
 # Write total escapement by stream to csv, infilled by stream and CU
-write.csv(xx, "DataOut/AllInfilledBySite.csv", row.names=F)
+write.csv(xx, "DataOut/total_spawners_infilled_by_site.csv", row.names=F)
 
 #Also want sumamrized by CU
-write.csv(AllByCU[[1]], "DataOut/AllInfilledByCU.csv")
+write.csv(AllByCU[[1]], "DataOut/total_spawners_infilled_by_CU.csv")
 
 # And sumamrized by CU x area
 AllBySite <- xx
 AllByArea <- AllBySite %>% group_by(CU_Name, Area, Year) %>% summarize( AreaTot = sum(Escape))
-write.csv(AllByArea, "DataOut/AllInfilledByArea.csv")
+write.csv(AllByArea, "DataOut/total_spawners_infilled_by_area.csv")
 
 #Join with report data
-AllByCUSumm <- AllByCU[[1]]
-AllByCUSumm$CU <- CUdf$CU_short[match(AllByCUSumm$CU_Name, CUdf$CU_raw)]
-#Now export to use in benchmark work
-DFout <- data.frame(Year=AllByCUSumm$Year, CU=AllByCUSumm$CU, Escape=AllByCUSumm$SiteEsc)
-#write.csv(DFout, "DataOut/InfilledAllDat2_15.csv")
-
-# dumb work around, but need years to not be factors to link data sets
-AllByCUSumm$Year <- as.character(AllByCUSumm$Year)
-AllByCUSumm$Year <- as.numeric(AllByCUSumm$Year)
+# AllByCUSumm <- AllByCU[[1]]
+# AllByCUSumm$CU <- CUdf$CU_short[match(AllByCUSumm$CU_Name, CUdf$CU_raw)]
+# #Now export to use in benchmark work
+# DFout <- data.frame(Year=AllByCUSumm$Year, CU=AllByCUSumm$CU, Escape=AllByCUSumm$SiteEsc)
+# #write.csv(DFout, "DataOut/InfilledAllDat2_15.csv")
+# 
+# # dumb work around, but need years to not be factors to link data sets
+# AllByCUSumm$Year <- as.character(AllByCUSumm$Year)
+# AllByCUSumm$Year <- as.numeric(AllByCUSumm$Year)
 
 #now merge two together, need to remove "Escape" Column from output
 #Infilled <- left_join(AllByCUSumm[,-which(names(AllByCUSumm)=="Escape")],SRdat[,1:4], by=c("CU", "Year"))
@@ -246,42 +240,42 @@ AllByCUSumm$Year <- as.numeric(AllByCUSumm$Year)
 
 # Remove non-wild
 
-# Change to long form from wide form
-LongDatWild <- ldat[ldat$Source=="Wild",]
-
-#Now Infill
-WildDat <- Infill(data = LongDatWild, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
-#WildDatAmean <- Infill(data = LongDatWild, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME", avg="Amean")
-#AllData
-#write.csv(WildDat[[1]], "DataOut/InfilledWild_all.csv")
-#Sumamarised data
-# write.csv(WildDat[[2]], "DataOut/InfilledWild.csv")
-
-# Remove Fraser, make data frame to feed into infill again
-WildDatSumm <- as.data.frame(WildDat[[2]][which(WildDat[[2]]$CU_Name %in% CUdf$CU_raw),])
-#WildDatSummAmean <- as.data.frame(WildDatAmean[[2]][which(WildDatAmean[[2]]$CU_Name %in% CUdf$CU_raw),])
-WildDatAll <- WildDat[[1]][which(WildDat[[1]]$CU_Name %in% CUdf$CU_raw),c("CU_Name", "NME", "Year", "Props", "SiteEsc", "Area", "Rabcode")]
-
-
-# Now infill missing years for entire CU
-
-#Infill missing values
-WildByCU <- Infill(data=WildDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
-# also compare arithmatic mean
-#WildByCUAmean <-  Infill(data=WildDatSummAmean, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc", avg="Amean")
-
-## Also want all infilled by site
-yy <- left_join(WildDatAll, data.frame(CU_Name=WildByCU[[1]]$CU_Name, Year=WildByCU[[1]]$Year, CUEsc = WildByCU[[1]]$SiteEsc))
-yy$Escape <- ifelse(is.nan(yy$SiteEsc), yy$CUEsc*yy$Props, yy$SiteEsc)
-#yy$CU <- CUdf$CU_short[match(yy$CU_Name, CUdf$CU_raw)]
-write.csv(yy, "DataOut/WildInfilledBySite.csv")
-
-
-#Add CU column
-WildSumm <- WildByCU[[1]]
-WildSumm$CU <- CUdf$CU_short[match(WildSumm$CU_Name, CUdf$CU_raw)]
-WildSumm$Year <- as.character(WildSumm$Year)
-WildSumm$Year <- as.numeric(WildSumm$Year)
+# # Change to long form from wide form
+# LongDatWild <- ldat[ldat$Source=="Wild",]
+# 
+# #Now Infill
+# WildDat <- Infill(data = LongDatWild, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
+# #WildDatAmean <- Infill(data = LongDatWild, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME", avg="Amean")
+# #AllData
+# #write.csv(WildDat[[1]], "DataOut/InfilledWild_all.csv")
+# #Sumamarised data
+# # write.csv(WildDat[[2]], "DataOut/InfilledWild.csv")
+# 
+# # Remove Fraser, make data frame to feed into infill again
+# WildDatSumm <- as.data.frame(WildDat[[2]][which(WildDat[[2]]$CU_Name %in% CUdf$CU_raw),])
+# #WildDatSummAmean <- as.data.frame(WildDatAmean[[2]][which(WildDatAmean[[2]]$CU_Name %in% CUdf$CU_raw),])
+# WildDatAll <- WildDat[[1]][which(WildDat[[1]]$CU_Name %in% CUdf$CU_raw),c("CU_Name", "NME", "Year", "Props", "SiteEsc", "Area", "Rabcode")]
+# 
+# 
+# # Now infill missing years for entire CU
+# 
+# #Infill missing values
+# WildByCU <- Infill(data=WildDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
+# # also compare arithmatic mean
+# #WildByCUAmean <-  Infill(data=WildDatSummAmean, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc", avg="Amean")
+# 
+# ## Also want all infilled by site
+# yy <- left_join(WildDatAll, data.frame(CU_Name=WildByCU[[1]]$CU_Name, Year=WildByCU[[1]]$Year, CUEsc = WildByCU[[1]]$SiteEsc))
+# yy$Escape <- ifelse(is.nan(yy$SiteEsc), yy$CUEsc*yy$Props, yy$SiteEsc)
+# #yy$CU <- CUdf$CU_short[match(yy$CU_Name, CUdf$CU_raw)]
+# write.csv(yy, "DataOut/WildInfilledBySite.csv")
+# 
+# 
+# #Add CU column
+# WildSumm <- WildByCU[[1]]
+# WildSumm$CU <- CUdf$CU_short[match(WildSumm$CU_Name, CUdf$CU_raw)]
+# WildSumm$Year <- as.character(WildSumm$Year)
+# WildSumm$Year <- as.numeric(WildSumm$Year)
 # WildSummAmean <- WildByCUAmean[[1]]
 # WildSummAmean$CU <- CUdf$CU_short[match(WildSummAmean$CU_Name, CUdf$CU_raw)]
 # WildSummAmean$Year <- as.character(WildSummAmean$Year)
@@ -341,9 +335,9 @@ LongDatNoQP <- ldat[which(ldat$Source =="Wild" &
 #Now Infill
 NoQPDat <- Infill(data = LongDatNoQP, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 #AllData
-write.csv(NoQPDat[[1]], "DataOut/InfilledNoQP_all.csv")
+#write.csv(NoQPDat[[1]], "DataOut/InfilledNoQP_all.csv")
 #Sumamarised data
-write.csv(NoQPDat[[2]], "DataOut/InfilledNoQP.csv")
+#write.csv(NoQPDat[[2]], "DataOut/InfilledNoQP.csv")
 
 # Remove Fraser, make data frame to feed into infill again
 NoQPDatSumm <- as.data.frame(NoQPDat[[2]][which(NoQPDat[[2]]$CU_Name %in% CUdf$CU_raw),])
@@ -359,22 +353,96 @@ NoQPByCU <- Infill(data=NoQPDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", 
 zz <- left_join(NoQPDatAll, data.frame(CU_Name=NoQPByCU[[1]]$CU_Name, Year=NoQPByCU[[1]]$Year, CUEsc = NoQPByCU[[1]]$SiteEsc))
 zz$Escape <- ifelse(is.nan(zz$SiteEsc), zz$CUEsc*zz$Props, zz$SiteEsc)
 zz$CU <- CUdf$CU_short[match(zz$CU_Name, CUdf$CU_raw)]
-write.csv(zz, "DataOut/NoQPInfilledBySite.csv")
+write.csv(zz, "DataOut/wild_spawners_infilled_by_site.csv")
 
 # Also by CU
-write.csv(NoQPByCU[[1]], "DataOut/Wild_ByCU.csv")
+write.csv(NoQPByCU[[1]], "DataOut/wild_spawners_infilled_by_CU.csv")
 
 #Now by CU, Area
 AllBySiteWild <- zz
 AllByAreaWild <- AllBySiteWild %>% group_by(CU_Name, Area, Year) %>% summarize( AreaTot = sum(Escape))
-write.csv(AllByAreaWild, "DataOut/WildBYarea.csv")
+write.csv(AllByAreaWild, "DataOut/wild_spawners_infilled_by_area.csv")
+
+#===============================================#
+#   Check against infilling of 2013 data =======
+#===============================================#
+
+# 2018 infilled data by site
+total_spawners_infilled_by_site_2018 <- AllBySite
+wild_spawners_infilled_by_site_2018 <- AllBySiteWild
+
+# 2013 data infilled by site
+total_spawners_infilled_by_site_2013 <- read_excel("DataIn/2013_infilled_data_PieterVanWill_for_checking.xlsx", sheet=1)
+wild_spawners_infilled_by_site_2013 <- read_excel("DataIn/2013_infilled_data_PieterVanWill_for_checking.xlsx", sheet=2)
+
+# merge totals 2013/2018 data 
+total_infill <- merge(total_spawners_infilled_by_site_2013, total_spawners_infilled_by_site_2018, 
+                      by=c("CU_Name", "NME", "Year", "Area", "Rabcode"), suffixes=c("_2013d", "_2018d"), all=TRUE)
+# merge wild 2013/2018 data
+wild_infill <- merge(wild_spawners_infilled_by_site_2013, wild_spawners_infilled_by_site_2018, 
+                      by=c("CU_Name", "NME", "Year", "Area", "Rabcode"), suffixes=c("_2013d", "_2018d"), all=TRUE)
+# compare for totals
+ggplot(total_infill, aes(x=Escape_2013d, y=Escape_2018d, colour=Year)) +
+  geom_point() +
+  facet_wrap(~CU_Name, scales="free") + 
+  geom_abline(aes(intercept=0, slope=1))
+# compare for wild
+ggplot(wild_infill, aes(x=Escape_2013d, y=Escape_2018d, colour=Year)) +
+  geom_point() +
+  facet_wrap(~CU_Name, scales="free") + 
+  geom_abline(aes(intercept=0, slope=1))
+# Something going weird for southern coastal streams
+
+# Note that everything seems to match up okay except Southern Coastal Stream. 
+# It appears that Viner Sound Creek is classified as fall run in the 2013 data and summer run in 2018.
+# Since this is a larger run, it changes the proportions of the infilling, leading to pretty different
+# infilling values between the 2013 data and the updated 2018 data.
+# From Pieter Van Will: 
+# Viner should be assigned as Summer.  It is a later timing than most of the summer runs but would not
+# really be impacted by the typical fall chum targeted fisheries.  It should not be included in this analysis.
+
+#Compare infilling by stream, 2013 and 2018 data
+CUs <- unique(total_infill$CU_Name)
+compare_stream_infilling_fig <- function(CU, dat) {
+  d <- dat
+  d <- d[d$CU_Name==CU, ]
+  ggplot(d, aes(y=Escape_2013d, x=Year)) +
+    geom_point() +
+    geom_point(aes(y=Escape_2018d, x=Year), colour="dodgerblue", shape=1, stroke=2) +
+    facet_wrap(~NME, scales="free_y") +
+    scale_x_discrete(breaks=seq(1960,2020,10)) +
+    ggtitle(CU) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle=90, vjust=0.5))
+}
+# for total spawners
+fig_list <- as.list(CUs)
+fig_list <- purrr::map(fig_list, compare_stream_infilling_fig, dat=total_infill)
+fig_list[[1]] # check
+pdf("Figures/fig_check_infill_by_stream_total_spawners.pdf", width=18, height=12, pointsize=8)
+for (i in 1:length(fig_list)){
+  print(fig_list[[i]])
+}
+dev.off()
+# For wild spawners
+fig_list_wild <- as.list(CUs)
+fig_list_wild <- purrr::map(fig_list_wild, compare_stream_infilling_fig, dat=wild_infill)
+fig_list_wild[[1]] # check
+pdf("Figures/fig_check_infill_by_stream_wild_spawners.pdf", width=18, height=12, pointsize=8)
+for (i in 1:length(fig_list_wild)){
+  print(fig_list_wild[[i]])
+}
+dev.off()
+
+# COmpare infilling by CU, 2013 and 2018 data
+
 
 
 #Add CU column
-NoQPSumm <- NoQPByCU[[1]]
-NoQPSumm$CU <- CUdf$CU_short[match(NoQPSumm$CU_Name, CUdf$CU_raw)]
-NoQPSumm$Year <- as.character(NoQPSumm$Year)
-NoQPSumm$Year <- as.numeric(NoQPSumm$Year)
+# NoQPSumm <- NoQPByCU[[1]]
+# NoQPSumm$CU <- CUdf$CU_short[match(NoQPSumm$CU_Name, CUdf$CU_raw)]
+# NoQPSumm$Year <- as.character(NoQPSumm$Year)
+# NoQPSumm$Year <- as.numeric(NoQPSumm$Year)
 # NoQPSummAmean <- NoQPByCUAmean[[1]]
 # NoQPSummAmean$CU <- CUdf$CU_short[match(NoQPSummAmean$CU_Name, CUdf$CU_raw)]
 # NoQPSummAmean$Year <- as.character(NoQPSummAmean$Year)
@@ -387,11 +455,11 @@ NoQPSumm$Year <- as.numeric(NoQPSumm$Year)
 #make plot showing all, wild, this
 #Join data together
 # Start with "Infilled"
-InfillWild <- data.frame("Year"=Infilled$Year, "CU"=Infilled$CU, "ReportEsc"=Infilled$Escape, "AllGmean" =Infilled$SiteEsc)
-#Now add Wild Gmean
-InfillWild <- left_join(InfillWild, data.frame("Year"=WildSumm$Year, "CU"=WildSumm$CU, "WildGmean"=WildSumm$SiteEsc), by=c("Year", "CU"))
-# Wild No QP
-InfillWild <- left_join(InfillWild, data.frame("Year"=NoQPSumm$Year, "CU"=NoQPSumm$CU, "NoQPGmean"=NoQPSumm$SiteEsc), by=c("Year", "CU"))
+# InfillWild <- data.frame("Year"=Infilled$Year, "CU"=Infilled$CU, "ReportEsc"=Infilled$Escape, "AllGmean" =Infilled$SiteEsc)
+# #Now add Wild Gmean
+# InfillWild <- left_join(InfillWild, data.frame("Year"=WildSumm$Year, "CU"=WildSumm$CU, "WildGmean"=WildSumm$SiteEsc), by=c("Year", "CU"))
+# # Wild No QP
+# InfillWild <- left_join(InfillWild, data.frame("Year"=NoQPSumm$Year, "CU"=NoQPSumm$CU, "NoQPGmean"=NoQPSumm$SiteEsc), by=c("Year", "CU"))
 
 # 
 # Cols <- c("#17AB69", "#2120B7",  "#FF314B", "#E8B338")

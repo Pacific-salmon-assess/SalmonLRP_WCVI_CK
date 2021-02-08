@@ -23,7 +23,7 @@ setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 
 # With changes by Luke Warkentin
 
-source("chumDataFunctions.r")
+source("R/chumDataFunctions.r")
 
 # Create look-up table for CU names
 RawDat <- read.csv("DataIn/Chum Escapement Data With Areas_2013.csv", stringsAsFactors = FALSE, check.names=FALSE, strip.white = TRUE) # strip.white helps with SummerRun values with spaces
