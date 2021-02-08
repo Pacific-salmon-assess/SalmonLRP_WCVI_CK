@@ -148,7 +148,7 @@ write.csv(xx, "DataOut/total_spawners_infilled_by_site.csv", row.names=F)
 #Also want sumamrized by CU
 write.csv(AllByCU[[1]], "DataOut/total_spawners_infilled_by_CU.csv")
 
-# And sumamrized by CU x area
+# And sumamrized by area
 AllBySite <- xx
 AllByArea <- AllBySite %>% group_by(CU_Name, Area, Year) %>% summarize( AreaTot = sum(Escape))
 write.csv(AllByArea, "DataOut/total_spawners_infilled_by_area.csv")
@@ -194,9 +194,9 @@ AllBySiteWild <- zz
 AllByAreaWild <- AllBySiteWild %>% group_by(CU_Name, Area, Year) %>% summarize( AreaTot = sum(Escape))
 write.csv(AllByAreaWild, "DataOut/wild_spawners_infilled_by_area.csv")
 
-#===============================================#
-#   Check against infilling of 2013 data =======
-#===============================================#
+# ----------------------------------------------------#
+#   Check against infilling of 2013 data 
+# ----------------------------------------------------#
 
 # 2018 infilled data by site
 total_spawners_infilled_by_site_2018 <- AllBySite
@@ -266,7 +266,28 @@ for (i in 1:length(fig_list_wild)){
 dev.off()
 
 # Compare infilling by CU, 2013 and 2018 data
-total_spawners_infilled_by_CU_2013
-total_spawners_infilled_by_CU_2018 
+# 2018 data
+total_spawners_infilled_by_CU_2018 <- AllByCU[[1]]
+wild_spawners_infilled_by_CU_2018 <- NoQPByCU[[1]]
 
+# 2013 data
+spawners_infilled_by_CU_2013 <- read_excel("DataIn/2013_infilled_data_PieterVanWill_for_checking.xlsx", sheet=3)
+names(spawners_infilled_by_CU_2013)[c(3,4)] <- c("wild", "total")
 
+# graph to compare
+# Total first
+ggplot(spawners_infilled_by_CU_2013, aes(y=total, x=Year)) +
+  geom_point() +
+  geom_point(data=total_spawners_infilled_by_CU_2018, aes(y=SiteEsc, x=as.integer(Year)), colour="orange", shape=1) +
+  facet_wrap(~CU_Name, scales="free_y") +
+  theme_classic()
+
+# Wild
+ggplot(spawners_infilled_by_CU_2013, aes(y=wild, x=Year)) +
+  geom_point() +
+  geom_point(data=wild_spawners_infilled_by_CU_2018, aes(y=SiteEsc, x=as.integer(Year)), colour="orange", shape=1) +
+  facet_wrap(~CU_Name, scales="free_y") +
+  theme_classic()
+
+# Note that Southern COastal streams is much lower for 2018 data, because Viner Sound Creek was changed from fall
+# run in 2013 data to summer run in 2018 data, meaning it is not longer used for this analysis
