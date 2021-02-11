@@ -121,7 +121,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           # Calcualte geometric means for subpopulation escapements (where, subpopulation is sum of tributaries) 
           EscpDat.cu <- EscpDat.yy %>% group_by(CU_Name, CU_ID, Subpop_Name, yr)  %>% summarise(SubpopEscp=sum(Escp)) %>%
             mutate(Gen_Mean = rollapply(SubpopEscp, genYrs, gm_mean, fill = NA, align="right"))
-          # Add a column indicating whether geometric mean escapement iss > 1000 fish threshold for each subpopulation 
+          # Add a column indicating whether geometric mean escapement is > 1000 fish threshold for each subpopulation 
           Above1000<-ifelse(EscpDat.cu$Gen_Mean >= 1000, 1, 0)
           EscpDat.cu<-EscpDat.cu %>% add_column(Above1000)
           # Calculate the number of subpopulations that are above 1000 fish threshold in each CU

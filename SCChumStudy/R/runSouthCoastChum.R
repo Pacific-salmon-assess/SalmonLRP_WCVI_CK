@@ -33,11 +33,14 @@ dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv"))
 compile("TMB_Files/SR_IndivRicker_NoSurv_LowAggPrior.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv_LowAggPrior"))
 
+compile("TMB_Files/LRP_Logistic_Only.cpp")
+dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
+
 # Switch to chum directory
 setwd(chumDir)
 
 # Run to re-do infilling and brood table
-# source("prepare_data.r") 
+#source("R/prepare_data.r") 
 
 # ====================================================================
 # Read in data and format for using in retrospective analysis
@@ -61,10 +64,6 @@ ChumSRDat <- ChumSRDat[ , !names(ChumSRDat) %in% "CU"] # remove raw CU column
 names(ChumSRDat)[names(ChumSRDat) =="Year"] <- "BroodYear" # FLAG: Check that Year is actually brood year in the infilling code
 names(ChumSRDat)[names(ChumSRDat) =="Escape"] <- "Spawners" # FLAG: Check that Escape column is spawners (as opposed to the Return column)
 names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits" 
-  
-# FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
-# This may be done automatically, see retroFunctions.r line 20 
-# This is done automatically using the BroodYrLag variable
 
 # ====================================================================================
 # Call functions to plot data availability:
@@ -89,9 +88,13 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 
 # Data prep
 
+
+# FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
+# This may be done automatically, see retroFunctions.r line 20 
+# This is done automatically using the BroodYrLag variable
 # remove years without full recruitment - not sure if this step is needed
-ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
-ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
+#ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
+#ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
 # make data frames that do not include any observations from CUs with CU-level infilling (Upper Knight and Bute Inlet)
 CUs_not_use <- unique(ChumEscpDat$CU_Name[which(is.na(ChumEscpDat$Escape))]) # get CUs that have NA values for escapement in some years (means that they were infilled at CU level)
@@ -122,8 +125,8 @@ ps <- c(seq(0.6, 0.95,.05), 0.99)
 
 
 # reload LRPFunctions.r to update changes (for active working)
-source(paste0(codeDir, "/LRPFunctions.r"))
-source(paste0(codeDir, "/plotFunctions.r"))
+#source(paste0(codeDir, "/LRPFunctions.r"))
+#source(paste0(codeDir, "/plotFunctions.r"))
 
 
 # Run retrospective analysis
@@ -180,9 +183,6 @@ B_penalty_sigma <- 58300/TMB_Inputs_IM$Scale # Use SD value that gives 95% densi
 #   With using CUs with CU infilling:
 #    Using 1.5 times SD makes logistic curve flip in one year, and 2 times SD makes it flip several years (with p=0.9)
 
-
-
-
 # Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
 #       (to bring logistic curve intercept down)
 
@@ -204,6 +204,23 @@ for(pp in 1:length(ps)){
                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   #}
 }
+
+
+# Run retrospective analysis using percentile benchmarks
+for(pp in 1:length(ps)){
+  # Run with Binomial LRP model with individual model Ricker
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "LRP_Logistic_Only", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.Percentile",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+  # Same but with CUs with CU-level infilling removed
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "LRP_Logistic_Only", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+}
+
+
 
 # ----------------#
 # Examine output  

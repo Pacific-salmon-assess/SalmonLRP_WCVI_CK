@@ -69,3 +69,7 @@ GetRickerParams <- function(SRDat){
 } # end get Ricker param. function
 
 
+# Function to get percentile benchmarks from historic time series of spawner abundance (e.g., for Inside South Coast Chum)
+get_percentile_benchmarks <- function( ) {
+  
+}
