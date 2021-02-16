@@ -233,8 +233,8 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     
     out <- list()
     out$All_Ests <- All_Ests
-     browser()
-    # also return agg abundance and num CUs over Sgen
+
+        # also return agg abundance and num CUs over Sgen
     # depending on whether bernoulli or prop, grab correct N
     if(Bern_Logistic == T){
       N_CUs <- obj$report()$All_Above_BM

@@ -91,10 +91,10 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 
 # FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
 # This may be done automatically, see retroFunctions.r line 20 
-# This is done automatically using the BroodYrLag variable
-# remove years without full recruitment - not sure if this step is needed
-#ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
-#ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
+# This is done automatically using the BroodYrLag variable 
+# remove years without full recruitment  - FLAG: still needing to run this, otherwise have NA recrtuiment going into model optimization
+ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
+ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
 # make data frames that do not include any observations from CUs with CU-level infilling (Upper Knight and Bute Inlet)
 CUs_not_use <- unique(ChumEscpDat$CU_Name[which(is.na(ChumEscpDat$Escape))]) # get CUs that have NA values for escapement in some years (means that they were infilled at CU level)
@@ -125,7 +125,7 @@ ps <- c(seq(0.6, 0.95,.05), 0.99)
 
 
 # reload LRPFunctions.r to update changes (for active working)
-#source(paste0(codeDir, "/LRPFunctions.r"))
+source(paste0(codeDir, "/LRPFunctions.r"))
 #source(paste0(codeDir, "/plotFunctions.r"))
 
 
@@ -176,6 +176,13 @@ plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$S
 abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2,2,1)) # plot upper and lower values and mean
 B_penalty_sigma <- 58300/TMB_Inputs_IM$Scale # Use SD value that gives 95% density between lower and upper limits, divide by scale
 
+# Add penalty values to TMB_Inputs_IM
+TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
+                      Tau_dist = 0.1,
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                      B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
+
+
 #B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2) # test with 1.5 and 2 times SD
 # Effect of increasing SD:
 #   Without CUs with CU infilling:
@@ -194,14 +201,14 @@ for(pp in 1:length(ps)){
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_", ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   # Without CU-level infilling
-  #runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #               BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-  #               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", "sigma", i, "_", ps[pp]*100, sep=""),
-  #               bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", "sigma", i, "_", ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
-                bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
+                bootstrapMode = F, plotLRP=T )
   #}
 }
 

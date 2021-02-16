@@ -28,7 +28,7 @@ library(ggplot2)
 source("R/chumDataFunctions.r")
 
 # read in raw escapement data, with years up to 2018, from Pieter Van Will
-rawdat <- read.csv("DataIn/Chum Escapement Data With Areas_2018.csv", stringsAsFactors = FALSE, check.names=FALSE, strip.white = TRUE) # strip.white for leading and trailing white spaces in Source and SummerRun columns
+rawdat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb152021).xlsx", sheet="Updated 2018", trim_ws=TRUE) # strip.white for leading and trailing white spaces in Source and SummerRun columns
 
 # ----------------------------------------------------#
 # Notes on data variables (From Pieter Van Will): 
