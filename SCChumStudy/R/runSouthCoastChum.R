@@ -212,17 +212,14 @@ for(pp in 1:length(ps)){
   #}
 }
 
+source(paste0(codeDir, "/retroFunctions.r"))
+source(paste0(codeDir, "/LRPFunctions.r"))
 
 # Run retrospective analysis using percentile benchmarks
 for(pp in 1:length(ps)){
-  # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "LRP_Logistic_Only", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.Percentile",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T)
-  # Same but with CUs with CU-level infilling removed
+  # Run with Binomial LRP with CUs with CU-level infilling removed
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "LRP_Logistic_Only", LRPmodel="BinLogistic", integratedModel=T,
+                 BMmodel = "LRP_Logistic_Only", LRPmodel="BinLogistic", integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
 }
