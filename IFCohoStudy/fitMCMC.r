@@ -2,8 +2,7 @@
 
 # For stantmb example, see: https://github.com/kaskr/tmbstan#examples
 
-
-nIter<-10000
+nIter<-5000
 
 
 library(dplyr)
@@ -25,6 +24,15 @@ setwd(codeDir)
 compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
 
+compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
+dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
+
+setwd(codeDir)
+compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
+
+compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
+dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
 
 compile("TMB_Files/SR_IndivRicker.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker"))
@@ -55,25 +63,48 @@ EscDat <- CoEscpDat
 # Start MCMC fit ==========================================
 
 # Option 1) Fit hierarchical model with survival covariate; no LRP estimation
-# TMB_Inputs <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-#                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
+#Mod <- "SR_HierRicker_Surv_noLRP"
+# TMB_Inputs <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+#                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
 #                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-# 
-# Mod <- "SR_HierRicker_Surv_noLRP"
+
+
 
 # # Option 2) Fit individual models with survival covariate; no LRP estimation
+# Mod <- "SR_IndivRicker_Surv_noLRP"
 # TMB_Inputs <- list(Scale = 1000, logA_Start = 1,
 #      Tau_dist = 0.1,
 #      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.4)
 # 
-# Mod <- "SR_IndivRicker_Surv_noLRP"
+
 
 
 # Option 3) Fit individual models without survival covariate; no LRP estimation
-TMB_Inputs <- list(Scale = 1000, logA_Start = 1,
-     Tau_dist = 0.1, Sgen_sig = 0.95)
+# Mod <- "SR_IndivRicker"
+# TMB_Inputs <- list(Scale = 1000, logA_Start = 1,
+#      Tau_dist = 0.1, Sgen_sig = 0.95)
 
-Mod <- "SR_IndivRicker"
+
+# Option 4) Fit hierarchical model with survival covariate and capacity cap; no LRP estimation
+Mod <- "SR_HierRicker_SurvCap_noLRP"
+cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+
+TMB_Inputs <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
+
+
+
+
+# Option 5) Fit individual models with survival covariate and capacity cap; no LRP estimation
+# Mod <- "SR_IndivRicker_SurvCap_noLRP"
+# cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+# TMB_Inputs <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
+#                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                    cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
+
+
 
 
 # Set-up for call to TMB
@@ -97,48 +128,54 @@ param$logSgen <-  log((SRDat %>% group_by(CU_Name) %>%  summarise(x=quantile(Spa
 data$Tau_dist <- TMB_Inputs$Tau_dist
 
 
-param <- list()
-param$logA <- rep(TMB_Inputs$logA_Start, N_Stocks)
-param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
-param$logSigma <- rep(-2, N_Stocks)
-param$logSgen <-  log((SRDat %>% group_by(CU_Name) %>%  summarise(x=quantile(Spawners, 0.5)))$x/Scale)
+#param <- list()
+#param$logA <- rep(TMB_Inputs$logA_Start, N_Stocks)
+#param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
+#param$logSigma <- rep(-2, N_Stocks)
+#param$logSgen <-  log((SRDat %>% group_by(CU_Name) %>%  summarise(x=quantile(Spawners, 0.5)))$x/Scale)
 
-if (Mod == "SR_HierRicker_Surv_noLRP" | Mod == "SR_IndivRicker_Surv_noLRP") {
+if (Mod %in% c("SR_HierRicker_Surv_noLRP", "SR_IndivRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP" )) {
   param$gamma <- 0
 }
 
-if (Mod == "SR_HierRicker_Surv_noLRP") {
-  param$logMuA <- TMB_Inputs$logA_Start
-  param$logSigmaA <- 1
-}
 
 # specify data
 data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
 
-if (Mod == "SR_HierRicker_Surv_noLRP" | Mod == "SR_IndivRicker_Surv_noLRP") {
+if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_IndivRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP","SR_IndivRicker_SurvCap_noLRP")) {
   data$logSurv_3 <- log(SRDat$STAS_Age_3)
   data$logSurv_4 <- log(SRDat$STAS_Age_4)
-}
-
-if (Mod == "SR_HierRicker_Surv_noLRP" | Mod == "SR_IndivRicker_Surv_noLRP") {
-muSurv <- SRDat %>% group_by(CU_ID) %>%
+  muSurv <- SRDat %>% group_by(CU_ID) %>%
   summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
   data$muLSurv <- log(muSurv$muSurv)
 }
 
 data$Tau_dist <- TMB_Inputs$Tau_dist
 
-if (Mod == "SR_HierRicker_Surv_noLRP") {
-  data$logMuA_mean <- TMB_Inputs$logMuA_mean
+if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP")) {
+  data$logMuA_mean <- TMB_Inputs$logMuA_mean 
   data$logMuA_sig <- TMB_Inputs$logMuA_sig
-  data$Tau_A_dist <- TMB_Inputs$Tau_A_dist
+  data$Tau_A_dist <- TMB_Inputs$Tau_A_dist 
+  param$logMuA <- TMB_Inputs$logA_Start
+  param$logSigmaA <- 1
 }
 
-if (Mod == "SR_HierRicker_Surv_noLRP" | Mod == "SR_IndivRicker_Surv_noLRP") {
+if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_IndivRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP","SR_IndivRicker_SurvCap_noLRP")) {
   data$gamma_mean <- TMB_Inputs$gamma_mean
   data$gamma_sig <- TMB_Inputs$gamma_sig
 }
 
+
+# add data and parameters specific to models with carrying capacity prior:
+if(Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP")) {
+  param$cap <- TMB_Inputs$cap_mean
+  data$cap_mean<-TMB_Inputs$cap_mean
+  data$cap_sig<-TMB_Inputs$cap_sig
+}
+# add parameter specific to model without cap on carrying capacity (model parameterized for B):
+if(Mod %in% c("SR_HierRicker_Surv_noLRP", "SR_IndivRicker_Surv_noLRP")) {
+  param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
+}
 
 # range of spawner abundance to predict recruitment from
 data$Pred_Spwn <- rep(seq(0,max(data$S)*1.1,length=100), N_Stocks) # vectors of spawner abundance to use for predicted recruits, one vector of length 100 for each stock
@@ -155,7 +192,7 @@ map <- list(logSgen=factor(rep(NA, data$N_Stks))) # Fix Sgen
 
 
 
-if (Mod == "SR_HierRicker_Surv_noLRP") {
+if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP")) {
   obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
 } else {
   obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE,  map=map)
@@ -174,7 +211,7 @@ pl$logSgen <- log(0.3*SMSYs)
 
 
 # Phase 2 get Sgen, SMSY etc. =================
-if (Mod == "SR_HierRicker_Surv_noLRP") {
+if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP")) {
   obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
 } else {
   obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE)
@@ -184,12 +221,14 @@ if (Mod == "SR_HierRicker_Surv_noLRP") {
 # Create upper bounds vector that is same length and order as start vector that will be given to nlminb
 upper<-unlist(obj$par)
 upper[1:length(upper)]<-Inf
-upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy (To do: confirm with Brooke)
+upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy
+#upper[names(upper) =="cap"] <- SMSYs * 10 # constrain Sgen to be less than 10x Smsy
 upper<-unname(upper)
 
 lower<-unlist(obj$par)
 lower[1:length(lower)]<--Inf
 lower[names(lower) =="logSgen"] <- log(0.001)
+lower[names(lower) =="cap"] <- 0
 lower<-unname(lower)
 
 opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
@@ -224,34 +263,72 @@ post<-as.matrix(fitmcmc)
 post<-as_tibble(post)
 post<-post %>% add_column(iteration=as.numeric(row.names(post)))
 
-if (Mod == "SR_IndivRicker") {
+
   post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
-} else {
-  post_long_alpha<-post %>% select(starts_with("logA"), iteration, gamma) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
-}
-post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
-
-if (Mod == "SR_IndivRicker") {
-  post_long_beta<-post %>% select(starts_with("logB"), iteration) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
-} else {
-  post_long_beta<-post %>% select(starts_with("logB"), iteration, gamma) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
-}
-post_long_beta$stock<-rep(1:5,length=nrow(post_long_beta))
-
-if (Mod == "SR_IndivRicker") {  
+  post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
+  
   post_long_sigma<-post %>% select(starts_with("logSigma") & !starts_with("logSigmaA"), iteration) %>% 
-    pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
-} else {
-  post_long_sigma<-post %>% select(starts_with("logSigma") & !starts_with("logSigmaA"), iteration, gamma) %>% 
-    pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
-}
-post_long_sigma$stock<-rep(1:5,length=nrow(post_long_sigma))
+      pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
+  post_long_sigma$stock<-rep(1:5,length=nrow(post_long_sigma))
+  
+  if (Mod != "SR_IndivRicker") {
+    post_long_gamma<-post %>% select(iteration, gamma)
+    nsamp<-nrow(post_long_gamma)
+    post_long_gamma<-rbind(post_long_gamma,post_long_gamma,post_long_gamma,post_long_gamma,post_long_gamma)
+    post_long_gamma$stock<-c(rep(1,length=nsamp),rep(2,length=nsamp),rep(3,length=nsamp),
+                            rep(4,nsamp),rep(5,length=nsamp))
+  }
+  
+  if (Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP")) {
+    post_long_cap<-post %>% select(starts_with("cap"), iteration) %>% pivot_longer(starts_with("cap"),names_to="stock", values_to="cap")
+    post_long_cap$stock<-rep(1:5,length=nrow(post_long_cap))
+  } else {
+    post_long_beta<-post %>% select(starts_with("logB"), iteration) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
+    post_long_beta$stock<-rep(1:5,length=nrow(post_long_beta))
+  }
+  
+  if (Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP")) {
+    post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
+  }
+  if (Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_Cap_noLRP")) {
+    post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
+  }
+  
+# if (Mod == "SR_IndivRicker") {
+#   post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
+# } else {
+#   post_long_alpha<-post %>% select(starts_with("logA"), iteration, gamma) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
+# }
+# post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
+# 
+# if (Mod == "SR_IndivRicker") {
+#   post_long_beta<-post %>% select(starts_with("logB"), iteration) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
+# } else if (Mod == "SR_HierRicker_SurvCap_noLRP") {
+#   post_long_beta<-post %>% select(starts_with("cap"), iteration, gamma) %>% pivot_longer(starts_with("cap"),names_to="stock", values_to="cap")
+# } else {
+#   post_long_beta<-post %>% select(starts_with("logB"), iteration, gamma) %>% pivot_longer(starts_with("logB"),names_to="stock", values_to="logB")
+# }
+# post_long_beta$stock<-rep(1:5,length=nrow(post_long_beta))
+# 
+# 
+# 
+# if (Mod == "SR_IndivRicker") {  
+#   post_long_sigma<-post %>% select(starts_with("logSigma") & !starts_with("logSigmaA"), iteration) %>% 
+#     pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
+# } else {
+#   post_long_sigma<-post %>% select(starts_with("logSigma") & !starts_with("logSigmaA"), iteration, gamma) %>% 
+#     pivot_longer(starts_with("logSigma"),names_to="stock", values_to="logSigma")
+# }
+# post_long_sigma$stock<-rep(1:5,length=nrow(post_long_sigma))
+# 
+# if (Mod == "SR_IndivRicker") { 
+#   post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma))
+# } else {
+#   post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_beta$gamma)
+# }
 
-if (Mod == "SR_IndivRicker") { 
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma))
-} else {
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_beta$gamma)
-}
+
+
 write.csv(post_long, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcPosterior.csv", sep=""),row.names=F)
 
 
@@ -286,6 +363,10 @@ plotPostHist<-function(x, post, parName, Scale, applyExp=T, CUNames) {
     margPost <- margPost/Scale
     xlab<-"Beta"
   }
+  if (parName == "cap") {
+    margPost <- margPost*Scale
+    xlab<-"SRep"
+  }
   
   
   margPost<-as.data.frame(margPost)
@@ -315,11 +396,31 @@ pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"Si
 do.call(grid.arrange, ps)
 dev.off()
 
-ps<-list()
-ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logB", Scale=1000, applyExp=T, CUNames=CU_list)
-pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"BetaPost.pdf", sep=""))
-do.call(grid.arrange, ps)
-dev.off()
+if(Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP","SR_HierRicker_Surv_noLRP", "SR_IndivRicker_Surv_noLRP")) {
+  pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"GammaPost.pdf", sep=""))
+  margPost<-as.matrix(fitmcmc)[,"gamma"]
+  ggplot(as.data.frame(margPost), aes(x=margPost)) + geom_histogram() + labs(x="gamma", y = "Count")
+  dev.off()
+}
+
+if(Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP")) {
+  ps<-list()
+  ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="cap", Scale=1000, applyExp=F, CUNames=CU_list)
+  pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"CapPost.pdf", sep=""))
+  do.call(grid.arrange, ps)
+  dev.off()
+  
+} else {
+
+  ps<-list()
+  ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logB", Scale=1000, applyExp=T, CUNames=CU_list)
+  pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"BetaPost.pdf", sep=""))
+  do.call(grid.arrange, ps)
+  dev.off()
+
+}
+
+
 
 # ========================================================================================================
 # View mcmc fits
