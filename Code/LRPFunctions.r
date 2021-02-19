@@ -233,16 +233,14 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     
     out <- list()
     out$All_Ests <- All_Ests
-    
-    # also return agg abundance and num CUs over Sgen
+
+        # also return agg abundance and num CUs over Sgen
     # depending on whether bernoulli or prop, grab correct N
     if(Bern_Logistic == T){
       N_CUs <- obj$report()$All_Above_BM
     } else {
       N_CUs <- obj$report()$N_Above_BM/N_Stocks
     }
-    
-    
     
     
     # Save .rda file for binomial fits
@@ -333,7 +331,7 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   param$B_1 <- 0.1
 
   # Run TMB code
-  obj <- MakeADFun(data, param, DLL="ThreshAbund_Subpop1000", silent=TRUE)
+  obj <- MakeADFun(data, param, DLL="LRP_Logistic_Only", silent=TRUE)
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Create Table of outputs

@@ -11,7 +11,7 @@
 
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
                          BMmodel, LRPmodel=NULL, integratedModel=F, useGenMean=T, 
-                         TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T, B_penalty_mu, B_penalty_sigma) {
+                         TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T) {
   
   yearList<-startYr:endYr
   
@@ -55,7 +55,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       if (LRPmodel == "BernLogistic") useBern_Logistic <- TRUE
       if (LRPmodel == "BinLogistic") useBern_Logistic <- FALSE
       
-      # Model Not Integrated (i.e., seperate benchmark and LRP functions are being used) ===========================
+      # Model Not Integrated (i.e., separate benchmark and LRP functions are being used) ===========================
       if(integratedModel == F){
         
         # 1) Call specified benchmark function:
@@ -110,10 +110,35 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
         #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
         
+        }
+        
         # Case 3: Percentile-based benchmark model (e.g., for Inside South Coast Chum)
-        if (BMmodel == "ThreshAbund_Percentile" ) { # Note that ST is for short-term threshold, LT is for long-term threshold
-          # write in data and model Run_LRP function call
-      
+        if (BMmodel == "LRP_Logistic_Only" ) {
+          
+          
+          # FLAG: LW: Below is from coho code, needs to be modified
+        
+          # Calcualte geometric means for subpopulation escapements (where, subpopulation is sum of tributaries) 
+          EscpDat.cu <- EscpDat.yy %>% group_by(CU_Name, CU_ID, Subpop_Name, yr)  %>% summarise(SubpopEscp=sum(Escp)) %>%
+            mutate(Gen_Mean = rollapply(SubpopEscp, genYrs, gm_mean, fill = NA, align="right"))
+          # Add a column indicating whether geometric mean escapement is > 1000 fish threshold for each subpopulation 
+          Above1000<-ifelse(EscpDat.cu$Gen_Mean >= 1000, 1, 0)
+          EscpDat.cu<-EscpDat.cu %>% add_column(Above1000)
+          # Calculate the number of subpopulations that are above 1000 fish threshold in each CU
+          LBM_status_byCU <- EscpDat.cu %>% group_by(CU_Name, CU_ID, yr) %>% 
+            summarise(Escp=sum(SubpopEscp), N = length(unique(Subpop_Name)),N_grThresh=sum(Above1000))
+          # Add a column indicating whether >= 50% of subpopulations were above 1000 fish threshold in each CU (1 = yes, 0 = no) (short-term recovery goal)
+          HalfGrThresh<-ifelse(LBM_status_byCU$N_grThresh >=  ceiling(LBM_status_byCU$N/2),1,0)
+          # Add a column indicating wheter all subpopulations were above 1000 fish threshold in each CU (long-term recovery goal) 
+          AllGrThresh<-ifelse(LBM_status_byCU$N_grThresh == LBM_status_byCU$N,1,0)
+          LBM_status_byCU <- LBM_status_byCU %>% add_column(HalfGrThresh) %>% add_column(AllGrThresh)
+          
+          # 2) Call specified LRP function:
+          
+          LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU, Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
+                           useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
+          
+          
         }
         
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================
@@ -132,8 +157,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
       
       LRP_Mod <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
-                     useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, B_penalty_mu = B_penalty_mu, 
-                     B_penalty_sigma = B_penalty_sigma)
+                     useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
       
       # Compile Ricker parameters from TMB outputs
       RickerEsts <- LRP_Mod$All_Ests %>% filter(Param %in% c("A", "B" , "Smsy", "Sgen", "sigma"))
