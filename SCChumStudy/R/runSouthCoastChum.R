@@ -36,6 +36,9 @@ dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv_LowAggPrior"))
 compile("TMB_Files/LRP_Logistic_Only.cpp")
 dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
 
+compile("TMB_Files/LRP_Logistic_Only_LowAggPrior.cpp")
+dyn.load(dynlib("TMB_Files/LRP_Logistic_Only_LowAggPrior"))
+
 # Switch to chum directory
 setwd(chumDir)
 
@@ -222,6 +225,11 @@ for(pp in 1:length(ps)){
                  BMmodel = "LRP_Logistic_Only", LRPmodel="BinLogistic", integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
+  # with prior penalty on low aggregate abundance
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "LRP_Logistic_Only_LowAggPrior", LRPmodel="BinLogistic", integratedModel=F,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
 }
 
 
@@ -229,6 +237,19 @@ for(pp in 1:length(ps)){
 # ----------------#
 # Examine output  
 # ----------------#
+
+# Plot 25% benchmark over time
+pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
+png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=4, res=300, units="in")
+ggplot(pdat, aes(y=benchmark_perc_25, x=retro_year)) +
+  geom_line(colour="dodgerblue", lwd=1.2) +
+  geom_point(aes(y=Escp, x=yr), shape=1) +
+  geom_line(aes(y=Escp, x=yr)) +
+  facet_wrap(~CU_Name, scales="free_y") +
+  ylab("25% benchmark") + xlab("Retro year") +
+  geom_hline(aes(yintercept=0), linetype=2) +
+  theme_bw()
+dev.off()
 
 # Plot Sgen over time
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
