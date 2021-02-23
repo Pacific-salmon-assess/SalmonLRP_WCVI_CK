@@ -309,12 +309,11 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   Agg_Abund <- Agg_Abund %>% filter(yr %in% Mod_Yrs)
 
    # need year as index
-  # Logistic_Dat$yr_num <- group_indices(as.data.frame(Logistic_Dat), yr) - 1
-  # LW - replaced line above with below. Reason: ... argument of group_indices() deprecated
   Logistic_Dat$yr_num <- group_by(as.data.frame(Logistic_Dat), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
   
   if (Mod == "ThreshAbund_Subpop1000_ST") data$LM_CU_Status <- Logistic_Dat$HalfGrThresh
   if (Mod == "ThreshAbund_Subpop1000_LT") data$LM_CU_Status <- Logistic_Dat$AllGrThresh
+  if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_CU_Status <- Logistic_Dat$AboveBenchmark
   data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale
   # switch to this if not wanting to fit to geometric mean of aggregate escapement
   #data$LM_Agg_Abund <- Agg_Abund$Agg_Esc / Scale
@@ -322,16 +321,23 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   #dum2 <- dum2 %>% filter(yr %in% Mod_Yrs)
   #data$LM_Agg_Abund <- dum2$AggEscp.gm / Scale
   data$LM_yr <- Logistic_Dat$yr_num
-  data$LM_stk <- Logistic_Dat$CU_ID
+  if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_stk <- as.numeric(Logistic_Dat$CU) # FLAG - fix inconsistency with coho and Chum, no CU_ID column in Chum data right now
+  else data$LM_stk <- Logistic_Dat$CU_ID
   # range of agg abund to predict from
   data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
   data$p <- p
  
   param$B_0 <- 2
   param$B_1 <- 0.1
-
+  
+  # add values for B_penalty mu and sd
+  if(Mod %in% c("LRP_Logistic_Only_LowAggPrior")) {
+    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu
+    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma
+  }
+  
   # Run TMB code
-  obj <- MakeADFun(data, param, DLL="LRP_Logistic_Only", silent=TRUE)
+  obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE)
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Create Table of outputs
