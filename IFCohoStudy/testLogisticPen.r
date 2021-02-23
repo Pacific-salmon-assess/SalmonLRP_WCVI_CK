@@ -26,7 +26,7 @@ sourceAll <- function(){
   source("benchmarkFunctions.r")
   source("LRPFunctions.r")
   source("plotFunctions.r")
-  source("retroFunctions.r")
+  #source("retroFunctions.r")
   source("helperFunctions.r")
 }
 sourceAll()
@@ -72,8 +72,6 @@ CoEscpDat_bySubpop <- CoEscpDat_bySubpop %>% filter(yr >= 1998)
 # Roll up escpaments, and get Gen Mean of htat
 AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
-
-
 
 
 
@@ -153,6 +151,9 @@ TMB_Inputs_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                    B_penalty_mu=B_penalty_mu/1000, B_penalty_sigma = B_penalty_sigma / 1000)
 
 
+
+
+
 BMmodel <- "SR_IndivRicker_Surv_LowAggPrior"
 
 LRP_Mod_LowAggPrior <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
@@ -165,17 +166,18 @@ plotLogistic(Data = LRP_Mod_LowAggPrior$Logistic_Data, Preds = LRP_Mod_LowAggPri
 
 
 
-# Model 3: Low hi_Lim
+# Model 3: From projections
 
-B_penalty_sigma<-B_penalty_mu*5
+B_penalty_mu<-4061
+B_penalty_sigma<-1062
 
 # Plot distribution of penalty
 #hist(rnorm(1000,B_penalty_mu, B_penalty_sigma))
 
 # plot to check
-plot( x = seq( 0, max(CoSRDat$Spawners), 100), y=dnorm( seq(0, max(CoSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=B_penalty_sigma), 
+plot( x = seq( 0, max(CoSRDat$Spawners), 100), y=dnorm( seq(0, max(CoSRDat$Spawners), 100), mean=B_penalty_mu, sd=B_penalty_sigma), 
       xlim=c(0, max(CoSRDat$Spawners)), type="l", ylab="density", xlab="aggregate adundance")
-abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2,2,1)) # plot upper and lower values and mean
+abline(v=B_penalty_mu, col="dodgerblue", lty=2) # plot upper and lower values and mean
 
 TMB_Inputs_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                                Tau_dist = 0.1,
@@ -185,13 +187,71 @@ TMB_Inputs_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
 
 BMmodel <- "SR_IndivRicker_Surv_LowAggPrior"
 
-LRP_Mod_LowAggPrior_hiSig <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
+LRP_Mod_LowAggPrior_proj <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
                                       useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs=TMB_Inputs_LowAggPrior)
 
-plotLogistic(Data = LRP_Mod_LowAggPrior_hiSig$Logistic_Data, Preds = LRP_Mod_LowAggPrior_hiSig$Preds, 
-             LRP = LRP_Mod_LowAggPrior_hiSig$LRP, useGenMean = useGenMean,
-             plotName = paste("LogisticMod_LowAggPrior_hiSig", year, sep ="_"), outDir = figDir,
+plotLogistic(Data = LRP_Mod_LowAggPrior_proj$Logistic_Data, Preds = LRP_Mod_LowAggPrior_proj$Preds, 
+             LRP = LRP_Mod_LowAggPrior_proj$LRP, useGenMean = useGenMean,
+             plotName = paste("LogisticMod_LowAggPrior_proj", year, sep ="_"), outDir = figDir,
              p = p, useBern_Logistic = useBern_Logistic)
+
+
+
+# Model 4: Upper limit = sum(upper bound of Sgen)
+
+
+# make lower limit the lowest CU Sgen (this gives essentially the same results as using the average abundance of the smallest CU)
+low_lim <- max(0,min(na.omit(ests1$low_Sgen)))
+
+# make upper limit the sum of CU benchmarks
+hi_lim <- sum(na.omit(ests1$up_Sgen)) # sum Sgen estimates to get upper limit for penalty mu
+
+# make mu of penalty value mean of these two values, divide by scale
+B_penalty_mu <- mean(c(low_lim, hi_lim))
+
+dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=low_lim, hi_lim=hi_lim)
+B_penalty_sigma<-dum$par
+
+# Plot distribution of penalty
+#hist(rnorm(1000,B_penalty_mu, B_penalty_sigma))
+
+# plot to check
+plot( x = seq( 0, max(CoSRDat$Spawners), 100), y=dnorm( seq(0, max(CoSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=B_penalty_sigma), 
+      xlim=c(0, max(CoSRDat$Spawners)), type="l", ylab="density", xlab="aggregate adundance")
+abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2,2,1)) # plot upper and lower values and mean
+
+
+TMB_Inputs_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
+                               Tau_dist = 0.1,
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
+                               B_penalty_mu=B_penalty_mu/1000, B_penalty_sigma = B_penalty_sigma / 1000)
+
+
+BMmodel <- "SR_IndivRicker_Surv_LowAggPrior"
+
+LRP_Mod_LowAggPrior_SgenErr <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
+                                            useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs=TMB_Inputs_LowAggPrior)
+
+
+
+
+plotLogistic(Data = LRP_Mod_LowAggPrior_SgenErr$Logistic_Data, Preds = LRP_Mod_LowAggPrior_SgenErr$Preds, 
+             LRP = LRP_Mod_LowAggPrior_SgenErr$LRP, useGenMean = useGenMean,
+             plotName = paste("LogisticMod_LowAggPrior_SgenErr", year, sep ="_"), outDir = figDir,
+             p = p, useBern_Logistic = useBern_Logistic)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Create data frame for making LRP comparison plots
 
@@ -199,13 +259,16 @@ plotLogistic(Data = LRP_Mod_LowAggPrior_hiSig$Logistic_Data, Preds = LRP_Mod_Low
 
 
 
-modelNames<-c("No Pen","Pen SD = 95%CI", "Pen CV = 500%")
+#modelNames<-c("No Pen","Pen SD = 95%CI", "Pen CV = 500%", "Pen Up = Sgen_Up")
+
+modelNames<-c("No Pen", "Pen Up = sum(Sgen)", "Pen Up = sum(Sgen_Up)", "Proj. Pen")
 
 for (i in 1:length(modelNames)) {
 
   if (i == 1) Mod<-LRP_Mod
   if (i == 2) Mod<-LRP_Mod_LowAggPrior
-  if (i == 3) Mod<-LRP_Mod_LowAggPrior_hiSig
+  if (i == 3) Mod<-LRP_Mod_LowAggPrior_SgenErr
+  if (i == 4) Mod<-LRP_Mod_LowAggPrior_proj
   
   df<-Mod$LRP
   df$Name<-modelNames[i]
@@ -218,13 +281,31 @@ for (i in 1:length(modelNames)) {
   
 }
 
-LRP.df$Name<-factor(LRP.df$Name, levels = c("No Pen","Pen SD = 95%CI", "Pen CV = 500%"))
+
+
+LRP.df$Name<-factor(LRP.df$Name, levels = c("No Pen","Pen Up = sum(Sgen)", "Pen Up = sum(Sgen_Up)", "Proj. Pen"))
 
 g<-ggplot(data=LRP.df, mapping=aes(x=Name, y=fit)) + geom_point() +
   geom_errorbar(mapping=aes(x=Name, ymax=upr, ymin=lwr), width=0) +
   xlab("") + ylab("Aggregate LRP") +
   theme_classic()
 
+
+# Adding projected LRP to plot:
+
+
+
+# For p = 1.0:
+# projLRP.df<-data.frame(fit=24914,lwr=13624, upr=68709, Name="Proj.LRP")
+# For p = 0.80:
+projLRP.df<-data.frame(fit=14065,lwr=9988, upr=25139, Name="Proj.LRP")
+
+LRP.df<-rbind(LRP.df, projLRP.df)
+
+g2<-ggplot(data=LRP.df, mapping=aes(x=Name, y=fit)) + geom_point() +
+  geom_errorbar(mapping=aes(x=Name, ymax=upr, ymin=lwr), width=0) +
+  xlab("") + ylab("Aggregate LRP") +
+  theme_classic()
 
 
 

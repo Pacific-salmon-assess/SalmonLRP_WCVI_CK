@@ -113,10 +113,10 @@ Type objective_function<Type>::operator() ()
     // Jacobian adjustment for prior on sigma (add for TMBstan runs)
 	// ans -= log(2) - 2*logSigma(i);
 	// Mu-survival adjusted productivity for SMSY, Sgen calcs
-	logProd[i] = logA[i] + gamma*muLSurv[i];
-    A[i] = exp(logProd[i]);
+	logProd(i) = logA(i) + gamma*muLSurv(i);
+    A(i) = exp(logProd(i));
   // Calculate SMSY using Lambert W function
-  SMSY[i] =  (1 - LambertW(exp(1-logProd[i])) ) / B[i] ;
+  SMSY(i) = (1 - LambertW(exp(1-logProd[i])) ) / B(i);
   }
   
   // Add priors ====================
@@ -125,7 +125,7 @@ Type objective_function<Type>::operator() ()
   
   // prior for CU-specific caps
   for (int i = 0; i < N_Stks; i++){
-    ans += -dnorm(cap[i], cap_mean[i], cap_sig, true);
+    ans += -dnorm(cap(i), cap_mean(i), cap_sig, true);
   }
   
   // Estimate Sgen =========================
@@ -142,7 +142,7 @@ Type objective_function<Type>::operator() ()
   vector<Type> Rec_Preds(N_SpwnPreds);
   
   for(int i=0; i<N_SpwnPreds; i++){
-    LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv[stk_predS(i)] + log(Pred_Spwn(i)) - B(stk_predS(i)) * Pred_Spwn(i);
+    LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv(stk_predS(i)) + log(Pred_Spwn(i)) - B(stk_predS(i)) * Pred_Spwn(i);
   }
   Rec_Preds = exp(LogRec_Preds);
   

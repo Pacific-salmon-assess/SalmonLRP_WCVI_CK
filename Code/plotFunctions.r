@@ -860,10 +860,10 @@ plotProjected<-function(Data, LRP, plotName, outDir, p) {
   g <- g  + theme_light() + scale_fill_manual(values=rep("grey80", length(unique(Data$ppnCUs)))) +
     labs(y="Aggregate Escapement",
          x="Prop. CUs > Lower Benchmark") + theme(legend.position = "none") +
-          geom_hline(yintercept=LRP$fit, linetype="dashed", color="orange", size = 1) +
-          geom_vline(xintercept= p.ind, linetype="dashed", color="red", size = 1) +
-          geom_hline(yintercept = LRP$lwr, linetype = "dotted", color = "orange", size = 1) +
-          geom_hline(yintercept = LRP$upr, linetype = "dotted", color = "orange", size = 1) +
+          geom_hline(yintercept=LRP$fit, linetype="solid", color="orange", size = 0.5) +
+          geom_vline(xintercept= p.ind, linetype="dashed", color="black", size = 0.3) +
+          geom_hline(yintercept = LRP$lwr, linetype = "dotted", color = "orange", size = 0.5) +
+          geom_hline(yintercept = LRP$upr, linetype = "dotted", color = "orange", size = 0.5) +
           ylim(0,100000)
   
   g <- g + coord_flip()

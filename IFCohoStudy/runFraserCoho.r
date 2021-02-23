@@ -35,17 +35,17 @@ sourceAll()
 compile("TMB_Files/LRP_Logistic_Only.cpp")
 dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
 
-compile("TMB_Files/SR_HierRicker_Surv.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv"))
+compile("TMB_Files/SR_HierRicker_Surv_LowAggPrior.cpp")
+dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_LowAggPrior"))
 
-compile("TMB_Files/SR_IndivRicker_Surv.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv"))
+compile("TMB_Files/SR_IndivRicker_Surv_LowAggPrior.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_LowAggPrior"))
 
-compile("TMB_Files/SR_HierRicker_SurvCap.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap"))
+compile("TMB_Files/SR_HierRicker_SurvCap_LowAggPrior.cpp")
+dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_LowAggPrior"))
 
-compile("TMB_Files/SR_IndivRicker_SurvCap.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap"))
+compile("TMB_Files/SR_IndivRicker_SurvCap_LowAggPrior.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_LowAggPrior"))
 
 compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
@@ -105,15 +105,20 @@ plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by S
 # Run retrospective analyses:
 # =====================================================================================================================
 
+B_penalty_mu<-4489
+B_penalty_sigma<-2048
+
 # TMB input parameters:
 TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                 logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
+                B_penalty_mu=B_penalty_mu, B_penalty_sigma)
 
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                      B_penalty_mu=B_penalty_mu, B_penalty_sigma)
 
 
 # Prior means come from running "compareRickerModelTypes.r"
@@ -122,14 +127,14 @@ cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
 TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                    logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
+                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma)
 
 # Prior means come from running "compareRickerModelTypes.r"
 cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
+                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma)
 
 
 TMB_Inputs_Subpop <- list(Scale = 1000)
@@ -167,7 +172,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
   for(pp in 1:length(ps)){
     # Run with Binomial LRP model with hierarchical Ricker 
     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_HierRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
+                   BMmodel = "SR_HierRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""),
                   bootstrapMode = F, plotLRP=T)
     
@@ -179,7 +184,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
     
     # Run with Binomial LRP model with individual model Ricker 
     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_IndivRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
+                   BMmodel = "SR_IndivRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                    useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
                    bootstrapMode = F, plotLRP=T)
     
