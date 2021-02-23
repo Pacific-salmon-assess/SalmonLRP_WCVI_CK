@@ -115,25 +115,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         # Case 3: Percentile-based benchmark model (e.g., for Inside South Coast Chum)
         if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) {
           
-
-          # FLAG: LW: Below is from coho code, needs to be modified
-
-          # Calculate geometric means for subpopulation escapements (where, subpopulation is sum of tributaries) 
-          # EscpDat.cu <- EscpDat.yy %>% group_by(CU_Name, CU_ID, Subpop_Name, yr)  %>% summarise(SubpopEscp=sum(Escp)) %>%
-          #   mutate(Gen_Mean = rollapply(SubpopEscp, genYrs, gm_mean, fill = NA, align="right"))
-          # # Add a column indicating whether geometric mean escapement is > 1000 fish threshold for each subpopulation 
-          # Above1000<-ifelse(EscpDat.cu$Gen_Mean >= 1000, 1, 0)
-          # EscpDat.cu<-EscpDat.cu %>% add_column(Above1000)
-          # # Calculate the number of subpopulations that are above 1000 fish threshold in each CU
-          # LBM_status_byCU <- EscpDat.cu %>% group_by(CU_Name, CU_ID, yr) %>% 
-          #   summarise(Escp=sum(SubpopEscp), N = length(unique(Subpop_Name)),N_grThresh=sum(Above1000))
-          # # Add a column indicating whether >= 50% of subpopulations were above 1000 fish threshold in each CU (1 = yes, 0 = no) (short-term recovery goal)
-          # HalfGrThresh<-ifelse(LBM_status_byCU$N_grThresh >=  ceiling(LBM_status_byCU$N/2),1,0)
-          # # Add a column indicating wheter all subpopulations were above 1000 fish threshold in each CU (long-term recovery goal) 
-          # AllGrThresh<-ifelse(LBM_status_byCU$N_grThresh == LBM_status_byCU$N,1,0)
-          # LBM_status_byCU <- LBM_status_byCU %>% add_column(HalfGrThresh) %>% add_column(AllGrThresh)
-          # 
-          LBM_status_byCU <- EscpDat.yy %>% group_by(CU_Name) %>% 
+          LBM_status_byCU <- EscpDat.yy %>% group_by(CU_Name) %>%  # make new column with 25% benchmark
             mutate(benchmark_perc_25= quantile(Escp, probs=0.25, na.rm=TRUE)) 
           # Need to end up with a data frame that has CU, year, and whether CU is above benchmark (1 means yes, 0 mean no)
           LBM_status_byCU$AboveBenchmark <- ifelse(LBM_status_byCU$Escp >= LBM_status_byCU$benchmark_perc_25, 1,0)
@@ -191,15 +173,16 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     }
     
     # Make output csv file that has 25% benchmarks and escapement for each year, for each retro year
-    new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "AboveBenchmark") ]
-    new.perc.df$retro_year <- yearList[yy] # add column with retrospective year
+    if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) {
+      new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "AboveBenchmark") ]
+      new.perc.df$retro_year <- yearList[yy] # add column with retrospective year
     
-    if(yy==1){
-      out.perc.df <- new.perc.df
-    } else {
-      out.perc.df <- rbind(out.perc.df, new.perc.df) # as looping through retro years, add rows with percentile benchmarks for each CU (with escapement too)
+      if(yy==1){
+        out.perc.df <- new.perc.df
+      } else {
+        out.perc.df <- rbind(out.perc.df, new.perc.df) # as looping through retro years, add rows with percentile benchmarks for each CU (with escapement too)
+      }
     }
-    
     # If plotLRP=T, plot model fit and data  
     if (plotLRP == T & LRPmodel != "Proj") {
       

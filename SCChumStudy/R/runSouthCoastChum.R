@@ -69,7 +69,7 @@ names(ChumSRDat)[names(ChumSRDat) =="Escape"] <- "Spawners" # FLAG: Check that E
 names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits" 
 
 # ====================================================================================
-# Call functions to plot data availability:
+# Call functions to plot data availability (note that this is for infilled data):
 # ====================================================================================
 plot_CU_DataObs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_DataByCU")
 plot_Num_CUs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_N_CUs")
@@ -90,7 +90,6 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
 
 # Data prep
-
 
 # FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
 # This may be done automatically, see retroFunctions.r line 20 
@@ -158,10 +157,10 @@ for(pp in 1:length(ps)){
 # -----------------------------------------------------
 # Idea is to parameterize (mu and sigma) the aggregate abundance associated with a very low proportion (essentially 0; p=0.01) of
 # CUs being above their benchmark. The idea is to have 95% of this estimate between the CU Sgen and the sum of all their Sgen 
-# benchmarks (e.g., all CUs are just below their lower benchmarks). The mean of this distribution is halfway between these 
-# lower (2.5% quantile) and upper (97.5% quantile) values. 
+# benchmarks or upper estimates of Sgens (e.g., all CUs are just below their lower benchmarks). The mean of this distribution is 
+# halfway between these lower (2.5% quantile) and upper (97.5% quantile) values. 
 
-# FLAG: LW- Need to put these in TMB_Inputs list now. See Kendra's code in testLogisticPen.r
+# FLAG: LW - Need to put these in TMB_Inputs list now. See Kendra's code in testLogisticPen.r
 # get Sgen estimates from running integrated model without penalty
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
