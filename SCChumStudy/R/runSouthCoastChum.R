@@ -168,9 +168,16 @@ ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for 
 # make lower limit the lowest CU Sgen (this gives essentially the same results as using the average abundance of the smallest CU)
 low_lim <- min(ests1$est_Sgen) 
 # make upper limit the sum of CU benchmarks
-hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
+# hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
+
+hi_lim <- sum(na.omit(ests1$up_Sgen)) # sum Sgen estimates to get upper limit for penalty mu
+
 # make mu of penalty value mean of these two values, divide by scale
 B_penalty_mu <- mean(c(low_lim, hi_lim))/TMB_Inputs_IM$Scale
+
+dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=low_lim, hi_lim=hi_lim)
+B_penalty_sigma<-dum$par
+
 # get SD for prior penalty so that 95% density is between lower and upper limits
 sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = 58300)) # FLAG: Should give 95% density.
 # plot to check
