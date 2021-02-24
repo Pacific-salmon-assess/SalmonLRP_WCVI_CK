@@ -82,7 +82,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     }
   
   # add data and parameters specific to Ricker model with survival covariate
-  if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_HierRicker_SurvCap","SR_IndivRicker_SurvCap", "SR_IndivRicker_Surv_LowAggPrior")){
+  if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_HierRicker_SurvCap","SR_IndivRicker_SurvCap", "SR_IndivRicker_Surv_LowAggPrior", "SR_HierRicker_Surv_LowAggPrior")){
     data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
     data$logSurv_3 <- log(SRDat$STAS_Age_3)
     data$logSurv_4 <- log(SRDat$STAS_Age_4)
@@ -94,7 +94,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     param$gamma <- 0
     
      # add data and parameters specific to hierarchical models:
-     if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
+     if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap", "SR_HierRicker_Surv_LowAggPrior")){
        data$logMuA_mean <- TMB_Inputs$logMuA_mean 
        data$logMuA_sig <- TMB_Inputs$logMuA_sig
        data$Tau_A_dist <- TMB_Inputs$Tau_A_dist 
@@ -108,15 +108,15 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
        data$cap_sig<-TMB_Inputs$cap_sig
      }
      # add parameter specific to model without cap on carrying capacity (model parameterized for B):
-     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_IndivRicker_Surv_LowAggPrior")) {
+     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_IndivRicker_Surv_LowAggPrior", "SR_HierRicker_Surv_LowAggPrior")) {
        param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
      }
   }
   
   # add values for B_penalty mu and sd
-  if(Mod %in% c("SR_IndivRicker_NoSurv_LowAggPrior", "SR_IndivRicker_Surv_LowAggPrior")) {
-    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu
-    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma
+  if(Mod %in% c("SR_IndivRicker_NoSurv_LowAggPrior", "SR_IndivRicker_Surv_LowAggPrior", "SR_HierRicker_Surv_LowAggPrior")) {
+    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu/TMB_Inputs$Scale
+    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma/TMB_Inputs$Scale
   }
 
   # Phase 1: estimate SR params
@@ -124,12 +124,12 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior","SR_IndivRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, map=map)
   
-  } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
+  } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap", "SR_HierRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
   }
   
   # Call optimization:
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5)) # LW: increased eval.max and iter.max from 1e5 to 1e10; helped model converge
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Parameter estimate after phase 1 optimization:
   pl <- obj$env$parList(opt$par) # Parameter estimates after phase 1
@@ -141,13 +141,11 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   # set initial Sgen param as a function of Smsy
   pl$logSgen <- log(0.3*SMSYs) # FLAG: Currently this is returning NaN values, taking log of negative SMSY values
   
-  #write.csv(All_Ests, "2020-12-18_estimates_phase1_debugging.csv", row.names=FALSE)
-
   #Phase 2: get Sgen, SMSY
   map2 <- list(B_0=factor(NA), B_1=factor(NA))
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior","SR_IndivRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, map=map2)
-  } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
+  } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap", "SR_HierRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map2)
   }
   
@@ -172,7 +170,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   # Phase 3: fit logistic model; hold other estimates constant
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior","SR_IndivRicker_Surv_LowAggPrior")){
     obj <- MakeADFun(data, pl2, DLL=Mod, silent=TRUE)
-  } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
+  } else if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap", "SR_HierRicker_Surv_LowAggPrior")){
     map3 = list(logMuA = as.factor(NA), logSigmaA = as.factor(NA))
     # logMuA and logSigmaA disappear after mask, so need to save here
     HyperParams <- data.frame(summary(sdreport(obj))) %>% 
@@ -207,7 +205,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     # Create Table of outputs
     All_Ests <- data.frame(summary(sdreport(obj),p.value=TRUE))
     All_Ests$Param <- row.names(All_Ests)
-    if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")){
+    if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap", "SR_HierRicker_Surv_LowAggPrior")){
       All_Ests <- full_join(All_Ests, HyperParams)
     }
 
@@ -332,8 +330,8 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   
   # add values for B_penalty mu and sd
   if(Mod %in% c("LRP_Logistic_Only_LowAggPrior")) {
-    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu
-    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma
+    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu/TMB_Inputs$Scale
+    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma/TMB_Inputs$Scale
   }
   
   # Run TMB code

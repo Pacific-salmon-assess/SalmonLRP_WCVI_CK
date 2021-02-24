@@ -224,7 +224,9 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     # Save annual retrospective outputs as csv files =========================
     if (integratedModel == T) write.csv(outSR.df, paste(outputDir,"/annualRetro__SRparsByCU.csv", sep=""))
     write.csv(outLRP.df, paste(outputDir,"/annualRetro_LRPs.csv", sep=""))
-    write.csv(out.perc.df, paste(outputDir, "/annualRetro_perc_benchmarks.csv", sep=""))
+    if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) { # save percentile benchmark data frame output for plotting
+      write.csv(out.perc.df, paste(outputDir, "/annualRetro_perc_benchmarks.csv", sep=""))
+    }
       # in final year also plot geometric mean of aggregate abundance + LRPs
       # (Note: set her to always plot reference points relative to geometric mean)
     plotAnnualRetro(Dat = EscpDat.yy, Name  = RunName ,outDir = outDir, useGenMean = T, genYrs = genYrs)
