@@ -13,8 +13,10 @@ bc <- bc_bound() # get BC province boundary
 rivers <- watercourses_5M # get rivers layer
 chum_cu <- st_read("DataIn/chum_CU_boundary_shapefile/Chum Salmon CU Boundary_En.shp")
 # get south coast chum CUs 
-sc_cus <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Upper Knight", "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet")
-scc <- chum_cu[chum_cu$CU_name %in% sc_cus, ] # get sf object of just south coast chum CUs 
+#sc_cus <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Upper Knight", "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet")
+# Get just the 5 CUs without CU-level infilling
+sc_cus_no_CU_infilled <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Loughborough","Georgia Strait", "Howe Sound-Burrard Inlet")
+scc <- chum_cu[chum_cu$CU_name %in% sc_cus_no_CU_infilled, ] # get sf object of just south coast chum CUs 
 
 # get bounds 
 bounds <- as.numeric(st_bbox(scc))

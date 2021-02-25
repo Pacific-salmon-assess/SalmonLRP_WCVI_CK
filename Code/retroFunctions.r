@@ -152,7 +152,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       output$up_Sgen <- Sgens + 1.96*Sgen_SE
       output$retroYr <- yearList[yy]
       output <- cbind(output, RunInfo)  
-      
+
       # Put SR data into dataframes
       if (yy == 1) {
         outSR.df<-output
@@ -222,7 +222,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
 
    
     # Save annual retrospective outputs as csv files =========================
-    if (integratedModel == T) write.csv(outSR.df, paste(outputDir,"/annualRetro__SRparsByCU.csv", sep=""))
+    if (integratedModel == T) write.csv(outSR.df, paste(outputDir,"/annualRetro_SRparsByCU.csv", sep=""))
     write.csv(outLRP.df, paste(outputDir,"/annualRetro_LRPs.csv", sep=""))
     if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) { # save percentile benchmark data frame output for plotting
       write.csv(out.perc.df, paste(outputDir, "/annualRetro_perc_benchmarks.csv", sep=""))
