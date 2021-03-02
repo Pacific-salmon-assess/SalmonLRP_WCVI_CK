@@ -27,6 +27,10 @@ library(ggplot2)
 # source functions for infilling, etc.
 source("R/chumDataFunctions.r")
 
+# make folder for infilled data for Pieter Van Will's external run reconstruction (if it doesn't exist)
+if(!dir.exists("DataOut/infill_escapement_for_external_run_reconstruction/")) {
+   dir.create("DataOut/infill_escapement_for_external_run_reconstruction/") }
+
 # read in raw escapement data, with years up to 2018, from Pieter Van Will
 rawdat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb152021).xlsx", sheet="Updated 2018", trim_ws=TRUE) # strip.white for leading and trailing white spaces in Source and SummerRun columns
 
@@ -143,15 +147,15 @@ xx <- left_join(AllDatAll, data.frame(CU_Name=AllByCU[[1]]$CU_Name, Year=AllByCU
 xx$Escape <- ifelse(is.nan(xx$SiteEsc), xx$CUEsc*xx$Props, xx$SiteEsc)
 #xx$CU <- CUdf$CU_short[match(xx$CU_Name, CUdf$CU_raw)] # don't need CU abbreviation
 # Write total escapement by stream to csv, infilled by stream and CU
-write.csv(xx, "DataOut/total_spawners_infilled_by_site.csv", row.names=F)
+write.csv(xx, "DataOut/infill_escapement_for_external_run_reconstruction/total_spawners_infilled_by_site.csv", row.names=F)
 
 #Also want sumamrized by CU
-write.csv(AllByCU[[1]], "DataOut/total_spawners_infilled_by_CU.csv")
+write.csv(AllByCU[[1]], "DataOut/infill_escapement_for_external_run_reconstruction/total_spawners_infilled_by_CU.csv")
 
 # And sumamrized by area
 AllBySite <- xx
 AllByArea <- AllBySite %>% group_by(CU_Name, Area, Year) %>% summarize( AreaTot = sum(Escape))
-write.csv(AllByArea, "DataOut/total_spawners_infilled_by_area.csv")
+write.csv(AllByArea, "DataOut/infill_escapement_for_external_run_reconstruction/total_spawners_infilled_by_area.csv")
 
 # ----------------------------------------------------#
 # Infill wild spawners only, and remove Little Qualicum, 
@@ -184,15 +188,15 @@ NoQPByCU <- Infill(data=NoQPDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", 
 zz <- left_join(NoQPDatAll, data.frame(CU_Name=NoQPByCU[[1]]$CU_Name, Year=NoQPByCU[[1]]$Year, CUEsc = NoQPByCU[[1]]$SiteEsc))
 zz$Escape <- ifelse(is.nan(zz$SiteEsc), zz$CUEsc*zz$Props, zz$SiteEsc)
 zz$CU <- CUdf$CU_short[match(zz$CU_Name, CUdf$CU_raw)]
-write.csv(zz, "DataOut/wild_spawners_infilled_by_site.csv")
+write.csv(zz, "DataOut/infill_escapement_for_external_run_reconstruction/wild_spawners_infilled_by_site.csv")
 
 # Also by CU
-write.csv(NoQPByCU[[1]], "DataOut/wild_spawners_infilled_by_CU.csv")
+write.csv(NoQPByCU[[1]], "DataOut/infill_escapement_for_external_run_reconstruction/wild_spawners_infilled_by_CU.csv")
 
 #Now by Area
 AllBySiteWild <- zz
 AllByAreaWild <- AllBySiteWild %>% group_by(CU_Name, Area, Year) %>% summarize( AreaTot = sum(Escape))
-write.csv(AllByAreaWild, "DataOut/wild_spawners_infilled_by_area.csv")
+write.csv(AllByAreaWild, "DataOut/infill_escapement_for_external_run_reconstruction/wild_spawners_infilled_by_area.csv")
 
 # ----------------------------------------------------#
 #   Check against infilling of 2013 data 
