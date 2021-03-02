@@ -163,9 +163,12 @@ for(pp in 1:length(ps)){
 
 # get Sgen estimates from running integrated model without penalty
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
+
 #ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
 ests1 <- ests[,-c(1:3)]
-ests2 <- ests1 %>% group_by( c(1:3, 11:15)) %>%  summarise(across( 4:10, ~ mean(.x, na.rm=TRUE)))
+ests2 <- ests1 %>% pivot_longer(cols=4:10, names_to="parameter", values_to="estimate", values_drop_na=TRUE)
+ests3 <- ests2 %>% pivot_wider(names_from=parameter, values_from=estimate)
+ests4 <-  ests3[ests3$retroYr ==max(ests3$retroYr),] # get just last retro year for estimates
 
 # make lower limit the lowest CU Sgen (this gives essentially the same results as using the average abundance of
 # the smallest CU)
@@ -233,8 +236,16 @@ source(paste0(codeDir, "/LRPFunctions.r"))
 
 # Percentile benchmarks
 # Get low aggregate penalty values
-B_penalty_perc_mu <- NA
-B_penalty_perc_sigma  <- NA
+pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
+pdat1 <- pdat[pdat$retro_year ==max(pdat$retro_year),]
+pdat2 <- pdat1 %>% group_by(CU_Name, CU, benchmark_perc_25) %>% summarise(n())
+# make lower limit=0, upper limit sum of 25% benchmarks for retro year 2010
+low_lim_perc <- 0
+hi_lim_perc <- sum(pdat2$benchmark_perc_25)
+
+B_penalty_perc_mu <- mean(c(low_lim_perc, hi_lim_perc)) 
+dum_perc<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=1000000, low_lim=low_lim_perc, hi_lim=hi_lim_perc)
+B_penalty_perc_sigma<-dum_perc$par
 
 TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
                               Tau_dist = 0.1,
@@ -249,10 +260,10 @@ for(pp in 1:length(ps)){
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
   # with prior penalty on low aggregate abundance
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "LRP_Logistic_Only_LowAggPrior", LRPmodel="BinLogistic", integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "LRP_Logistic_Only_LowAggPrior", LRPmodel="BinLogistic", integratedModel=F,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
 }
 
 

@@ -26,7 +26,7 @@ setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 source("R/chumDataFunctions.r")
 
 # Create look-up table for CU names
-RawDat <- read.csv("DataIn/Chum Escapement Data With Areas_2013.csv", stringsAsFactors = FALSE, check.names=FALSE, strip.white = TRUE) # strip.white helps with SummerRun values with spaces
+RawDat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb152021).xlsx", sheet="Updated 2018", trim_ws=TRUE) # trim_ws for leading and trailing white spaces in Source and SummerRun columns
 # CUs without Fraser River CUs
 CU_raw <- unique(RawDat$CU_Name)
 CUdf <- data.frame("CU_raw"=CU_raw[1:7])
@@ -68,8 +68,10 @@ write.csv(NoQPByCU[[1]], "DataOut/WildEscape_w.Infill_ByCU.csv", row.names = F)
 WildEsc <- NoQPByCU[[1]]
 WildEsc$CUinfill <- ifelse(is.na(WildEsc$Escape), TRUE, FALSE) # Flag 'Escape = NA' sites
 
-# Read in Return data from P.V.W received 3/7/2016
-WildRetWide <- read.csv("DataIn/WildReturnsPVW_2013.csv", check.names=F)
+# Read in Return data from P.V.W received 2021-02-
+WildRetWide <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A84:BP101", trim_ws = TRUE)
+names(WildRetWide)[2] <- "Area"
+
 # Need to get PVW return data into long form:
 # First need to "collapse" areas to CU level
 #WildByCU <- WildRetWide  %>% group_by(CU_Name)   %>%  summarise_each(funs(sum(., na.rm=T)), 3:63)
