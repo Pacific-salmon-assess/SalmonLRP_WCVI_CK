@@ -1,5 +1,13 @@
 # Read in raw Chum data, infill and prepare for LRP Analysis, save as csv files
-# Plot data 
+
+# Reads in raw wild escapement data and infills to get spawners, reads in wild 
+# return data (from run reconstruction done by Pieter Van Will) and makes brood
+# table based on returns and age composition data from fishery.
+
+# Note that the run reconstruction to get wild returns by CU and area is done
+# in an xlsx file separately by Pieter Van Will, not in an R code.
+
+# Also plot data to examine infilling and saves figures.
 
 library(ggplot2)
 library(dplyr)

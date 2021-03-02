@@ -239,7 +239,7 @@ compare_stream_infilling_fig <- function(CU, dat) {
   d <- d[d$CU_Name==CU, ]
   ggplot(d, aes(y=Escape_2013d, x=Year)) +
     geom_point() +
-    geom_point(aes(y=Escape_2018d, x=Year), colour="dodgerblue", shape=1, stroke=2) +
+    geom_point(aes(y=Escape_2018d, x=Year), colour="dodgerblue", shape=1, stroke=1.2) +
     facet_wrap(~NME, scales="free_y") +
     scale_x_discrete(breaks=seq(1960,2020,10)) +
     ggtitle(CU) +
