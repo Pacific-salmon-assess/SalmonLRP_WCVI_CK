@@ -23,6 +23,9 @@ knitr-cache
 .RData
 .RHistory
 *.Rproj
+*.dll
+*.o
+*.rda
 
 
 
