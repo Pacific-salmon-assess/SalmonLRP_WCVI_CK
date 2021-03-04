@@ -83,7 +83,9 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   
   # add data and parameters specific to Ricker model with survival covariate
   if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_HierRicker_SurvCap","SR_IndivRicker_SurvCap", 
-                "SR_IndivRicker_Surv_LowAggPrior","SR_HierRicker_Surv_LowAggPrior", "SR_HierRicker_SurvCap_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior")){
+                "SR_IndivRicker_Surv_LowAggPrior","SR_HierRicker_Surv_LowAggPrior", "SR_HierRicker_SurvCap_LowAggPrior",
+                "SR_IndivRicker_SurvCap_LowAggPrior")) {
+
     data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
     data$logSurv_3 <- log(SRDat$STAS_Age_3)
     data$logSurv_4 <- log(SRDat$STAS_Age_4)
@@ -109,7 +111,8 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
        data$cap_sig<-TMB_Inputs$cap_sig
      }
      # add parameter specific to model without cap on carrying capacity (model parameterized for B):
-     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_IndivRicker_Surv_LowAggPrior","SR_HierRicker_Surv_LowAggPrior")) {
+
+     if(Mod %in% c("SR_HierRicker_Surv", "SR_IndivRicker_Surv", "SR_IndivRicker_Surv_LowAggPrior", "SR_HierRicker_Surv_LowAggPrior")) {
        param$logB <- log(1/( (SRDat %>% group_by(CU_ID) %>% summarise(x=quantile(Spawners, 0.8)))$x/Scale) )
      }
   }
@@ -133,7 +136,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   }
   
   # Call optimization:
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5)) # LW: increased eval.max and iter.max from 1e5 to 1e10; helped model converge
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Parameter estimate after phase 1 optimization:
   pl <- obj$env$parList(opt$par) # Parameter estimates after phase 1
@@ -145,8 +148,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   # set initial Sgen param as a function of Smsy
   pl$logSgen <- log(0.3*SMSYs) # FLAG: Currently this is returning NaN values, taking log of negative SMSY values
   
-  #write.csv(All_Ests, "2020-12-18_estimates_phase1_debugging.csv", row.names=FALSE)
-
   #Phase 2: get Sgen, SMSY
   map2 <- list(B_0=factor(NA), B_1=factor(NA))
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior",
@@ -213,6 +214,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     # Create Table of outputs
     All_Ests <- data.frame(summary(sdreport(obj),p.value=TRUE))
     All_Ests$Param <- row.names(All_Ests)
+
     if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap","SR_HierRicker_Surv_LowAggPrior", "SR_HierRicker_SurvCap_LowAggPrior")){
       All_Ests <- full_join(All_Ests, HyperParams)
     }
@@ -315,12 +317,11 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   Agg_Abund <- Agg_Abund %>% filter(yr %in% Mod_Yrs)
 
    # need year as index
-  # Logistic_Dat$yr_num <- group_indices(as.data.frame(Logistic_Dat), yr) - 1
-  # LW - replaced line above with below. Reason: ... argument of group_indices() deprecated
   Logistic_Dat$yr_num <- group_by(as.data.frame(Logistic_Dat), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
   
   if (Mod == "ThreshAbund_Subpop1000_ST") data$LM_CU_Status <- Logistic_Dat$HalfGrThresh
   if (Mod == "ThreshAbund_Subpop1000_LT") data$LM_CU_Status <- Logistic_Dat$AllGrThresh
+  if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_CU_Status <- Logistic_Dat$AboveBenchmark
   data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale
   # switch to this if not wanting to fit to geometric mean of aggregate escapement
   #data$LM_Agg_Abund <- Agg_Abund$Agg_Esc / Scale
@@ -328,16 +329,23 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   #dum2 <- dum2 %>% filter(yr %in% Mod_Yrs)
   #data$LM_Agg_Abund <- dum2$AggEscp.gm / Scale
   data$LM_yr <- Logistic_Dat$yr_num
-  data$LM_stk <- Logistic_Dat$CU_ID
+  if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_stk <- as.numeric(Logistic_Dat$CU) # FLAG - fix inconsistency with coho and Chum, no CU_ID column in Chum data right now
+  else data$LM_stk <- Logistic_Dat$CU_ID
   # range of agg abund to predict from
   data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
   data$p <- p
  
   param$B_0 <- 2
   param$B_1 <- 0.1
-
+  
+  # add values for B_penalty mu and sd
+  if(Mod %in% c("LRP_Logistic_Only_LowAggPrior")) {
+    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu/TMB_Inputs$Scale
+    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma/TMB_Inputs$Scale
+  }
+  
   # Run TMB code
-  obj <- MakeADFun(data, param, DLL="LRP_Logistic_Only", silent=TRUE)
+  obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE)
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Create Table of outputs

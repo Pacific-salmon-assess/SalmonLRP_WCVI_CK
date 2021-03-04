@@ -25,7 +25,7 @@ Type objective_function<Type>::operator() ()
   // get number of years, number of obs
   int Logistic_Mod_Yrs = LM_Agg_Abund.size();
   int N_LM_Obs = LM_CU_Status.size();
-  // create vector with number of pops above their BM (Sgen)
+  // create vector with number of pops above their benchmark (Sgen or percentile)
   vector <Type> N_Above_BM(Logistic_Mod_Yrs);
   // Also version with 0/1's if doing bernoulli
   vector <Type> All_Above_BM(Logistic_Mod_Yrs);

@@ -69,3 +69,9 @@ ggplot.corr <- function(data, lag.max = 10, ci = 0.95, title="") {
   return(plot.acf)
   
 }
+
+# Function to get SD for prior penalty so that 95% density is between lower and upper limits
+getSD<-function(par, low_lim,hi_lim) {
+  den<-sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = par))
+  return(abs(den - 0.95)) 
+}

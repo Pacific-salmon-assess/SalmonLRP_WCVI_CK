@@ -1,0 +1,16 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+=======
+
+notes.docx
+old_code_reference/
+old_code_reference/*
+
+DataIn/archive/*
+R/archive/*
+
+Random Docs
+.Rproj.user/
+
