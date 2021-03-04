@@ -31,31 +31,116 @@ setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
 
 # With changes by Luke Warkentin
 
+# Read in chum functions
 source("R/chumDataFunctions.r")
 
-# Create look-up table for CU names
-RawDat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb152021).xlsx", sheet="Updated 2018", trim_ws=TRUE) # trim_ws for leading and trailing white spaces in Source and SummerRun columns
-# CUs without Fraser River CUs
-CU_raw <- unique(RawDat$CU_Name)
-CUdf <- data.frame("CU_raw"=CU_raw[1:7])
+# Read in raw escapement data from Pieter Van Will. 
+rawdat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb152021).xlsx", sheet="Updated 2018", trim_ws=TRUE) # strip.white for leading and trailing white spaces in Source and SummerRun columns
 
 # Get number of summer vs fall run streams for each CU (for reference)
-table(RawDat$CU_Name, RawDat$SummerRun)
+table(rawdat$CU_Name, rawdat$SummerRun)
 
-## Step 1: Infill Escapement Data ===============================================================
+# ----------------------------------------------------#
+# Notes on data (From Pieter Van Will): 
+# ----------------------------------------------------#
+# I. Data variables
+#
+#   Source:
+#     -Wild are wild spawners
+#     -Rack is the # of fish that are harvested at a facility and do not contribute to the system 
+#           (part of the total return but not contributing as spawners or enhanced)
+#     -Enhanced was an assignment we gave given the typically high magnitude of the enhancement, if it was 
+#           a large facility on the system with a large chum production we tended to call the system as 
+#           a whole enhanced (like Puntledge or the systems with large spawning channels like Qualicum)
+#     -Brood are the fish from the system that are taken to support the supplementation of that stock 
+#           (do contribute to the subsequent returns).
+#
+#   SummerRun: We removed the summer run fish as all the data in regards the reconstruction work is 
+#       associated with Fall timed stocks.  
+#
+#   NME: Individual streams. Note for Qualicum River, Little Qualicum River, Puntledge River - Historically we assume 
+#       these three stocks are 100% enhanced at least since enhancement began at those locations.  
+#       We have little data in the enhanced contribution found in the returns but for the purposes of 
+#       pulling out wild we make the assumption they were 100% enhanced and not included. 
+#
+# 
+# II. Other notes
+#
+#   Note that NAs are unobserved creeks.
+#
+#  	Regarding blank escapement count values vs. 0 values, specifically where wild was NA but brood was 0:
+#     Pieter Van Will: I would consider any of those as Blanks and would require infill 
+#     (perhaps if the Escapement is 0, convert that to a blank and I doubt there any real 0 
+#     escapement numbers, even if there are some fish or a 0 in brood stock.)
+#
+#   Little Qualicum, Qualicum, and Puntledge Rivers: assume these are 100% enhanced, and 
+#     remove entirely for infilling for wild escapement
 
-# Infill missing values using only wild fish 
-#  --> Code taken from "Infilling.R" file written by B. Davis for Holt et al. 2018 Chum CSAS paper
-#  --> Infilling.r file was from "Retrospective Analysis BD" folder)
 
-NoQPDatBySite <- RawDat[which(RawDat$Source=="Wild" & RawDat$NME %notin% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")),]
+# ----------------------------------------------------#
+# Infill wild spawners only, and remove Little Qualicum, 
+#               Qualicum, and Puntledge Rivers entirely
+# ----------------------------------------------------#
 
-# Remove summer run fish
-NoQPDatBySite2 <- NoQPDatBySite[which(!NoQPDatBySite$SummerRun), ]
+#------------------ don't know if this is needed---------------------
+# Create look-up table for CU names
+# CUs without Fraser River CUs
+CU_raw <- unique(rawdat$CU_Name)
+CUdf <- data.frame("CU_raw"=CU_raw[1:7])
 
-# Change to long form from wide form
-LongDatNoQP <- NoQPDatBySite2 %>% gather( "Year", "Escape", 10:70)
+#need to match CU names
+# CU_raw <- unique(rawdat$CU_Name)
+# CU_short <- c("SCS", "NEVI", "UK", "LB", "BI", "GS", "HSBI")
+# CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight",
+#             "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
+# CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
+#------------------ don't know if this is needed---------------------
 
+# Process and filter data
+rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish - earlier run timing means they are not intercepted in same fisheries, can't do run reconstruction with them
+# Remove non wild fish
+rawdat_w <- rawdat_f[rawdat_f$Source=="Wild", ]
+
+# wide to long format. maintain NA values (uncounted streams)
+ldat <- rawdat_w %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(rawdat_f)), names_to="Year", values_to="Escape")
+
+# summarise by stream, to collapse any brood/rack/enhanced/rack etc categories
+ldat_s <- ldat %>% group_by(CU_Name, GroupName, GU_Name, NME, SummerRun, Rabcode, Area, Year, Source) %>%
+  summarise(Escape=sum(Escape, na.rm=TRUE))
+# for sum escapement values that are 0, make back into NA (unobserved)
+# since na.rm was TRUE, these became 0 values; summing NA values with na.rm=TRUE returns 0
+ldat_s$Escape[ ldat_s$Escape == 0 ] <- NA
+
+# Remove non-wild and Little Qualicum, Qualicum, and Puntledge Rivers entirely
+LongDatNoQP <- ldat_s[which(ldat_s$NME %notin% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")),]
+
+#Now Infill
+NoQPDat <- Infill(data = LongDatNoQP, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
+#AllData
+#write.csv(NoQPDat[[1]], "DataOut/InfilledNoQP_all.csv")
+#Sumamarised data
+#write.csv(NoQPDat[[2]], "DataOut/InfilledNoQP.csv")
+
+# Remove Fraser, make data frame to feed into infill again
+NoQPDatSumm <- as.data.frame(NoQPDat[[2]][which(NoQPDat[[2]]$CU_Name %in% CUdf$CU_raw),])
+NoQPDatAll <- NoQPDat[[1]][which(NoQPDat[[1]]$CU_Name %in% CUdf$CU_raw),c("CU_Name", "NME", "Year", "Props", "SiteEsc", "Area", "Rabcode")]
+
+# Now infill missing years for entire CU
+
+#Infill missing values
+NoQPByCU <- Infill(data=NoQPDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
+#NoQPByCUAmean <-  Infill(data=NoQPDatSummAmean, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc", avg="Amean")
+
+## Also want all infilled by site
+zz <- left_join(NoQPDatAll, data.frame(CU_Name=NoQPByCU[[1]]$CU_Name, Year=NoQPByCU[[1]]$Year, CUEsc = NoQPByCU[[1]]$SiteEsc))
+zz$Escape <- ifelse(is.nan(zz$SiteEsc), zz$CUEsc*zz$Props, zz$SiteEsc)
+zz$CU <- CUdf$CU_short[match(zz$CU_Name, CUdf$CU_raw)]
+write.csv(zz, "DataOut/wild_spawners_infilled_by_site.csv")
+
+# Also by CU
+#write.csv(NoQPByCU[[1]], "DataOut/wild_spawners_infilled_by_CU.csv")
+
+############   OLD CODE   ##################
 #Now Infill. Gives a list of 2 data frames. First is infilling by stream, second is a summary that is summarized by CU. 
 NoQPDat <- Infill(data = LongDatNoQP, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 
@@ -68,7 +153,7 @@ NoQPByCU <- Infill(data=NoQPDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", 
 
 # Write by CU output
 write.csv(NoQPByCU[[1]], "DataOut/WildEscape_w.Infill_ByCU.csv", row.names = F)
-
+##############################################
 
 ## Step 2: Construct Spawner Recruit Brood Tables =============================================
 
@@ -150,8 +235,8 @@ write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 # =====================================#
 
 # format data
-yrcols <- grep("[[:digit:]]{4}", names(RawDat)) # get position of yr columns
-rdl <- RawDat %>% pivot_longer( cols= yrcols, names_to="year", values_to="escapement") # wide to long format for plotting
+yrcols <- grep("[[:digit:]]{4}", names(rawdat)) # get position of yr columns
+rdl <- rawdat %>% pivot_longer( cols= yrcols, names_to="year", values_to="escapement") # wide to long format for plotting
 #check_names <- rdl %>% group_by(CU_Name, GroupName, GU_Name) %>% summarise(n=n()) # check correspondence of CU and GroupName, GU_Name
 
 rdl <- rdl[rdl$Source=="Wild", ] # remove non-wild fish

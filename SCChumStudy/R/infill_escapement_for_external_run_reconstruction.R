@@ -79,7 +79,6 @@ CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Kn
             "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
 CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
 
-
 rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish - earlier run timing means they are not intercepted in same fisheries, can't do run reconstruction with them
 
 ## Infill total spawners (wild/enhanced/brood/rack)
