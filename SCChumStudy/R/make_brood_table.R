@@ -114,13 +114,13 @@ wild_infill_by_stream_list <- Infill(data = ldat_s, groupby=c("CU_Name"), Uid = 
 #write.csv(NoQPDat[[2]], "DataOut/InfilledNoQP.csv")
 
 # Remove Fraser, make data frame to feed into infill again
-wild_infill_by_stream_sum_no_fraser <- as.data.frame(infill_wild[[2]][which(infill_wild[[2]]$CU_Name %in% CUdf$CU_raw),])
-wild_infill_by_stream <- NoQPDat[[1]][which(NoQPDat[[1]]$CU_Name %in% CUdf$CU_raw),c("CU_Name", "NME", "Year", "Props", "SiteEsc", "Area", "Rabcode")]
+wild_infill_by_stream_sum_no_fraser <- as.data.frame(wild_infill_by_stream_list[[2]][which(wild_infill_by_stream_list[[2]]$CU_Name %in% CUdf$CU_raw),])
+wild_infill_by_stream <- wild_infill_by_stream_list[[1]][which(wild_infill_by_stream_list[[1]]$CU_Name %in% CUdf$CU_raw),c("CU_Name", "NME", "Year", "Props", "SiteEsc", "Area", "Rabcode")]
 
 # Now infill missing years for entire CU
 
 #Infill by CU for years + CU combinations where there are no observations (Knight and Bute)
-wild_infill_by_CU <- Infill(data=wild_infill_by_stream_no_fraser, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
+wild_infill_by_CU <- Infill(data=wild_infill_by_stream_sum_no_fraser, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
 #NoQPByCUAmean <-  Infill(data=NoQPDatSummAmean, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc", avg="Amean")
 
 ## Also want all infilled by site
