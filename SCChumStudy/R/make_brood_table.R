@@ -56,12 +56,12 @@ table(rawdat$CU_Name, rawdat$SummerRun)
 #           (do contribute to the subsequent returns).
 #
 #   SummerRun: We removed the summer run fish as all the data in regards the reconstruction work is 
-#       associated with Fall timed stocks.  
+#       associated with Fall timed stocks.
 #
 #   NME: Individual streams. Note for Qualicum River, Little Qualicum River, Puntledge River - Historically we assume 
 #       these three stocks are 100% enhanced at least since enhancement began at those locations.  
 #       We have little data in the enhanced contribution found in the returns but for the purposes of 
-#       pulling out wild we make the assumption they were 100% enhanced and not included. 
+#       pulling out wild we make the assumption they were 100% enhanced and not included.
 #
 # 
 # II. Other notes
@@ -82,24 +82,19 @@ table(rawdat$CU_Name, rawdat$SummerRun)
 #               Qualicum, and Puntledge Rivers entirely
 # ----------------------------------------------------#
 
-#------------------ don't know if this is needed---------------------
 # Create look-up table for CU names
-# CUs without Fraser River CUs
 CU_raw <- unique(rawdat$CU_Name)
-CUdf <- data.frame("CU_raw"=CU_raw[1:7])
-
-#need to match CU names
-# CU_raw <- unique(rawdat$CU_Name)
-# CU_short <- c("SCS", "NEVI", "UK", "LB", "BI", "GS", "HSBI")
-# CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight",
-#             "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
-# CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
-#------------------ don't know if this is needed---------------------
+CU_short <- c("SCS", "NEVI", "UK", "LB", "BI", "GS", "HSBI")
+CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight",
+            "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
+CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
 
 # Process and filter data
 rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish - earlier run timing means they are not intercepted in same fisheries, can't do run reconstruction with them
 # Remove non wild fish
 rawdat_w <- rawdat_f[rawdat_f$Source=="Wild", ]
+# Remove Little Qualicum, Qualicum, and Puntledge Rivers, because they are historically highly enhanced
+rawdat_w2 <- rawdat_w[which(rawdat_w$NME %notin% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")), ]
 
 # wide to long format. maintain NA values (uncounted streams)
 ldat <- rawdat_w %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(rawdat_f)), names_to="Year", values_to="Escape")
@@ -111,31 +106,28 @@ ldat_s <- ldat %>% group_by(CU_Name, GroupName, GU_Name, NME, SummerRun, Rabcode
 # since na.rm was TRUE, these became 0 values; summing NA values with na.rm=TRUE returns 0
 ldat_s$Escape[ ldat_s$Escape == 0 ] <- NA
 
-# Remove non-wild and Little Qualicum, Qualicum, and Puntledge Rivers entirely
-LongDatNoQP <- ldat_s[which(ldat_s$NME %notin% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")),]
-
 #Now Infill
-NoQPDat <- Infill(data = LongDatNoQP, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
+wild_infill_by_stream_list <- Infill(data = ldat_s, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 #AllData
 #write.csv(NoQPDat[[1]], "DataOut/InfilledNoQP_all.csv")
 #Sumamarised data
 #write.csv(NoQPDat[[2]], "DataOut/InfilledNoQP.csv")
 
 # Remove Fraser, make data frame to feed into infill again
-NoQPDatSumm <- as.data.frame(NoQPDat[[2]][which(NoQPDat[[2]]$CU_Name %in% CUdf$CU_raw),])
-NoQPDatAll <- NoQPDat[[1]][which(NoQPDat[[1]]$CU_Name %in% CUdf$CU_raw),c("CU_Name", "NME", "Year", "Props", "SiteEsc", "Area", "Rabcode")]
+wild_infill_by_stream_sum_no_fraser <- as.data.frame(infill_wild[[2]][which(infill_wild[[2]]$CU_Name %in% CUdf$CU_raw),])
+wild_infill_by_stream <- NoQPDat[[1]][which(NoQPDat[[1]]$CU_Name %in% CUdf$CU_raw),c("CU_Name", "NME", "Year", "Props", "SiteEsc", "Area", "Rabcode")]
 
 # Now infill missing years for entire CU
 
-#Infill missing values
-NoQPByCU <- Infill(data=NoQPDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
+#Infill by CU for years + CU combinations where there are no observations (Knight and Bute)
+wild_infill_by_CU <- Infill(data=wild_infill_by_stream_no_fraser, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
 #NoQPByCUAmean <-  Infill(data=NoQPDatSummAmean, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc", avg="Amean")
 
 ## Also want all infilled by site
-zz <- left_join(NoQPDatAll, data.frame(CU_Name=NoQPByCU[[1]]$CU_Name, Year=NoQPByCU[[1]]$Year, CUEsc = NoQPByCU[[1]]$SiteEsc))
-zz$Escape <- ifelse(is.nan(zz$SiteEsc), zz$CUEsc*zz$Props, zz$SiteEsc)
-zz$CU <- CUdf$CU_short[match(zz$CU_Name, CUdf$CU_raw)]
-write.csv(zz, "DataOut/wild_spawners_infilled_by_site.csv")
+wild_infill_join <- left_join(wild_infill_by_stream, data.frame(CU_Name=wild_infill_by_CU[[1]]$CU_Name, Year=wild_infill_by_CU[[1]]$Year, CUEsc = wild_infill_by_CU[[1]]$SiteEsc))
+wild_infill_join$Escape <- ifelse(is.nan(wild_infill_join$SiteEsc), wild_infill_join$CUEsc*wild_infill_join$Props, wild_infill_join$SiteEsc)
+wild_infill_join$CU <- CUdf$CU_short[match(wild_infill_join$CU_Name, CUdf$CU_raw)]
+write.csv(wild_infill_join, "DataOut/wild_spawners_infilled_by_site_CU.csv")
 
 # Also by CU
 #write.csv(NoQPByCU[[1]], "DataOut/wild_spawners_infilled_by_CU.csv")
