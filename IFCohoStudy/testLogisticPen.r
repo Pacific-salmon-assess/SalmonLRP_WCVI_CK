@@ -148,7 +148,7 @@ abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2
 TMB_Inputs_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                    Tau_dist = 0.1,
                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
-                   B_penalty_mu=B_penalty_mu/1000, B_penalty_sigma = B_penalty_sigma / 1000)
+                   B_penalty_mu=B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
 
 
 
@@ -182,7 +182,7 @@ abline(v=B_penalty_mu, col="dodgerblue", lty=2) # plot upper and lower values an
 TMB_Inputs_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                                Tau_dist = 0.1,
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
-                               B_penalty_mu=B_penalty_mu/1000, B_penalty_sigma = B_penalty_sigma / 1000)
+                               B_penalty_mu=B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
 
 
 BMmodel <- "SR_IndivRicker_Surv_LowAggPrior"
@@ -224,7 +224,7 @@ abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2
 TMB_Inputs_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                                Tau_dist = 0.1,
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
-                               B_penalty_mu=B_penalty_mu/1000, B_penalty_sigma = B_penalty_sigma / 1000)
+                               B_penalty_mu=B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
 
 
 BMmodel <- "SR_IndivRicker_Surv_LowAggPrior"

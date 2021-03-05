@@ -250,15 +250,14 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
       N_CUs <- obj$report()$N_Above_BM/N_Stocks
     }
     
-    
     # Save .rda file for binomial fits
     if(Bern_Logistic == F){
-      rda<-list()
-      rda$All_Ests<-All_Ests
-      rda$AggAbund<-Agg_Abund$Agg_Esc / Scale
-      rda$obsPpnAboveBM<-N_CUs
-      rda$p <- p
-      rda$nLL<-obj$report()$ans
+      diagDat<-list()
+      diagDat$All_Ests<-All_Ests
+      diagDat$AggAbund<-Agg_Abund$Agg_Esc / Scale
+      diagDat$obsPpnAboveBM<-N_CUs
+      diagDat$p <- p
+      diagDat$nLL<-obj$report()$ans
     }
     
     Logistic_Data <- data.frame(Mod = Mod, yr = Agg_Abund$yr, 
@@ -276,7 +275,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
                           lwr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate - 1.96*Std..Error) %>% pull(xx),
                           upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
     
-    out$rda<-rda
+    out$Diagnostic_Data<-diagDat
     
     out
     

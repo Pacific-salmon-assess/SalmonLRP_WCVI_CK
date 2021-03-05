@@ -11,7 +11,9 @@
 
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
                          BMmodel, LRPmodel=NULL, integratedModel=F, useGenMean=T, 
-                         TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T) {
+                         TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T,
+                         runLogisticDiag=F) {
+ 
   
   yearList<-startYr:endYr
   
@@ -203,14 +205,18 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       
     }
     
-  
-    # Save rda outputs for binomial model fit
-    if (LRPmodel == "BinLogistic") {
-      input<-LRP_Mod$rda
-      input$dir<-""
-      input$plotName<-"testLRDiagnostics"
-      save(input, file = paste(outputDir,"/",BMmodel, "_p",p,"_",yearList[yy],".rda",sep=""))
+    ## Run logistic model diagnostics =======
+    if (runLogisticDiag==TRUE) {
+      logisticDiagStats<-LRdiagnostics(All_Ests=LRP_Mod$Diagnostic_Data$All_Ests, 
+                  AggAbund=LRP_Mod$Diagnostic_Data$AggAbund, 
+                  obsPpnAboveBM=LRP_Mod$Diagnostic_Data$obsPpnAboveBM, 
+                  p=p, nLL=LRP_Mod$Diagnostic_Data$nLL, 
+                  dir=figDir, plotname=paste("logisticFitDiag",yearList[yy], sep="_"))
+    
+    capture.output(logisticDiagStats, file = paste(figDir,"/logisticFitDiag_",yearList[yy] ,".txt", sep=""))
+    
     }
+    
   } # end of year loop
 
 
