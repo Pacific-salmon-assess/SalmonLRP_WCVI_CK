@@ -21,7 +21,7 @@ Infill <- function( data, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"),
     SiteAvg <- data %>% group_by(across(all_of(c(unit, groupby, Uid)))) %>% mutate(EscAvg = GeoMean(Escape)) # groups by NME (stream), CU, and Uid (combo of Rabcode and Group name), adds column with geometric mean of escapement across all years
   }
   if(avg=="Amean"){
-    SiteAvg <- data %>% group_by(.dots=c(unit, groupby, Uid)) %>% mutate(EscAvg = mean(Escape, na.rm=TRUE))
+    SiteAvg <- data %>% group_by(across(all_of(c(unit, groupby, Uid)))) %>% mutate(EscAvg = mean(Escape, na.rm=TRUE))
   }
   
   Year="Year" #need Year to be character string for group_by and .dots notation to work
