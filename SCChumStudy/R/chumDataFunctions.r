@@ -18,14 +18,14 @@ Infill <- function( data, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"),
   
   # Calculate geometric mean of each unit (stream) within group, over all years, and add column. The average escapement for each steam, over all years. 
   if(avg=="GeoMean"){
-    SiteAvg <- data %>% group_by(.dots=c(unit, groupby, Uid)) %>% mutate(EscAvg = GeoMean(Escape)) # groups by NME (stream), CU, and Uid (combo of Rabcode and Group name), adds column with geometric mean of escapement across all years
+    SiteAvg <- data %>% group_by(across(all_of(c(unit, groupby, Uid)))) %>% mutate(EscAvg = GeoMean(Escape)) # groups by NME (stream), CU, and Uid (combo of Rabcode and Group name), adds column with geometric mean of escapement across all years
   }
   if(avg=="Amean"){
     SiteAvg <- data %>% group_by(.dots=c(unit, groupby, Uid)) %>% mutate(EscAvg = mean(Escape, na.rm=TRUE))
   }
   
   Year="Year" #need Year to be character string for group_by and .dots notation to work
-  
+
   # proportion of the group that this unit average makes up
   GroupAvg <- SiteAvg %>% group_by(.dots=c(groupby, Year)) %>% mutate(GroupSum = sum(EscAvg)) # groups data frame from above by CU and year, and sums the average escapement. Sum of average stream escapement for each CU.
   GroupAvg$Props <- GroupAvg$EscAvg/GroupAvg$GroupSum # Proportion of average escapement for each stream from its group (here, CU). The contribution of each stream to its CU. Or, average stream escapement / sum of average stream escapement across CU
