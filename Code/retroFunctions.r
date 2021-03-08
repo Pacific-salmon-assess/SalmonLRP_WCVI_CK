@@ -207,13 +207,15 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     ## Run logistic model diagnostics =======
     if (runLogisticDiag==TRUE) {
+     
       logisticDiagStats<-LRdiagnostics(All_Ests=LRP_Mod$Diagnostic_Data$All_Ests, 
                   AggAbund=LRP_Mod$Diagnostic_Data$AggAbund, 
                   obsPpnAboveBM=LRP_Mod$Diagnostic_Data$obsPpnAboveBM, 
                   p=p, nLL=LRP_Mod$Diagnostic_Data$nLL, 
                   dir=figDir, plotname=paste("logisticFitDiag",yearList[yy], sep="_"))
     
-    capture.output(logisticDiagStats, file = paste(figDir,"/logisticFitDiag_",yearList[yy] ,".txt", sep=""))
+      capture.output(logisticDiagStats, file = paste(outputDir,"/logisticFitDiag_",yearList[yy] ,".txt", sep=""))
+      save(logisticDiagStats, file = paste(outputDir,"/logisticFitDiag_",yearList[yy] ,".rda", sep=""))
     
     }
     
@@ -224,9 +226,6 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
   # Save outputs and make plots if function is not being run as part of a bootstrap
   if (bootstrapMode == F) {
   
-    
-
-   
     # Save annual retrospective outputs as csv files =========================
     if (integratedModel == T) write.csv(outSR.df, paste(outputDir,"/annualRetro_SRparsByCU.csv", sep=""))
     write.csv(outLRP.df, paste(outputDir,"/annualRetro_LRPs.csv", sep=""))

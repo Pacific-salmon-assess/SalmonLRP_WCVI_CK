@@ -93,14 +93,14 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # ==================================================================================
 # Call functions to plot data availability:
 # ====================================================================================
-plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
-plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
-
-# Note: these next 2 two escpt plots need to have formatting fixed
-plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
-plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc Separate", samePlot = F)
-plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
-plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
+# plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
+# plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
+# 
+# # Note: these next 2 two escpt plots need to have formatting fixed
+# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
+# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc Separate", samePlot = F)
+# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
+# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
 
 
 # ==================================================================================================================
@@ -452,3 +452,80 @@ plotAggStatus_byNCUs_Compare(estYear=2018, nCUList=c(5,4,3), Names=modelFitList,
 #         other values look the same
 #   2. DataOut/AnnualRetrospective/annualRetro_LRPs.csv:
 #         values are identical
+
+
+
+# ========================================================================
+# Run leave-one-out logistic model diagnostic
+# ========================================================================
+
+
+year <- 2018
+p<-0.99
+useGenMean <- FALSE
+genYrs<-3
+BroodYrLag<-2
+useBern_Logistic <- FALSE
+
+
+#CoEscpDat
+#CoSRDat
+
+
+
+
+#LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE, n=18){
+  
+  
+  # Step 1: estimate logistic regression iteratively, removing a single year 
+  # each time
+  
+  # predPpnAboveBM <- NA
+  # 
+  # for (i in 1:n){
+  #   # Estimate logistic regression using function Get.LRP
+  #   zz <- Get.LRP(remove.EnhStocks = TRUE, LOO=i)
+  #   All_Ests <- zz$out$All_Ests
+  #   
+  #   if(i==1){ # These remain constant over iterations
+  #     # Step 2: Get observed time-series of aggregate raw abundances that includes all
+  #     # data and then scale to units near 1-10 
+  #     AggAbundRaw <- zz$out$Logistic_Data$xx
+  #     digits <- count.dig(AggAbundRaw)
+  #     ScaleSMU <- min(10^(digits -1 ), na.rm=T)
+  #     AggAbund <- AggAbundRaw/ScaleSMU
+  #     # Get time-series of observed ppns of CUs> benchamark, including all
+  #     # data
+  #     obsPpnAboveBM <- zz$out$Logistic_Data$yy
+  #     # Get threshold p value (ppn of CUs>benchmark) used to estimate LRP
+  #     p <- zz$LRPppn
+  #     #dir <- "DataOut/"
+  #   }
+  #   
+  #   # Step 3: Get predicted ppn of CUs above their lower benchmark for the year 
+  #   # that was held out
+  #   B_0 <- All_Ests %>% filter(Param=="B_0") %>% pull(Estimate)
+  #   B_1 <- All_Ests %>% filter(Param=="B_1") %>% pull(Estimate)
+  #   #predPpnAboveBM <- inv_logit(B_0 + B_1*AggAbund)
+  #   predPpnAboveBM[i] <- inv_logit(B_0 + B_1*AggAbund[i])
+  # } # End of for i in 1:18
+  # 
+  # # Step 4: Calculate Hit Ratio
+  # 
+  # # In which years did the model predict aggregate abundances >LRP?
+  # yHat <- predPpnAboveBM > p
+  # # In which years were observed aggregate abundances >LRP?
+  # y <- obsPpnAboveBM > p
+  # 
+  # # Confusion Matrix
+  # confMat <- table(y, yHat)
+  # 
+  # # What is the accuracy in classifying observed aggregate abundances?
+  # # Hit ratio = ratio of correct classification
+  # hitRatio <- sum(diag(confMat))/sum(confMat)
+  # hitRatio <- round(hitRatio, digits=2)
+  # 
+  # 
+  # 
+  # #}# End of Function 2: LOO_LRdiagnostics()
+  # 

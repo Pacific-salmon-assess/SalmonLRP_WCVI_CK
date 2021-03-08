@@ -11,7 +11,7 @@ library(zoo)
 # Run TMB Ricker and LRP estimation, either Hier Ricker or regular ========================================================
 Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic, 
                            useGenMean, genYrs, p,
-                           TMB_Inputs) {
+                           TMB_Inputs, LOO=NULL) {
   
   # Specify Mod (i.e., TMB model name) specific to each benchmark model type
   Mod <- BMmodel

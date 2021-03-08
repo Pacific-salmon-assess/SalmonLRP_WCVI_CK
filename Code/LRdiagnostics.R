@@ -442,6 +442,9 @@ LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE, n=18){
 
 
 
+
+
+
 #NB the logit function from Brooke's helperFunction code needs an extra set of
 # ()s. I don't think it was actually implemented in the code...?
 
