@@ -76,11 +76,11 @@ table(rawdat$CU_Name, rawdat$SummerRun)
 #   Little Qualicum, Qualicum, and Puntledge Rivers: assume these are 100% enhanced, and 
 #     remove entirely for infilling for wild escapement
 
-
+# ----------------------------------------------------#
+# Step 1: Infill wild escapement data
 # ----------------------------------------------------#
 # Infill wild spawners only, and remove Little Qualicum, 
 #               Qualicum, and Puntledge Rivers entirely
-# ----------------------------------------------------#
 
 # Create look-up table for CU names
 CU_raw <- unique(rawdat$CU_Name)
@@ -97,7 +97,7 @@ rawdat_w <- rawdat_f[rawdat_f$Source=="Wild", ]
 rawdat_w2 <- rawdat_w[which(rawdat_w$NME %notin% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")), ]
 
 # wide to long format. maintain NA values (uncounted streams)
-ldat <- rawdat_w %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(rawdat_f)), names_to="Year", values_to="Escape")
+ldat <- rawdat_w2 %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(rawdat_f)), names_to="Year", values_to="Escape")
 
 # summarise by stream, to collapse any brood/rack/enhanced/rack etc categories
 ldat_s <- ldat %>% group_by(CU_Name, GroupName, GU_Name, NME, SummerRun, Rabcode, Area, Year, Source) %>%
@@ -107,6 +107,7 @@ ldat_s <- ldat %>% group_by(CU_Name, GroupName, GU_Name, NME, SummerRun, Rabcode
 ldat_s$Escape[ ldat_s$Escape == 0 ] <- NA
 
 #Now Infill
+#Now Infill. Gives a list of 2 data frames. First is infilling by stream, second is a summary that is summarized by CU. 
 wild_infill_by_stream_list <- Infill(data = ldat_s, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 #AllData
 #write.csv(NoQPDat[[1]], "DataOut/InfilledNoQP_all.csv")
@@ -121,7 +122,6 @@ wild_infill_by_stream <- wild_infill_by_stream_list[[1]][which(wild_infill_by_st
 
 #Infill by CU for years + CU combinations where there are no observations (Knight and Bute)
 wild_infill_by_CU <- Infill(data=wild_infill_by_stream_sum_no_fraser, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
-#NoQPByCUAmean <-  Infill(data=NoQPDatSummAmean, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc", avg="Amean")
 
 ## Also want all infilled by site
 wild_infill_join <- left_join(wild_infill_by_stream, data.frame(CU_Name=wild_infill_by_CU[[1]]$CU_Name, Year=wild_infill_by_CU[[1]]$Year, CUEsc = wild_infill_by_CU[[1]]$SiteEsc))
@@ -130,58 +130,66 @@ wild_infill_join$CU <- CUdf$CU_short[match(wild_infill_join$CU_Name, CUdf$CU_raw
 write.csv(wild_infill_join, "DataOut/wild_spawners_infilled_by_site_CU.csv")
 
 # Also by CU
-#write.csv(NoQPByCU[[1]], "DataOut/wild_spawners_infilled_by_CU.csv")
+#write.csv(wild_infill_by_CU[[1]], "DataOut/wild_spawners_infilled_by_CU.csv")
 
-############   OLD CODE   ##################
-#Now Infill. Gives a list of 2 data frames. First is infilling by stream, second is a summary that is summarized by CU. 
-NoQPDat <- Infill(data = LongDatNoQP, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 
-# Remove Fraser, make data frame to feed into infill again
-NoQPDatSumm <- as.data.frame(NoQPDat[[2]][which(NoQPDat[[2]]$CU_Name %in% CUdf$CU_raw),])
+# Compare to infilling for run reconstruction
+# # Read in what was done for run reconstruction
+# zz <- read.csv( "DataOut/infill_escapement_for_external_run_reconstruction/wild_spawners_infilled_by_site.csv")
+# CUs <- unique(wild_infill_by_stream$CU_Name)
+# compare_stream_infilling_fig <- function(CU, dat1, dat2) {
+#   d1 <- dat1[dat1$CU_Name==CU, ]
+#   d2 <- dat2[dat2$CU_Name==CU, ]
+#   ggplot(d1, aes(y=SiteEsc, x=Year)) +
+#     geom_point() +
+#     geom_point(data=d2, aes(y=SiteEsc, x=as.integer(Year)), colour="dodgerblue", shape=1, stroke=1.2) +
+#     facet_wrap(~NME, scales="free_y") +
+#     scale_x_discrete(breaks=seq(1960,2020,10)) +
+#     ggtitle(CU) +
+#     theme_bw() +
+#     theme(axis.text.x = element_text(angle=90, vjust=0.5))
+# }
+# # for total spawners
+# fig_list <- as.list(CUs)
+# fig_list <- purrr::map(fig_list, compare_stream_infilling_fig, dat1=zz, dat2=wild_infill_by_stream)
+# fig_list[[1]] # check
+# pdf("Figures/fig_compare_infill_run_reconstruction_brood_table.pdf", width=18, height=12, pointsize=8)
+# for (i in 1:length(fig_list)){
+#   print(fig_list[[i]])
+# }
+# dev.off()
 
-# Now infill missing years for entire CU
-#Infill missing values
-NoQPByCU <- Infill(data=NoQPDatSumm, groupby=NULL, Uid = NULL , unit="CU_Name", EscCol="GroupEsc")
+# Looks identical 
 
-# Write by CU output
-write.csv(NoQPByCU[[1]], "DataOut/WildEscape_w.Infill_ByCU.csv", row.names = F)
-##############################################
 
-## Step 2: Construct Spawner Recruit Brood Tables =============================================
+# ----------------------------------------------------#
+# Step 2: Construct Spawner Recruit Brood Tables 
+# ----------------------------------------------------#
 
 # Prep infilled escapement data
-WildEsc <- NoQPByCU[[1]]
+WildEsc <- wild_infill_by_CU[[1]]
 WildEsc$CUinfill <- ifelse(is.na(WildEsc$Escape), TRUE, FALSE) # Flag 'Escape = NA' sites
 
-# Read in Return data from P.V.W received 2021-02-
+# Read in Return data from Pieter Van Will received 2021-02-24
 WildRetWide <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A84:BP101", trim_ws = TRUE)
 names(WildRetWide)[2] <- "Area"
 
 # Need to get PVW return data into long form:
 # First need to "collapse" areas to CU level
-#WildByCU <- WildRetWide  %>% group_by(CU_Name)   %>%  summarise_each(funs(sum(., na.rm=T)), 3:63)
-# KH changed above line to:
-WildByCU <- WildRetWide  %>% group_by(CU_Name)   %>%  summarise_at(vars("2013": "1953"),sum,na.rm = T)
+WildByCU <- WildRetWide  %>% group_by(CU_Name)   %>%  summarise_at(vars("2018":"1953"),sum,na.rm = T)
 WildByCU$CU_Name <- as.character(WildByCU$CU_Name)
 # Now into long form
-WildRetLong <- WildByCU %>% gather("Year", "Return", 2:62)
-
+WildRetLong <- WildByCU %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(WildByCU)), names_to="Year", values_to="Return")
 # Read in age comp data
-ACdat <- read.csv("DataIn/AgeComp_2013.csv")
-
-# -> Code taken from "SCChumWildData.R" file written by B. Davis for Holt et al. 2018 Chum CSAS paper:
+ACdat <- read.csv("DataIn/AgeComp_2018.csv")
 
 # Construct Brood table
 
 #Will need to merge EscDat and ECdat to get catch info, make three Brood tables
-# Year needs to be integer to join, stupid work around, couldn't figure out other way
-WildRetLong$Year <- as.character(WildRetLong$Year)
+# Year needs to be integer to join
 WildRetLong$Year <- as.integer(WildRetLong$Year)
 Btable1 <- left_join(data.frame(Year=as.integer(WildEsc$Year), CU=WildEsc$CU_Name, Escape=WildEsc$SiteEsc, CUinfill=WildEsc$CUinfill), 
                      data.frame(Year=WildRetLong$Year, CU=WildRetLong$CU_Name, Return=WildRetLong$Return), by=c("Year", "CU"))
-
-# KH - added following line to change year to factor:
-ACdat$Year<-as.integer(ACdat$Year)
 
 Btable <- left_join(Btable1, ACdat, by=c("Year"))
 
@@ -222,9 +230,9 @@ write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
 
 
-# =====================================#
+# ----------------------------------------------------#
 # Explore data with figures - LW
-# =====================================#
+# ----------------------------------------------------#
 
 # format data
 yrcols <- grep("[[:digit:]]{4}", names(rawdat)) # get position of yr columns
@@ -280,7 +288,7 @@ dev.off()
 #------------#
 
 # Plot actual vs. infilled data by stream, one page per CU
-infill_by_stream <- NoQPDat[[1]] # get by-steam infilled data
+infill_by_stream <- wild_infill_by_stream_list[[1]] # get by-steam infilled data
 
 CUs <- unique(infill_by_stream$CU_Name)
 make_CU_figs <- function(CU) {
@@ -306,10 +314,9 @@ dev.off()
 CUs <- unique(infill_by_stream$CU_Name)
 make_stream_figs <- function(CU) {
   infill_by_stream[infill_by_stream$CU_Name==CU,] %>% 
-    ggplot( aes(y=SiteEsc, x=Year, group=NME)) +
-    geom_point(colour="dodgerblue") +
-    geom_path() +
-    geom_point(aes(y=Escape, x=Year), colour="black") +
+    ggplot( aes(y=SiteEsc, x=Year, group=NME)) + # infilled
+    geom_point(colour="dodgerblue", shape=1) +
+    geom_point(aes(y=Escape, x=Year), colour="black") + # observed
     #scale_y_log10() +
     facet_wrap(~NME, scales="free_y") +
     scale_x_discrete(breaks=seq(1960,2010,10)) +
@@ -330,6 +337,7 @@ dev.off()
 # Infilling by stream assumes escapements in streams within a CU have correlation. 
 # change campbell river duplicate
 rdl$NME[which(rdl$NME=="CAMPBELL RIVER" & rdl$GU_Name=="5 - Fraser")] <- "LITTLE CAMPBELL RIVER"
+
 corCU <- function(CU) {
   df1 <- rdl %>% filter(CU_Name==CU) %>% select(NME, year, escapement) %>%
     pivot_wider(names_from=NME, values_from=escapement)
@@ -348,9 +356,9 @@ dev.off()
 # ----------#
 # Plot infilling by CU, to compare actual, infilled by stream, and infilling by CU - LW
 # ----------#
-infill_by_stream_no_fraser <- NoQPDat[[2]] %>% filter(!(CU_Name %in% c("8 - Lower Fraser", "9 - Fraser Canyon"))) 
+infill_by_stream_no_fraser <- wild_infill_by_stream_list[[2]] %>% filter(!(CU_Name %in% c("8 - Lower Fraser", "9 - Fraser Canyon"))) 
 png("Figures/fig_compare_actual_infill_by_stream_and_CU.png", height=5, width=10, res=300, units="in")
-ggplot(data=NoQPByCU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
+ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   geom_point( colour="red") + # infill by CU is in red
   geom_point(data = infill_by_stream_no_fraser, aes(y=GroupEsc, x=Year), colour="dodgerblue") + # infill by stream is blue
   geom_point(data = infill_by_stream_no_fraser, aes(y=SumRawEsc, x=Year)) + # raw escapement data
@@ -365,7 +373,7 @@ dev.off()
 
 # Plot escapement and R/S time series on same x axis for each CU --------
 # Merge escapement and recruitment data by CU and year
-cdat <- merge(NoQPByCU[[1]], Btable, by.x=c("CU_Name", "Year"), by.y=c("CU", "Year"), all=TRUE)
+cdat <- merge(wild_infill_by_CU[[1]], Btable, by.x=c("CU_Name", "Year"), by.y=c("CU", "Year"), all=TRUE)
 str(cdat)
 cdat$Year <- as.numeric(cdat$Year)
 cdat$RS <- cdat$Recruit/cdat$SiteEsc
@@ -379,7 +387,6 @@ colors <- paletteer::paletteer_c( palette = "scico::roma", n = ncols)
 
 # Transform the numeric variable in bins
 rank <- as.factor( as.numeric( cut(log(cdat$RS), ncols)))
-
 
 options(scipen = 100000)
 
