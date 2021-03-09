@@ -204,7 +204,8 @@ Type objective_function<Type>::operator() ()
   //Get final BM
   Type Agg_LRP = (log(p/(1-p)) - B_0)/(B_1);
   
-  // Add prior penalty on Aggregate abbundance at low proportion of CUs above benchmark
+  // Add prior penalty on aggregate abundance at low proportion of CUs above benchmark (if Bernoulli == F) 
+  // ---- or penalty on aggregate abundance with a 1% probability of all CUs being above benchmark (if Bernoulli = T)
   Type p_min = 0.01; // value p_min = low proportion of CUs greater than benchmark (Sgen)
   ans += -dnorm((log(p_min/(1-p_min)) - B_0) / B_1, B_penalty_mu , B_penalty_sigma, true ); // likelihood penalty on aggregate abundance
   
