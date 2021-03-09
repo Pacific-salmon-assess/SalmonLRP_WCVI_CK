@@ -207,7 +207,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     ## Run logistic model diagnostics =======
     if (runLogisticDiag==TRUE) {
-     
+    
       logisticDiagStats<-LRdiagnostics(All_Ests=LRP_Mod$Diagnostic_Data$All_Ests, 
                   AggAbund=LRP_Mod$Diagnostic_Data$AggAbund, 
                   obsPpnAboveBM=LRP_Mod$Diagnostic_Data$obsPpnAboveBM, 
@@ -215,7 +215,8 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
                   dir=figDir, plotname=paste("logisticFitDiag",yearList[yy], sep="_"))
     
       capture.output(logisticDiagStats, file = paste(outputDir,"/logisticFitDiag_",yearList[yy] ,".txt", sep=""))
-      save(logisticDiagStats, file = paste(outputDir,"/logisticFitDiag_",yearList[yy] ,".rda", sep=""))
+      save(logisticDiagStats, file = paste(outputDir,"/logisticFitDiagStats_",yearList[yy] ,".rda", sep=""))
+      save(LRP_Mod, file = paste(outputDir,"/logisticFit_",yearList[yy] ,".rda", sep=""))
     
     }
     
