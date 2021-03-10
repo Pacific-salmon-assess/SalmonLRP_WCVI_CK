@@ -5,10 +5,10 @@
 
 library(rsample)
 library(tidyverse)
-options(scipen=1000000)
 library(gridExtra)
 library(reshape2)
 library(TMB)
+options(scipen=1000000)
 
 setwd('..') # This works if working directory is in ~/SalmonLRP_RetroEval/SCChumStudy folder
 rootDir<-getwd()
@@ -43,14 +43,14 @@ dyn.load(dynlib("TMB_Files/LRP_Logistic_Only_LowAggPrior"))
 setwd(chumDir)
 
 # Run to re-do infilling and brood table
-#source("R/prepare_data.r") 
+#source("R/make_brood_table.r") 
 
 # ====================================================================
 # Read in data and format for using in retrospective analysis
 # ====================================================================
 
 # Read in chum wild escapement data (infilled) by CU
-ChumEscpDat <- read.csv("DataOut/WildEscape_w.Infill_ByCU.csv")
+ChumEscpDat <- read.csv("DataOut/wild_spawners_CU_infilled_by_site_CU.csv")
 ChumEscpDat$MU <- "SC Chum" # Add MU column - FLAG this may not be necessary - can't find MU in any of the function scripts. Check with Kendra
 ChumEscpDat$CU <- substr(ChumEscpDat$CU_Name, 1,1) # pull out CU ID from raw CU column name
 ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the name of the CU, replace CU_Name with that (remove the CU number)
@@ -98,11 +98,16 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
 ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
-# make data frames that do not include any observations from CUs with CU-level infilling (Upper Knight and Bute Inlet)
+# make data frames that do not include any observations from CUs that have any amount of CU-level infilling (Upper Knight and Bute Inlet)
 CUs_not_use <- unique(ChumEscpDat$CU_Name[which(is.na(ChumEscpDat$Escape))]) # get CUs that have NA values for escapement in some years (means that they were infilled at CU level)
 ChumEscpDat_no_CU_infill <- ChumEscpDat[!(ChumEscpDat$CU_Name %in% CUs_not_use), ]
 ChumSRDat_no_CU_infill <- ChumSRDat[!(ChumSRDat$CU_Name %in% CUs_not_use), ]
 
+# make data frames that do not include any observations from years that have any amount of CU-level infilling
+years_not_use <- unique(ChumEscDat$year[which(is.na(ChumEscDat$Escape))])
+# need to adjust this so that it also doesn't have brood year
+#ChumEscpDat_no_CU_infill_yrs <- 
+#ChumSRDat_no_CU_infill_yrs <- 
 
 # ========================================================================
 # Run annual restrospective analysis using CUs
@@ -125,20 +130,13 @@ ps <- c(seq(0.6, 0.95,.05), 0.99)
 #     This parameter gets used in the runAnnualRetro() function to remove the first few years of data for 
 #     which recruitment is NA because the BY has not yet been fully observed.
 
-
-# reload LRPFunctions.r to update changes (for active working)
-source(paste0(codeDir, "/LRPFunctions.r"))
-source(paste0(codeDir, "/retroFunctions.r"))
-#source(paste0(codeDir, "/plotFunctions.r"))
-
-
 # Run retrospective analysis
 for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T)
+  # runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T)
   # Same but with CUs with CU-level infilling removed
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
@@ -152,10 +150,9 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
 }
 
-
-# -----------------------------------------------------
+# -----------------------------------------------------#
 # Get values for low aggregate likelihood penalty model FLAG: need to redo this for the 5 CUs without CU-level infilling.
-# -----------------------------------------------------
+# -----------------------------------------------------#
 # Idea is to parameterize (mu and sigma) the aggregate abundance associated with a very low proportion (essentially 0; p=0.01) of
 # CUs being above their benchmark. The idea is to have 95% of this estimate between the CU Sgen and the sum of all their Sgen 
 # benchmarks or upper estimates of Sgens (e.g., all CUs are just below their lower benchmarks). The mean of this distribution is 
@@ -260,10 +257,10 @@ for(pp in 1:length(ps)){
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
   # with prior penalty on low aggregate abundance
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "LRP_Logistic_Only_LowAggPrior", LRPmodel="BinLogistic", integratedModel=F,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T)
+  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "LRP_Logistic_Only_LowAggPrior", LRPmodel="BinLogistic", integratedModel=F,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T)
 }
 
 
@@ -286,7 +283,19 @@ ggplot(pdat, aes(y=benchmark_perc_25, x=retro_year)) +
 dev.off()
 
 # Plot Sgen over time
-mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
+mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
+
+# remove extra columns and collapse NA rows
+head(mdat)
+names(mdat)
+
+mdat2 <- mdat[,! names(mdat) %in% c("X", "z.value", "Pr...z.2..")]
+
+aggregate(mdat2)
+
+#mdat3 <- mdat2 %>% group_by(Mod, CU_ID, CU_Name, retroYr, BMmodel, LRPmodel, useGenMean, integratedModel) %>%
+#  summarise(across(.cols=est_B:up_Sgen, .funs=first))
+
 # Plot Sgen estimates over time
 png("Figures/fig_Sgen_annual_retro.png", width=8, height=4, res=300, units="in")
 ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
