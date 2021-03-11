@@ -11,7 +11,7 @@ library(zoo)
 # Run TMB Ricker and LRP estimation, either Hier Ricker or regular ========================================================
 Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic, 
                            useGenMean, genYrs, p,
-                           TMB_Inputs, LOO=NULL) {
+                           TMB_Inputs) {
   
   # Specify Mod (i.e., TMB model name) specific to each benchmark model type
   Mod <- BMmodel
@@ -59,6 +59,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
  data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
  # range of spawner abundance to predict recruitment from
  data$Pred_Spwn <- rep(seq(0,max(data$S)*1.1,length=100), N_Stocks) # vectors of spawner abundance to use for predicted recruits, one vector of length 100 for each stock
+ 
  for (i in 1:N_Stocks) { # make a vector of same length as Pred_Spwn with CU ids
    if (i == 1) {
      data$stk_predS <- rep(unique(SRDat$CU_ID)[1],100) 
@@ -211,6 +212,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     }
   )   
 
+  
     # Create Table of outputs
     All_Ests <- data.frame(summary(sdreport(obj),p.value=TRUE))
     All_Ests$Param <- row.names(All_Ests)
@@ -250,15 +252,14 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
       N_CUs <- obj$report()$N_Above_BM/N_Stocks
     }
     
-    # Save .rda file for binomial fits
-    if(Bern_Logistic == F){
+    # Save .rda file with data needed to calculate model diagnostics
       diagDat<-list()
       diagDat$All_Ests<-All_Ests
       diagDat$AggAbund<-Agg_Abund$Agg_Esc / Scale
       diagDat$obsPpnAboveBM<-N_CUs
       diagDat$p <- p
       diagDat$nLL<-obj$report()$ans
-    }
+
     
     Logistic_Data <- data.frame(Mod = Mod, yr = Agg_Abund$yr, 
                                 yy = N_CUs, xx = Agg_Abund$Agg_Esc)
