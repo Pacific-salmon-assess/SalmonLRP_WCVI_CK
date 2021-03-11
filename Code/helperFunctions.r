@@ -75,3 +75,33 @@ getSD<-function(par, low_lim,hi_lim) {
   den<-sum( dnorm( seq( low_lim, hi_lim, 1), mean=mean(c(low_lim, hi_lim)), sd = par))
   return(abs(den - 0.95)) 
 }
+
+
+count.dig <- function(x) {floor(log10(x)) + 1}
+
+'%not in%' <- function (x, table) is.na(match(x, table, nomatch=NA_integer_))
+
+# PredInt = a function to calculate prediction intervals
+# x = independent variable
+# y = dependenet variable
+# Newx = x variables for which you'd like the prediction intervals
+# Predy = Predicted y variable at those Newx's
+PredInt <- function(x,y,Newx=x, Predy){
+  sumXErr <- sum( (x-mean(x))^2 )
+  sumYErr <- sum( (y-mean(y))^2 )
+  sumXYErr <- sum( (y - mean(y)) * (x - mean(x)) ) ^2
+  STEYX <- sqrt( (1/(length(x)-2)) * (sumYErr - sumXYErr/sumXErr) )
+  
+  # SE of the prediction from http://www.real-statistics.com/regression/confidence-and-prediction-intervals/
+  SE.pred <- STEYX * sqrt( (1 + 1/length(x) + ((Newx - mean(x))^2)/sumXErr) ) 
+  t.crit <- qt(0.975,df=length(x)-2) #95% intervals
+  
+  upr <- Predy + SE.pred*t.crit
+  lwr <- Predy - SE.pred*t.crit
+  PI <- list()
+  PI$upr <- upr
+  PI$lwr <- lwr
+  return(PI)
+  
+}
+
