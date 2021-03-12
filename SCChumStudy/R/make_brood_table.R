@@ -127,10 +127,10 @@ wild_infill_by_CU <- Infill(data=wild_infill_by_stream_sum_no_fraser, groupby=NU
 wild_infill_join <- left_join(wild_infill_by_stream, data.frame(CU_Name=wild_infill_by_CU[[1]]$CU_Name, Year=wild_infill_by_CU[[1]]$Year, CUEsc = wild_infill_by_CU[[1]]$SiteEsc))
 wild_infill_join$Escape <- ifelse(is.nan(wild_infill_join$SiteEsc), wild_infill_join$CUEsc*wild_infill_join$Props, wild_infill_join$SiteEsc)
 wild_infill_join$CU <- CUdf$CU_short[match(wild_infill_join$CU_Name, CUdf$CU_raw)]
-write.csv(wild_infill_join, "DataOut/wild_spawners_infilled_by_site_CU.csv")
+write.csv(wild_infill_join, "DataOut/wild_spawners_stream_infilled_by_site_CU.csv")
 
-# Also by CU
-#write.csv(wild_infill_by_CU[[1]], "DataOut/wild_spawners_infilled_by_CU.csv")
+# Save data by CU
+write.csv(wild_infill_by_CU[[1]], "DataOut/wild_spawners_CU_infilled_by_site_CU.csv")
 
 
 # Compare to infilling for run reconstruction

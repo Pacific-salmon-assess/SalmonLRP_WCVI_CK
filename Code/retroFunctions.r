@@ -149,7 +149,8 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       
       # Compile Ricker parameters from TMB outputs
       RickerEsts <- LRP_Mod$All_Ests %>% filter(Param %in% c("A", "B" , "Smsy", "Sgen", "sigma"))
-      output <- RickerEsts %>% dplyr::select(-Std..Error) %>% 
+      # remove standard error, z and Pr z 2 values from values fron output, these are used for model diagnostics
+      output <- RickerEsts %>% dplyr::select(-c(Std..Error, z.value, Pr...z.2..)) %>% 
                                pivot_wider( names_from = "Param", values_from = "Estimate", names_prefix = "est_")
       Sgen_SE <- RickerEsts %>% filter(Param == "Sgen") %>% pull(Std..Error)
       Sgens <- output$est_Sgen
