@@ -72,7 +72,7 @@ Type objective_function<Type>::operator() ()
   DATA_SCALAR(cap_sig);
   DATA_SCALAR(p);
   DATA_SCALAR(Sgen_sig);
-  
+
   
   PARAMETER_VECTOR(logA);
   PARAMETER_VECTOR(cap);
@@ -206,6 +206,7 @@ Type objective_function<Type>::operator() ()
   
   //Get final BM
   Type Agg_LRP = (log(p/(1-p)) - B_0)/(B_1);
+
   
   // Get estimates for plotting CIs
   int N_Preds = Pred_Abund.size();

@@ -88,6 +88,7 @@ Type objective_function<Type>::operator() ()
  REPORT(All_Above_BM);
  ADREPORT(Agg_LRP);
  ADREPORT(Logit_Preds);
+ REPORT(ans);
  
  return ans;
  

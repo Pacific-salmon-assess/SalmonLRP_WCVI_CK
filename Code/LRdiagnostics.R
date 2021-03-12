@@ -377,7 +377,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
 
 
 LOO_LRdiagnostics_cohoModel <- function(year, p, useBern_Logistic,
-                                        BMmodel, RunName,outputDir, TMB_Inputs) {
+                                        RunName,outputDir, TMB_Inputs) {
 
   # Step 1: Extract logistic regression data from .rda file
   load(paste(outputDir,"/logisticFit_",year,".rda",sep=""))

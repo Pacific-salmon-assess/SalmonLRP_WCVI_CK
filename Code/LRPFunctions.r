@@ -212,7 +212,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     }
   )   
 
-  
     # Create Table of outputs
     All_Ests <- data.frame(summary(sdreport(obj),p.value=TRUE))
     All_Ests$Param <- row.names(All_Ests)
@@ -275,7 +274,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     out$LRP <- data.frame(fit = All_Ests %>% filter(Param == "Agg_LRP") %>% pull(Estimate), 
                           lwr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate - 1.96*Std..Error) %>% pull(xx),
                           upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
-    
+
     out$Diagnostic_Data<-diagDat
     
     out
@@ -287,7 +286,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
 # ==============================================================================================================
 
 # Run TMB estimation for logistic regression fit only (no Ricker fit - used for threshold and percentile based approaches) ==========
-Run_LRP <- function(EscDat, Mod, useBern_Logistic, 
+Run_LRP <- function(Dat, Mod, useBern_Logistic, 
                            useGenMean, genYrs, p, TMB_Inputs) {
 
   # will define this here, since used so much
@@ -297,31 +296,41 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   data <- list()
   param <- list()
   
-  N_Stocks <- length(unique(EscDat$CU_Name))
+  N_Stocks <- length(unique(Dat$CU_Name))
   data$N_Stks <- N_Stocks
   data$Bern_Logistic <- as.numeric(useBern_Logistic)
   
   # Calculate Generation Mean of Aggregate Abundance
-  Agg_Abund <- EscDat %>% group_by(yr) %>% summarise(Agg_Esc = sum(Escp)) %>%
+  Agg_Abund <- Dat %>% group_by(yr) %>% summarise(Agg_Esc = sum(Escp)) %>%
     mutate(Gen_Mean = rollapply(Agg_Esc, genYrs, gm_mean, fill = NA, align="right"))
   
   # Give model year for which will fit logistic model
   # -- only include years in which we have obs for all CUs?
-  Num_CUs_Over_Time <- EscDat %>% group_by(yr) %>% summarise(n=length(unique((CU_Name))))
+  Num_CUs_Over_Time <- Dat %>% group_by(yr) %>% summarise(n=length(unique((CU_Name))))
   Mod_Yrs <- Num_CUs_Over_Time$yr[Num_CUs_Over_Time$n == max(Num_CUs_Over_Time$n)]
   
-  # -- and only include years with geometric mean of aggregagte abundance
+  # -- and only include years with geometric mean of aggregate abundance
   Gen_Mean_Yrs<-Agg_Abund$yr[!is.na(Agg_Abund$Gen_Mean)]
   Mod_Yrs<-Mod_Yrs[Mod_Yrs %in% Gen_Mean_Yrs]
-  Logistic_Dat <- EscDat %>% filter(yr %in% Mod_Yrs)
+  Logistic_Dat <- Dat %>% filter(yr %in% Mod_Yrs)
   Agg_Abund <- Agg_Abund %>% filter(yr %in% Mod_Yrs)
 
    # need year as index
   Logistic_Dat$yr_num <- group_by(as.data.frame(Logistic_Dat), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+ 
+  data$LM_CU_Status <- Logistic_Dat$AboveBenchmark
+  #if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_CU_Status <- Logistic_Dat$AboveBenchmark
   
-  if (Mod == "ThreshAbund_Subpop1000_ST") data$LM_CU_Status <- Logistic_Dat$HalfGrThresh
-  if (Mod == "ThreshAbund_Subpop1000_LT") data$LM_CU_Status <- Logistic_Dat$AllGrThresh
-  if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_CU_Status <- Logistic_Dat$AboveBenchmark
+ # if (Mod == "ThreshAbund_Subpop1000_ST") {
+    #data$LM_CU_Status <- Logistic_Dat$HalfGrThresh
+ #   Mod<-LRPMod
+ # }
+  
+ # if (Mod == "ThreshAbund_Subpop1000_LT") {
+    #data$LM_CU_Status <- Logistic_Dat$AllGrThresh
+ #   Mod<-LRPMod
+#  }
+  
   data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale
   # switch to this if not wanting to fit to geometric mean of aggregate escapement
   #data$LM_Agg_Abund <- Agg_Abund$Agg_Esc / Scale
@@ -329,8 +338,9 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   #dum2 <- dum2 %>% filter(yr %in% Mod_Yrs)
   #data$LM_Agg_Abund <- dum2$AggEscp.gm / Scale
   data$LM_yr <- Logistic_Dat$yr_num
-  if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_stk <- as.numeric(Logistic_Dat$CU) # FLAG - fix inconsistency with coho and Chum, no CU_ID column in Chum data right now
-  else data$LM_stk <- Logistic_Dat$CU_ID
+  #if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_stk <- as.numeric(Logistic_Dat$CU) # FLAG - fix inconsistency with coho and Chum, no CU_ID column in Chum data right now
+  #else data$LM_stk <- Logistic_Dat$CU_ID
+  data$LM_stk <- Logistic_Dat$CU_ID
   # range of agg abund to predict from
   data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
   data$p <- p
@@ -349,7 +359,7 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   
   # Create Table of outputs
-  All_Ests <- data.frame(summary(sdreport(obj)))
+  All_Ests <- data.frame(summary(sdreport(obj),p.value=TRUE))
   All_Ests$Param <- row.names(All_Ests)
   
   # Put together readable data frame of values
@@ -371,6 +381,14 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
     N_CUs <- obj$report()$N_Above_BM/N_Stocks
   }
   
+  # Save list with data needed to calculate model diagnostics
+  diagDat<-list()
+  diagDat$All_Ests<-All_Ests
+  diagDat$AggAbund<-Agg_Abund$Agg_Esc / Scale
+  diagDat$obsPpnAboveBM<-N_CUs
+  diagDat$p <- p
+  diagDat$nLL<-obj$report()$ans
+
   Logistic_Data <- data.frame(Mod = Mod, yr = Mod_Yrs, 
                               yy = N_CUs, xx = data$LM_Agg_Abund*Scale)
   
@@ -385,6 +403,8 @@ Run_LRP <- function(EscDat, Mod, useBern_Logistic,
   out$LRP <- data.frame(fit = All_Ests %>% filter(Param == "Agg_LRP") %>% pull(Estimate), 
                         lwr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate - 1.96*Std..Error) %>% pull(xx),
                         upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
+  
+  out$Diagnostic_Data<-diagDat
   
   out
  
@@ -641,7 +661,7 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
   out <- list()
   out$Proj<- data.frame(AggSpawners=projDat[,"sAg"], ppnCUs=projDat[, "ppnCUsLowerBM"])
   out$LRP <- as.data.frame(projDat.pp %>% filter(ppnCUsLowerBM==p) %>% select(fit=LRP.50, lwr=LRP.05, upr=LRP.95))
-  
+
   out
   
 }

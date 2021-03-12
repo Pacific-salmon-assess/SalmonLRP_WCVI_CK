@@ -10,7 +10,7 @@
 
 
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
-                         BMmodel, LRPmodel=NULL, integratedModel=F, useGenMean=T, 
+                         BMmodel, LRPmodel=NULL, LRPfile=NULL, integratedModel=F, useGenMean=T, 
                          TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T,
                          runLogisticDiag=F) {
  
@@ -63,20 +63,20 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         # 1) Call specified benchmark function:
 
         
-        # Case 1: LRP model is based on projections
-        if (LRPmodel == "Proj") {
-          
-          Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-          Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-          EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
-          
-          LRP_Mod<-Run_ProjRicker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, LRPmodel = LRPmodel, 
-                                      useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, outDir=outDir)
-          
-        }
+        # # Case 1: LRP model is based on projections
+        # if (LRPmodel == "Proj") {
+        #   
+        #   Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+        #   Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+        #   EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
+        #   
+        #   LRP_Mod<-Run_ProjRicker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, LRPmodel = LRPmodel, 
+        #                               useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, outDir=outDir)
+        #   
+        # }
         
       
-        # Case 2: BM Model == 1000 fish threshold at sub-population level
+        # Case 1: BM Model == 1000 fish threshold at sub-population level
         
         if (BMmodel == "ThreshAbund_Subpop1000_ST" | BMmodel == "ThreshAbund_Subpop1000_LT") { # Note that ST is for short-term threshold, LT is for long-term threshold
 
@@ -89,47 +89,50 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           # Calculate the number of subpopulations that are above 1000 fish threshold in each CU
           LBM_status_byCU <- EscpDat.cu %>% group_by(CU_Name, CU_ID, yr) %>% 
             summarise(Escp=sum(SubpopEscp), N = length(unique(Subpop_Name)),N_grThresh=sum(Above1000))
-          # Add a column indicating whether >= 50% of subpopulations were above 1000 fish threshold in each CU (1 = yes, 0 = no) (short-term recovery goal)
-          HalfGrThresh<-ifelse(LBM_status_byCU$N_grThresh >=  ceiling(LBM_status_byCU$N/2),1,0)
-          # Add a column indicating wheter all subpopulations were above 1000 fish threshold in each CU (long-term recovery goal) 
-          AllGrThresh<-ifelse(LBM_status_byCU$N_grThresh == LBM_status_byCU$N,1,0)
-          LBM_status_byCU <- LBM_status_byCU %>% add_column(HalfGrThresh) %>% add_column(AllGrThresh)
           
-          # Added dum 2 as a test to confirm our results match M. Arbeider code when we take geometric mean at the sub-population level before aggregating escapements
+          if (BMmodel == "ThreshAbund_Subpop1000_ST") {
+            # Add a column indicating whether >= 50% of subpopulations were above 1000 fish threshold in each CU (1 = yes, 0 = no) (short-term recovery goal)
+            HalfGrThresh<-ifelse(LBM_status_byCU$N_grThresh >=  ceiling(LBM_status_byCU$N/2),1,0)
+            LBM_status_byCU <- LBM_status_byCU %>% add_column(AboveBenchmark=HalfGrThresh)
+          }
+          if (BMmodel == "ThreshAbund_Subpop1000_LT") {
+            # Add a column indicating whether all subpopulations were above 1000 fish threshold in each CU (long-term recovery goal) 
+            AllGrThresh<-ifelse(LBM_status_byCU$N_grThresh == LBM_status_byCU$N,1,0)
+            LBM_status_byCU <- LBM_status_byCU %>% add_column(AboveBenchmark=AllGrThresh)
+          }
+          
+          # Model check: Added dum 2 as a test to confirm our results match M. Arbeider code when we take geometric mean at the sub-population level before aggregating escapements
           # --- June 5, 2020: Have confirmed that our results do match . Our results for long-term recovery target are the same as those 
           #         from the "IFC Conservation Goal Targets.Rmd" file Michael provided us.
           #dum<-EscpDat.yy %>% group_by(Subpop_Name,yr) %>% summarise(Escp.sp = sum(Escp)) %>% mutate(Gen_Mean = rollapply(Escp.sp, genYrs, gm_mean, fill = NA, align="right"))
           #dum2<- dum %>% group_by(yr) %>% summarise(AggEscp.gm=sum(Gen_Mean))
           
 
-      # 2) Call specified LRP function:
-        
-        LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU, Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
+      # Call specified LRP function:
+        LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                          useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
-        
         # This version with dum2=dum2 as an input was created to test consistency with M. Arbeider code; 
         # ---- if wanting to run with geometric means calculated at subpopulation level, will need to add AggEscp_gmBySP arguement to LRP_Mod function
         #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
         #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
-        
         }
-        
-        # Case 3: Percentile-based benchmark model (e.g., for Inside South Coast Chum)
-        if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) {
+       
+        # Case 3: BM model is percentile-based benchmark model (e.g., for Inside South Coast Chum)
+        #"if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior )) {
           
+        
+        
+        if (BMmodel %in% c("Percentile")) {
           LBM_status_byCU <- EscpDat.yy %>% group_by(CU_Name) %>%  # make new column with 25% benchmark
             mutate(benchmark_perc_25= quantile(Escp, probs=0.25, na.rm=TRUE)) 
           # Need to end up with a data frame that has CU, year, and whether CU is above benchmark (1 means yes, 0 mean no)
           LBM_status_byCU$AboveBenchmark <- ifelse(LBM_status_byCU$Escp >= LBM_status_byCU$benchmark_perc_25, 1,0)
           
-          # 2) Call specified LRP function:
-          
-          LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU, Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
+          # Call specified LRP function:
+          LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                            useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
-          
-          
         }
-        
+       
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================
     
     } else if(integratedModel == T){
@@ -175,7 +178,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     }
     
     # Make output csv file that has 25% benchmarks and escapement for each year, for each retro year
-    if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) {
+    if (BMmodel %in% c( "Percentile" )) {
       new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "AboveBenchmark") ]
       new.perc.df$retro_year <- yearList[yy] # add column with retrospective year
     
@@ -185,25 +188,26 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         out.perc.df <- rbind(out.perc.df, new.perc.df) # as looping through retro years, add rows with percentile benchmarks for each CU (with escapement too)
       }
     }
-    # If plotLRP=T, plot model fit and data  
-    if (plotLRP == T & LRPmodel != "Proj") {
+   # # If plotLRP=T, plot model fit and data  
+   # if (plotLRP == T & LRPmodel != "Proj") {
       
+    if (plotLRP == T) {
       plotLogistic(Data = LRP_Mod$Logistic_Data, Preds = LRP_Mod$Preds, 
                    LRP = LRP_Mod$LRP, useGenMean = useGenMean,
                    plotName = paste("LogisticMod", yearList[yy], sep ="_"), outDir = figDir,
                    p = p, useBern_Logistic = useBern_Logistic)
     }
-    
-    
-    if (plotLRP == T & LRPmodel == "Proj") {
 
-      
-      plotProjected(Data = LRP_Mod$Proj, LRP = LRP_Mod$LRP,
-                   plotName = paste("ProjMod", yearList[yy], sep ="_"), 
-                   outDir = figDir, p = p)
-      
-      
-    }
+    # 
+    # if (plotLRP == T & LRPmodel == "Proj") {
+    # 
+    #   
+    #   plotProjected(Data = LRP_Mod$Proj, LRP = LRP_Mod$LRP,
+    #                plotName = paste("ProjMod", yearList[yy], sep ="_"), 
+    #                outDir = figDir, p = p)
+    #   
+    #   
+    # }
     
     ## Run logistic model diagnostics =======
     if (runLogisticDiag==TRUE) {
@@ -228,9 +232,11 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
   if (bootstrapMode == F) {
   
     # Save annual retrospective outputs as csv files =========================
-    if (integratedModel == T) write.csv(outSR.df, paste(outputDir,"/annualRetro_SRparsByCU.csv", sep=""))
     write.csv(outLRP.df, paste(outputDir,"/annualRetro_LRPs.csv", sep=""))
-    if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) { # save percentile benchmark data frame output for plotting
+    if (integratedModel == T) {
+      write.csv(outSR.df, paste(outputDir,"/annualRetro_SRparsByCU.csv", sep=""))
+    }
+    if (BMmodel %in% c( "Percentile" )) { # save percentile benchmark data frame output for plotting
       write.csv(out.perc.df, paste(outputDir, "/annualRetro_perc_benchmarks.csv", sep=""))
     }
       # in final year also plot geometric mean of aggregate abundance + LRPs

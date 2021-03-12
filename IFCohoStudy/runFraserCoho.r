@@ -34,9 +34,6 @@ sourceAll()
 
 # Load TMB models
 
-compile("TMB_Files/LRP_Logistic_Only.cpp")
-dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
-
 compile("TMB_Files/SR_HierRicker_Surv_LowAggPrior.cpp")
 dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_LowAggPrior"))
 
@@ -49,17 +46,35 @@ dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_LowAggPrior"))
 compile("TMB_Files/SR_IndivRicker_SurvCap_LowAggPrior.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_LowAggPrior"))
 
-compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
+compile("TMB_Files/SR_HierRicker_Surv.cpp")
+dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv"))
 
+compile("TMB_Files/SR_IndivRicker_Surv.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv"))
+
+compile("TMB_Files/SR_HierRicker_SurvCap.cpp")
+dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap"))
+
+compile("TMB_Files/SR_IndivRicker_SurvCap.cpp")
+dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap"))
+
+# compile("TMB_Files/LRP_Logistic_Only.cpp")
+# dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
+
+# Only needed if running projection models =======
+#compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
+#dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
+
+# Only needed for leave-one-out logistic regression diagnostics
 compile("TMB_Files/LRP_BasicLogistic_Only_LowAggPrior.cpp")
 dyn.load(dynlib("TMB_Files/LRP_BasicLogistic_Only_LowAggPrior"))
 
+# Only needed for leave-one-out logistic regression diagnostics
+compile("TMB_Files/LRP_Logistic_Only_LowAggPrior.cpp")
+dyn.load(dynlib("TMB_Files/LRP_Logistic_Only_LowAggPrior"))
 
-
-#compile("TMB_Files/Proj_LRP.cpp")
-#dyn.load(dynlib("TMB_Files/Proj_LRP"))
-
+compile("TMB_Files/LRP_Logistic_Only.cpp")
+dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
 # ======================================================================
 # Read-in Coho data:  
 # =====================================================================
@@ -143,12 +158,16 @@ TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma)
 
+# Calculate penalty for sub-population approach
+subPop_B_penalty_lwr<-1000 # set at abundance below which no one CU could be above subpop have at least half of subpops above 1000 fish
+subPop_B_penalty_upr<-8000 # set at minimum abundance at which all 5 CUs could have half of subpops above 1000 fish 
+      # (i.e., MFr = 1 subpop>1000, FCany=1 subpop>1000, LThomp=1 subpop>1000, NThomp=2 subpop>3000, SThomp = 2 subpop> 1000)
+B_penalty_mu<-mean(c(subPop_B_penalty_lwr,subPop_B_penalty_upr))
+dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
+B_penalty_sigma<-dum$par
 
-TMB_Inputs_Subpop <- list(Scale = 1000)
+TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma)
 
-# TMB_Inputs_Subpop <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-#                           logMuA_sig = 2, Tau_dist = 0.1, Tau_A_dist = 0.1, 
-#                           gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
 
 
 # # Test projected LRP
@@ -177,6 +196,8 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
 # Loop over p values and run annual retrospective analyses for each level of p
   ps <- c(0.6, 0.7, 0.8, 0.9, 0.99)
   for(pp in 1:length(ps)){
+    
+    
     # Run with Binomial LRP model with hierarchical Ricker 
     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
                    BMmodel = "SR_HierRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
@@ -185,7 +206,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
     
     # Run with Bernoulli LRP model with hierarchical Ricker
     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_HierRicker_Surv_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
+                   BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
     
@@ -197,7 +218,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
     
     # # Run with Bernoulli LRP model with individual model Ricker
     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_IndivRicker_Surv_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
+                   BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                    useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
@@ -207,12 +228,11 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep=""),
                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
   
-    
-    # # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
-    runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_HierRicker_SurvCap_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
-                   useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-                   bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+    # # # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
+    # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+    #                BMmodel = "SR_HierRicker_SurvCap_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
+    #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
+    #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
     # Run with Binomial LRP model with individual model Ricker, with prior on capacity 
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
@@ -220,44 +240,34 @@ TMB_Inputs_Subpop <- list(Scale = 1000)
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
     
-  
-    # # Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
-    runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_IndivRicker_SurvCap_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
-                   useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-                   bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-
-    
+    # # # Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
+    # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+    #                BMmodel = "SR_IndivRicker_SurvCap_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
+    #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
+    #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
   }
 
 
 
 # Run annual restrospective analyses using subpopulations ===========================
 
-ps <- c(seq(0.6, 0.95,.05), 0.99)
+ps <- c(0.6, 0.7, 0.8, 0.9, 0.99)
 for(pp in 1:length(ps)){
 
 runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-               BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", integratedModel=F,
+               BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
                bootstrapMode = F, plotLRP=T)
 
-runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-               BMmodel = "ThreshAbund_Subpop1000_LT", LRPmodel="BernLogistic", integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshLT_",ps[pp]*100, sep=""),
-               bootstrapMode = F, plotLRP=T)
 
 runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-               BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", integratedModel=F,
+               BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior",integratedModel=F,
                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""),
-               bootstrapMode = F, plotLRP=T)
-
-runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-               BMmodel = "ThreshAbund_Subpop1000_LT", LRPmodel="BinLogistic", integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshLT_",ps[pp]*100, sep=""),
-               bootstrapMode = F, plotLRP=T)
+               bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
 }
+
+
 
 # Run all available combinations of number of CUs ============================================================
 
@@ -497,7 +507,7 @@ Wald[mm]<-round(logisticDiagStats$p.Wald,2)
 
 # Run leave-one-out logistic model diagnostic:
 hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-                    BMmodel=BMmodel,RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+                    RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
 
 
 
@@ -519,7 +529,7 @@ Wald[mm]<-round(logisticDiagStats$p.Wald,2)
 
 # Run leave-one-out logistic model diagnostic:
 hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-                                          BMmodel=BMmodel,RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+                                          RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
 
 
 # Model 3 =====================
@@ -540,7 +550,7 @@ Wald[mm]<-round(logisticDiagStats$p.Wald,2)
 
 # Run leave-one-out logistic model diagnostic:
 hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-                                          BMmodel=BMmodel,RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+                                          RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
 
 
 
@@ -562,7 +572,33 @@ Wald[mm]<-round(logisticDiagStats$p.Wald,2)
 
 # Run leave-one-out logistic model diagnostic:
 hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-                                          BMmodel=BMmodel,RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+                                          RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+
+
+
+
+# Model 5 =====================
+mm<-5
+modelName[mm]<-"SubPop"
+# Specify model fit to evaluate 
+#BMmodel<-"SR_HierRicker_SurvCap_LowAggPrior"
+RunName <- paste("Bin.SPopAbundThreshST_",p*100, sep="")
+TMB_Inputs<-TMB_Inputs_Subpop
+outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
+
+# Extract logistic regression data from .rda file
+load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
+PearChiSq[mm]<-round(logisticDiagStats$p.PearChiSq,2)
+DevChiSq[mm]<-round(logisticDiagStats$p.DevChiSq,2)
+quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
+Wald[mm]<-round(logisticDiagStats$p.Wald,2)
+
+# Run leave-one-out logistic model diagnostic:
+hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
+                                          RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+
+
+# Summarize model fit diagnostics
 
 diagStats_byModel<-data.frame(model = modelName, PearChiSq=PearChiSq, DevChiSq=DevChiSq,
                               quasiR2=quasiR2, Wald=Wald, hitRatio=hitRatio)

@@ -82,8 +82,10 @@ Type objective_function<Type>::operator() ()
  Type Agg_LRP = (log(p/(1-p)) - B_0)/(B_1);
  
  // Add prior penalty on Aggregate abbundance at low proportion of CUs above benchmark
- Type p_min = 0.01; // value p_min = low proportion of CUs greater than benchmark (Sgen)
- ans += -dnorm(  (log(p_min/(1-p_min)) - B_0) / B_1, B_penalty_mu , B_penalty_sigma, true ); // likelihood penalty on aggregate abundance
+ if(Bern_Logistic == 0) {
+  Type p_min = 0.01; // value p_min = low proportion of CUs greater than benchmark (Sgen)
+  ans += -dnorm(  (log(p_min/(1-p_min)) - B_0) / B_1, B_penalty_mu , B_penalty_sigma, true ); // likelihood penalty on aggregate abundance
+ }
  
  // Get estimates for plotting CIs
  int N_Preds = Pred_Abund.size();
@@ -95,6 +97,7 @@ Type objective_function<Type>::operator() ()
  REPORT(All_Above_BM);
  ADREPORT(Agg_LRP);
  ADREPORT(Logit_Preds);
+ REPORT(ans);
  
  return ans;
  
