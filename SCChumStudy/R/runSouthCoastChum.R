@@ -104,7 +104,7 @@ ChumEscpDat_no_CU_infill <- ChumEscpDat[!(ChumEscpDat$CU_Name %in% CUs_not_use),
 ChumSRDat_no_CU_infill <- ChumSRDat[!(ChumSRDat$CU_Name %in% CUs_not_use), ]
 
 # make data frames that do not include any observations from years that have any amount of CU-level infilling
-years_not_use <- unique(ChumEscDat$year[which(is.na(ChumEscDat$Escape))])
+years_not_use <- unique(ChumEscpDat$year[which(is.na(ChumEscpDat$Escape))])
 # need to adjust this so that it also doesn't have brood year
 #ChumEscpDat_no_CU_infill_yrs <- 
 #ChumSRDat_no_CU_infill_yrs <- 
@@ -159,13 +159,13 @@ for(pp in 1:length(ps)){
 # halfway between these lower (2.5% quantile) and upper (97.5% quantile) values. 
 
 # get Sgen estimates from running integrated model without penalty
-ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_90/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
+ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_90/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 
-#ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
-ests1 <- ests[,-c(1:3)]
-ests2 <- ests1 %>% pivot_longer(cols=4:10, names_to="parameter", values_to="estimate", values_drop_na=TRUE)
-ests3 <- ests2 %>% pivot_wider(names_from=parameter, values_from=estimate)
-ests4 <-  ests3[ests3$retroYr ==max(ests3$retroYr),] # get just last retro year for estimates
+ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
+# ests1 <- ests[,-c(1:3)]
+# ests2 <- ests1 %>% pivot_longer(cols=2:8, names_to="parameter", values_to="estimate", values_drop_na=TRUE)
+# ests3 <- ests2 %>% pivot_wider(names_from=parameter, values_from=estimate)
+# ests4 <-  ests3[ests3$retroYr ==max(ests3$retroYr),] # get just last retro year for estimates
 
 # make lower limit the lowest CU Sgen (this gives essentially the same results as using the average abundance of
 # the smallest CU)
@@ -282,19 +282,12 @@ ggplot(pdat, aes(y=benchmark_perc_25, x=retro_year)) +
   theme_bw()
 dev.off()
 
+# ---------------------------------------------#
+# Look at stock recruit parameters over time
+# ---------------------------------------------#
 # Plot Sgen over time
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
-
-# remove extra columns and collapse NA rows
-head(mdat)
-names(mdat)
-
-mdat2 <- mdat[,! names(mdat) %in% c("X", "z.value", "Pr...z.2..")]
-
-aggregate(mdat2)
-
-#mdat3 <- mdat2 %>% group_by(Mod, CU_ID, CU_Name, retroYr, BMmodel, LRPmodel, useGenMean, integratedModel) %>%
-#  summarise(across(.cols=est_B:up_Sgen, .funs=first))
+mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
 # Plot Sgen estimates over time
 png("Figures/fig_Sgen_annual_retro.png", width=8, height=4, res=300, units="in")
@@ -317,8 +310,16 @@ ggplot(mdat, aes(y=est_B, x=retroYr, colour=CU_Name)) +
   facet_wrap(~CU_Name, scales="free_y") +
   theme_bw()
 
+# Plot Alpha and beta on same plot
+mdat1 %>% filter(param %in% c("est_A", "est_B")) %>%
+  ggplot(., aes(y=est, x=retroYr)) +
+  geom_line() +
+  facet_grid( param~CU_Name, scales="free_y")+
+  theme_bw()
+
+
 # Plot ricker, SMSY, Sgen estimates from integrated model
-ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_95/annualRetro__SRparsByCU.csv", stringsAsFactors = FALSE)
+ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_95/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just one retro year for estimates
 t <- merge(ests1, ChumSRDat[, names(ChumSRDat) %in% c("BroodYear", "Spawners", "Recruits", "CU_Name")], by=c("CU_Name"))
 
