@@ -204,22 +204,10 @@ TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sig
                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""),
                   bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
     
-    # Run with Bernoulli LRP model with hierarchical Ricker
-    runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-                   useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
-                   bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-    
     # Run with Binomial LRP model with individual model Ricker 
     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
                    BMmodel = "SR_IndivRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                    useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
-                   bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-    
-    # # Run with Bernoulli LRP model with individual model Ricker
-    runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                   BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-                   useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
     # Run with Binomial LRP model with hierarchical Ricker, with prior on capacity 
@@ -228,23 +216,24 @@ TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sig
                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep=""),
                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
   
-    # # # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
-    # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-    #                BMmodel = "SR_HierRicker_SurvCap_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
-    #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-    #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-
     # Run with Binomial LRP model with individual model Ricker, with prior on capacity 
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_SurvCap_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
     
-    # # # Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
-    # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-    #                BMmodel = "SR_IndivRicker_SurvCap_LowAggPrior", LRPmodel="BernLogistic", integratedModel=T,
-    #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-    #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     # # Run with Bernoulli LRP model with individual model Ricker
+     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+                    BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+                    useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     
+     # Run with Bernoulli LRP model with hierarchical Ricker
+     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+                    BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     
   }
 
 

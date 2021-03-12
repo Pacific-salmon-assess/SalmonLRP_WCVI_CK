@@ -253,7 +253,7 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
 for(pp in 1:length(ps)){
   # Run with Binomial LRP with CUs with CU-level infilling removed
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "LRP_Logistic_Only", LRPmodel="BinLogistic", integratedModel=F,
+                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
   # with prior penalty on low aggregate abundance
