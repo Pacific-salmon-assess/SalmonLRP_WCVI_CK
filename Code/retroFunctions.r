@@ -144,6 +144,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       
       EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")]))
       
+     
       LRP_Mod <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = useBern_Logistic, 
                      useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
       
@@ -261,8 +262,8 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
 
 
 runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p,
-                                BMmodel, LRPmodel, integratedModel,useGenMean, TMB_Inputs, outDir, RunName) {
- 
+                                BMmodel, LRPmodel, LRPfile=NULL, integratedModel,useGenMean, TMB_Inputs, outDir, RunName,
+                                  runLogisticDiag=F) {
   CU_Names<-unique(EscpDat$CU_Name)
   
   for (nn in 1:length(nCUList)) {
@@ -292,13 +293,59 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
         TMB_Inputs.ii$cap_mean<-TMB_Inputs$cap_mean[which(CUs.ii %in% as.character(unique(EscpDat$CU_Name)))]
       }
       
-      # Run annual retrospective analyses for sampled CUs:
+      
+      # Specify low agg prior penalty parameters that are specific to the sampled CUs
+      
+      # For Ricker models:
+      if(BMmodel %in% c("SR_IndivRicker_Surv_LowAggPrior",
+                    "SR_HierRicker_Surv_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior",
+                    "SR_HierRicker_SurvCap_LowAggPrior" )) {
+        
+        
+        
+        # First, fit model without low agg prior:
+        BMmodel_noPrior<-strsplit(BMmodel,"_LowAggPrior")[[1]]
+        out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=endYr, endYr=endYr, BroodYrLag=BroodYrLag, 
+                             genYrs=genYrs, p = p, BMmodel = BMmodel_noPrior, LRPmodel=LRPmodel, LRPfile=LRPfile, integratedModel=integratedModel,
+                             useGenMean=useGenMean, TMB_Inputs=TMB_Inputs.ii, outDir=cohoDir, RunName = NA, 
+                             bootstrapMode = T, plotLRP=F,runLogisticDiag=F)
+        # Extract Sgen
+        Sgen_up<-out$SRparsByCU$up_Sgen
+        Sgen_est<-out$SRparsByCU$est_Sgen
+        # Calculate penalty for sub-pop using Sgen ests
+        B_penalty_lwr<-min(out$SRparsByCU$est_Sgen) # set at abundance below which no one CU could be above Sgen
+        B_penalty_upr<-sum(out$SRparsByCU$est_Sgen) 
+        # (i.e., MFr = 1 subpop>1000, FCany=1 subpop>1000, LThomp=1 subpop>1000, NThomp=2 subpop>3000, SThomp = 2 subpop> 1000)
+        B_penalty_mu<-mean(c(B_penalty_lwr,B_penalty_upr))
+        dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
+        B_penalty_sigma<-dum$par
+        # Add penalty parts to TMB_Inputs for this combination of CUs
+        TMB_Inputs.ii$B_penalty_mu<-B_penalty_mu
+        TMB_Inputs.ii$B_penalty_sigma<-B_penalty_sigma
+      }
+      
+      # For Subpopulation threshold models:
+      if(BMmodel %in% c("ThreshAbund_Subpop1000_ST")) {
+        
+        # Calculate penalty for sub-population approach
+        subPop_B_penalty_lwr<-1000 # set at abundance below which no one CU could be above subpop have at least half of subpops above 1000 fish
+        subPop_B_penalty_upr<-ceiling(length(unique(EscpDat.ii$Subpop_Name))*0.5)*1000 # short-cut to get upper limit as half of subpopulations * 1000
+        B_penalty_mu<-mean(c(subPop_B_penalty_lwr,subPop_B_penalty_upr))
+        dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
+        B_penalty_sigma<-dum$par
+        
+        # Add penalty parts to TMB_Inputs for this combination of CUs
+        TMB_Inputs.ii$B_penalty_mu<-B_penalty_mu
+        TMB_Inputs.ii$B_penalty_sigma<-B_penalty_sigma
+      
+    }
+      
+# Run annual retrospective analyses for sampled CUs:
         out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=startYr, endYr=endYr, BroodYrLag=BroodYrLag, 
-                            genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, integratedModel=integratedModel,
+                            genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, LRPfile=LRPfile, integratedModel=integratedModel,
                             useGenMean=useGenMean, TMB_Inputs=TMB_Inputs.ii, outDir=cohoDir, RunName = NA, 
-                            bootstrapMode = T, plotLRP=F)
+                            bootstrapMode = T, plotLRP=F,runLogisticDiag=runLogisticDiag)
           
-
           # Add output to table
           # - if first retrospective run, create dataframe to store outputs
           if (ii == 1) {
@@ -319,15 +366,12 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
             new.df<-data.frame(iCombn, nCUs, new.df, status, se, cv)
             output.df<-rbind(output.df, new.df)
           }
-          
-          
-          
-#        } # End of LRP types loop
         
-#      } # End of BM types loop
       
     } # End of nReps loop 
     
+    
+
     outputDir<-paste(outDir,"/DataOut/nCUCombinations",sep="")
     
     if (file.exists(outputDir) == FALSE){
@@ -336,7 +380,7 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
     
     write.csv(output.df, paste(outputDir,"/",RunName,"_",nCUList[nn],"CUs.csv", sep="")) 
     
-    
+  
   } # End of nCUs loop
   
   

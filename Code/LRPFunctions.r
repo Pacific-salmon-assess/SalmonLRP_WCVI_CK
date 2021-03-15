@@ -122,12 +122,20 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   if(Mod %in% c("SR_IndivRicker_NoSurv_LowAggPrior", "SR_IndivRicker_Surv_LowAggPrior",
                 "SR_HierRicker_Surv_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior",
                 "SR_HierRicker_SurvCap_LowAggPrior" )) {
+    
+    
     data$B_penalty_mu <- TMB_Inputs$B_penalty_mu/Scale
     data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma/Scale
+  
   }
 
   # Phase 1: estimate SR params
   map <- list(logSgen=factor(rep(NA, data$N_Stks)), B_0=factor(NA), B_1=factor(NA)) # Determine which parameters to fix
+
+  # if(Mod %in% c("SR_IndivRicker_Surv_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior")) {
+  #   browser()
+  # }
+  # 
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior",
                 "SR_IndivRicker_Surv_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, map=map)

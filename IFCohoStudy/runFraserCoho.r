@@ -262,33 +262,37 @@ runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018,
 
 # For CU approach ===========================================================
 
-nCUs<-c(5,3,4)
+nCUs<-c(5,3,4) 
 ps<-c(0.60, 0.80,0.99)
 
 
 for (pp in 1:length(ps)){
 
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
-               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""))
+               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
+               runLogisticDiag=F)
 
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
-               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap", LRPmodel="BinLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep="")) 
+               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep=""),
+               runLogisticDiag=F) 
   
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
-             genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv", LRPmodel="BinLogistic", integratedModel=T,
-             useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""))
+             genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+             useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""),
+             runLogisticDiag=F)
 
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
-               genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap", LRPmodel="BinLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep="")) 
+               genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep=""),
+               runLogisticDiag=F) 
   
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2,
-               genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""))
+               genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""),
+               runLogisticDiag=F)
 
-  
 }
 
 
@@ -303,20 +307,20 @@ for (pp in 1:length(ps)){
 
 yearList<-2015:2018
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_Surv",p=0.80, Dir=cohoDir,
-                     inputPrefix="Bin.HierRickerSurv_80",plotAveLine=TRUE)
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_Surv",p=0.99, Dir=cohoDir,
+                     inputPrefix="Bin.HierRickerSurv_99",plotAveLine=TRUE)
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.80, Dir=cohoDir,
-                     inputPrefix="Bin.IndivRickerSurv_80",plotAveLine=TRUE)
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.99, Dir=cohoDir,
+                     inputPrefix="Bin.IndivRickerSurv_99",plotAveLine=TRUE)
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_SurvCap",p=0.80, Dir=cohoDir,
-                      inputPrefix="Bin.HierRickerSurvCap_80",plotAveLine=TRUE)
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_SurvCap",p=0.99, Dir=cohoDir,
+                      inputPrefix="Bin.HierRickerSurvCap_99",plotAveLine=TRUE)
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.80, Dir=cohoDir,
-                      inputPrefix="Bin.IndivRickerSurvCap_80",plotAveLine=TRUE)
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.99, Dir=cohoDir,
+                      inputPrefix="Bin.IndivRickerSurvCap_99",plotAveLine=TRUE)
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.95, Dir=cohoDir,
-                     inputPrefix="Bin.SPopAbundThreshST_80", plotAveLine=TRUE)
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.99, Dir=cohoDir,
+                     inputPrefix="Bin.SPopAbundThreshST_99", plotAveLine=TRUE)
 
 
 
@@ -368,7 +372,7 @@ modelFitList<-c("Bin.IndivRickerSurv_60",
                 "Bin.SPopAbundThreshST_99")
 
 # Specify which thresholds should be tested in the data-based proportional thresholds
-ps_Prop<-c(0.6, 0.8, 1.0)
+ps_Prop<-c(0.6, 0.8, 0.99)
 
 # Provide WSP assessment results
 WSP_estYr<-2014
@@ -474,8 +478,8 @@ Wald<-NA
 hitRatio<-NA
 
 
-year <- 2015
-p<-0.99
+year <- 2018
+p<-0.80
 useBern_Logistic <- FALSE
 
 # Model 1 =====================
@@ -590,4 +594,7 @@ hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=use
 # Summarize model fit diagnostics
 
 diagStats_byModel<-data.frame(model = modelName, PearChiSq=PearChiSq, DevChiSq=DevChiSq,
-                              quasiR2=quasiR2, Wald=Wald, hitRatio=hitRatio)
+                              quasiR2=quasiR2, Wald=Wald, LOOhitRatio=hitRatio)
+
+write.csv(diagStats_byModel,file=paste(cohoDir,"/DataOut/LogisticDiagStatsByModel_p=",p,"_",year,".csv",sep=""))
+

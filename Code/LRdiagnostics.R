@@ -396,6 +396,7 @@ LOO_LRdiagnostics_cohoModel <- function(year, p, useBern_Logistic,
   
   LRPmodel<-"LRP_BasicLogistic_Only_LowAggPrior"
   
+  
   # Loop over nyears and leave-one-out of data set
   predPpnAboveBM <- NA
   
@@ -413,6 +414,7 @@ LOO_LRdiagnostics_cohoModel <- function(year, p, useBern_Logistic,
     
     Logistic_Data$yr_num <- group_by(as.data.frame(Logistic_Data), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
     
+
     data<-list()
     data$N_Stks <- 5
     data$LM_N_Above_BM <- Logistic_Data$yy * data$N_Stks

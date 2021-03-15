@@ -396,10 +396,10 @@ plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat, 
     retroResults <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "/annualRetro_LRPs.csv", sep=""))
     
     # Set-up name for labelling plot ====================
-    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"Sgen: HM_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Sgen: IM_"
-    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"Sgen: HM.HiSrep_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Sgen: IM.HiSrep_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv_LowAggPrior") name1<-"Sgen: HM_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv_LowAggPrior") name1<-"Sgen: IM_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap_LowAggPrior") name1<-"Sgen: HM.HiSrep_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap_LowAggPrior") name1<-"Sgen: IM.HiSrep_"
     if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Dist_"
     
     if (retroResults$LRPmodel[1] == "BernLogistic") name2<-"Bern"
@@ -803,10 +803,10 @@ plotLRPCompare<-function(LRP_estYr, modelFitList,  pList, outDir, fName) {
       retroResults <- read.csv(paste(outDir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "_",pList[pp],"/annualRetro_LRPs.csv", sep=""))
   
       # Set-up name for labelling plot ====================
-      if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"HM"
-      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"IM"
-      if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"HM.HiSrep"
-      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"IM.HiSrep"
+      if (retroResults$BMmodel[1] == "SR_HierRicker_Surv_LowAggPrior") name1<-"HM"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv_LowAggPrior") name1<-"IM"
+      if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap_LowAggPrior") name1<-"HM.HiSrep"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap_LowAggPrior") name1<-"IM.HiSrep"
       if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Dist"
       
       
@@ -823,7 +823,7 @@ plotLRPCompare<-function(LRP_estYr, modelFitList,  pList, outDir, fName) {
       }
     }
   }
-  
+
   # assign plot order:
   LRP_DF$Name<-factor(LRP_DF$Name, levels = c("IM", "HM", "IM.HiSrep", "HM.HiSrep", "Dist"))
   LRP_DF$p<-factor(LRP_DF$p, levels=c(99,80,60))
