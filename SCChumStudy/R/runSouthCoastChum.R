@@ -52,7 +52,8 @@ setwd(chumDir)
 # Read in chum wild escapement data (infilled) by CU
 ChumEscpDat <- read.csv("DataOut/wild_spawners_CU_infilled_by_site_CU.csv")
 ChumEscpDat$MU <- "SC Chum" # Add MU column - FLAG this may not be necessary - can't find MU in any of the function scripts. Check with Kendra
-ChumEscpDat$CU <- substr(ChumEscpDat$CU_Name, 1,1) # pull out CU ID from raw CU column name
+ChumEscpDat$CU_ID <- as.integer(substr(ChumEscpDat$CU_Name, 1,1)) # pull out CU ID from raw CU column name. Need CU_ID column for percentile benchmarks
+ChumEscpDat$CU <- ChumEscpDat$CU_ID # need CU column for some functions
 ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the name of the CU, replace CU_Name with that (remove the CU number)
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Year"] <- "yr"
@@ -82,13 +83,6 @@ plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc Separate", sam
 # Setup for retrospective analysis
 # =====================================================================================================================
 
-# Get priors for likelihood penalty on aggregate abundance at low probability
-
-
-TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
-                      Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
 # Data prep
 
 # FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
@@ -109,13 +103,18 @@ years_not_use <- unique(ChumEscpDat$year[which(is.na(ChumEscpDat$Escape))])
 #ChumEscpDat_no_CU_infill_yrs <- 
 #ChumSRDat_no_CU_infill_yrs <- 
 
+# Specify p value for logistic regression
+ps <- c(seq(0.6, 0.95,.05), 0.99) 
+
 # ========================================================================
-# Run annual restrospective analysis using CUs
+# Run annual restrospective analysis using stock recruit parameter based Sgen
 # ========================================================================
 
+TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
+                      Tau_dist = 0.1,
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+
 # Loop over p values and run annual retrospective analyses for each level of p
-#ps <- 0.90 # for now just use one p value
-ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # LW Notes
 # Choosing values for runAnnualRetro function:
@@ -182,7 +181,7 @@ hi_lim <- sum(na.omit(ests1$up_Sgen)) # sum upper CI of Sgen estimates to get up
 # make mu of penalty value mean of these two values, divide by scale
 B_penalty_mu <- mean(c(low_lim, hi_lim))
 # get SD that gives 95% density between lower and upper limits (using getSD helper function)
-dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=low_lim, hi_lim=hi_lim)
+dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=50000000, low_lim=low_lim, hi_lim=hi_lim)
 B_penalty_sigma<-dum$par
 
 # get SD for prior penalty so that 95% density is between lower and upper limits
@@ -230,8 +229,29 @@ for(pp in 1:length(ps)){
 source(paste0(codeDir, "/retroFunctions.r"))
 source(paste0(codeDir, "/LRPFunctions.r"))
 
-
+# ---------------------------#
 # Percentile benchmarks
+# ---------------------------#
+TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
+                              Tau_dist = 0.1,
+                              gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                              B_penalty_mu = NA, B_penalty_sigma = NA)
+
+# Run retrospective analysis using percentile benchmarks
+for(pp in 1:length(ps)){
+  # Run with Binomial LRP with CUs with CU-level infilling removed
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+  # with prior penalty on low aggregate abundance
+  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "LRP_Logistic_Only_LowAggPrior", LRPmodel="BinLogistic", integratedModel=F,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T)
+}
+
+
 # Get low aggregate penalty values
 pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
 pdat1 <- pdat[pdat$retro_year ==max(pdat$retro_year),]
@@ -290,36 +310,27 @@ mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
 # Plot Sgen estimates over time
-png("Figures/fig_Sgen_annual_retro.png", width=8, height=4, res=300, units="in")
+png("Figures/fig_Sgen_annual_retro.png", width=12, height=3, res=300, units="in")
 ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
   geom_line() +
   geom_ribbon(aes(ymin=low_Sgen, ymax=up_Sgen, x=retroYr),colour=NA, alpha=0.2) +
-  facet_wrap(~CU_Name, scales="free_y") +
+  facet_wrap(~CU_Name, scales="free_y", nrow=1) +
   ylab("Sgen") + xlab("Year") +
   geom_hline(aes(yintercept=0), linetype=2) +
   theme_bw()
 dev.off()
-# Plot alpha estimates over time
-ggplot(mdat, aes(y=est_A, x=retroYr, colour=CU_Name)) +
-  geom_line() +
-  facet_wrap(~CU_Name, scales="free_y") +
-  theme_bw()
-# Plot beta estimates over time
-ggplot(mdat, aes(y=est_B, x=retroYr, colour=CU_Name)) +
-  geom_line() +
-  facet_wrap(~CU_Name, scales="free_y") +
-  theme_bw()
 
 # Plot Alpha and beta on same plot
+png("Figures/fig_a_b_annual_retro.png", width=10, height=4, res=300, units="in")
 mdat1 %>% filter(param %in% c("est_A", "est_B")) %>%
   ggplot(., aes(y=est, x=retroYr)) +
   geom_line() +
   facet_grid( param~CU_Name, scales="free_y")+
   theme_bw()
-
+dev.off()
 
 # Plot ricker, SMSY, Sgen estimates from integrated model
-ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_95/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
+ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just one retro year for estimates
 t <- merge(ests1, ChumSRDat[, names(ChumSRDat) %in% c("BroodYear", "Spawners", "Recruits", "CU_Name")], by=c("CU_Name"))
 

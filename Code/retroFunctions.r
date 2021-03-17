@@ -127,7 +127,6 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
             mutate(benchmark_perc_25= quantile(Escp, probs=0.25, na.rm=TRUE)) 
           # Need to end up with a data frame that has CU, year, and whether CU is above benchmark (1 means yes, 0 mean no)
           LBM_status_byCU$AboveBenchmark <- ifelse(LBM_status_byCU$Escp >= LBM_status_byCU$benchmark_perc_25, 1,0)
-          
           # Call specified LRP function:
           LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                            useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
