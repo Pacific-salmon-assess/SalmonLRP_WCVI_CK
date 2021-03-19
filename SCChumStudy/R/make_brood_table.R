@@ -13,9 +13,6 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 
-# Only need if running independently from runSouthCoastChum.R
-setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
-
 # ===========================================================================================
 # Read-in Chum Data & Run Data Prep Functions:  
 # ===========================================================================================

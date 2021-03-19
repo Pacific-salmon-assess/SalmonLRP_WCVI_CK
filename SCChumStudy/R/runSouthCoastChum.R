@@ -8,52 +8,40 @@ library(tidyverse)
 library(gridExtra)
 library(reshape2)
 library(TMB)
+library(here)
+
 options(scipen=1000000)
 
-setwd('..') # This works if working directory is in ~/SalmonLRP_RetroEval/SCChumStudy folder
-rootDir<-getwd()
-codeDir<-paste(rootDir,"/Code",sep="")
-chumDir<-paste(rootDir,"/SCChumStudy",sep="")
-
-setwd(codeDir)
-
-sourceAll <- function(){
-  source("benchmarkFunctions.r")
-  source("LRPFunctions.r")
-  source("plotFunctions.r")
-  source("retroFunctions.r")
-  source("helperFunctions.r")
+chumDir <- here() # needed for some plot functions
+codeDir <- file.path(dirname(here()), "Code") # get code directory in project parent folder
+r_to_source <- list.files(codeDir, pattern="\\.R|\\.r") # get r files to source from parent code directory
+# function to source all files required
+sourceAll <- function(dir, files){
+  fpaths <- paste0( dir, "/", files)
+  sapply(fpaths, source)
 }
-sourceAll()
+sourceAll(dir=codeDir, files= r_to_source) # source all r files from parent directory
 
 # Load TMB models
-compile("TMB_Files/SR_IndivRicker_NoSurv.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv"))
-
-compile("TMB_Files/SR_IndivRicker_NoSurv_LowAggPrior.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_NoSurv_LowAggPrior"))
-
-compile("TMB_Files/LRP_Logistic_Only.cpp")
-dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
-
-compile("TMB_Files/LRP_Logistic_Only_LowAggPrior.cpp")
-dyn.load(dynlib("TMB_Files/LRP_Logistic_Only_LowAggPrior"))
-
-# Switch to chum directory
-setwd(chumDir)
-
-# Run to re-do infilling and brood table
-#source("R/make_brood_table.r") 
+# make vector of TMB cpp file names without .cpp extension
+TMB_for_chum <- c("SR_IndivRicker_NoSurv",
+                  "SR_IndivRicker_NoSurv_LowAggPrior",
+                  "LRP_Logistic_Only",
+                  "LRP_Logistic_Only_LowAggPrior")
+# compile and load the TMB .cpp files
+compile_load_TMB(dir=codeDir, files=TMB_for_chum)
 
 # ====================================================================
 # Read in data and format for using in retrospective analysis
 # ====================================================================
+# Run to re-do infilling and brood table
+#source("R/make_brood_table.r") 
 
 # Read in chum wild escapement data (infilled) by CU
 ChumEscpDat <- read.csv("DataOut/wild_spawners_CU_infilled_by_site_CU.csv")
 ChumEscpDat$MU <- "SC Chum" # Add MU column - FLAG this may not be necessary - can't find MU in any of the function scripts. Check with Kendra
-ChumEscpDat$CU_ID <- as.integer(substr(ChumEscpDat$CU_Name, 1,1)) # pull out CU ID from raw CU column name. Need CU_ID column for percentile benchmarks
-ChumEscpDat$CU <- ChumEscpDat$CU_ID # need CU column for some functions
+#ChumEscpDat$CU_ID <- as.integer(substr(ChumEscpDat$CU_Name, 1,1)) # pull out CU ID from raw CU column name. Need CU_ID column for percentile benchmarks
+ChumEscpDat$CU <- as.integer(substr(ChumEscpDat$CU_Name, 1,1))  # need CU column for some functions
 ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the name of the CU, replace CU_Name with that (remove the CU number)
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Year"] <- "yr"
@@ -98,10 +86,31 @@ ChumEscpDat_no_CU_infill <- ChumEscpDat[!(ChumEscpDat$CU_Name %in% CUs_not_use),
 ChumSRDat_no_CU_infill <- ChumSRDat[!(ChumSRDat$CU_Name %in% CUs_not_use), ]
 
 # make data frames that do not include any observations from years that have any amount of CU-level infilling
-years_not_use <- unique(ChumEscpDat$year[which(is.na(ChumEscpDat$Escape))])
+years_not_use <- unique(ChumEscpDat$yr[which(is.na(ChumEscpDat$Escape))])
 # need to adjust this so that it also doesn't have brood year
-#ChumEscpDat_no_CU_infill_yrs <- 
-#ChumSRDat_no_CU_infill_yrs <- 
+# We know which years use CU-level infilling for escapement. 
+# Now, which years use those CU-level infilled escapement data 
+# to reconstruct the brood table? 
+# Any years that use these escapement values in the reconstruction of 
+# spawners or recruits. 
+# Spawners = CU-infilled years + max age of fish
+# Recruits = CU-infilled years - max age of fish
+# max age of fish is 6 years
+# make vector of years not to use, all cu-level infilled years and all the years 
+# Make vector that includes the 6 years before and after each CU-level infilled year
+years_not_use2 <- unique(
+                     as.vector(
+                        sapply( years_not_use, function(x) {
+                                 yf <- x - 6
+                                 yl <- x + 6
+                                 y <- yf:yl 
+                                 y })))
+ChumEscpDat_no_CU_infill_yrs <- ChumEscpDat[!(ChumEscpDat$yr %in% years_not_use2), ]
+ChumSRDat_no_CU_infill_yrs <- ChumSRDat[!(ChumSRDat$BroodYear %in% years_not_use2), ]
+range(ChumEscpDat_no_CU_infill_yrs$yr) 
+# Note that there are only 15 years of data after removing
+# years with CU-level infilling. May make it not feasible to
+# check effect. 
 
 # Specify p value for logistic regression
 ps <- c(seq(0.6, 0.95,.05), 0.99) 
@@ -136,46 +145,42 @@ for(pp in 1:length(ps)){
   #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T)
-  # Same but with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  # Run with CUs with CU-level infilling removed
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T)
-  # 
-  # # Run with Bernoulli LRP model with individual model Ricker 
-  # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
+  
+  # Run with years with CU-level infilling removed
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill_yrs, SRDat=ChumSRDat_no_CU_infill_yrs, startYr=1965, endYr=1972, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_yrs_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
 }
 
 # -----------------------------------------------------#
-# Get values for low aggregate likelihood penalty model FLAG: need to redo this for the 5 CUs without CU-level infilling.
+# Get values for low aggregate likelihood penalty model 
+# FLAG: need to redo this for the 5 CUs without CU-level infilling.
 # -----------------------------------------------------#
-# Idea is to parameterize (mu and sigma) the aggregate abundance associated with a very low proportion (essentially 0; p=0.01) of
-# CUs being above their benchmark. The idea is to have 95% of this estimate between the CU Sgen and the sum of all their Sgen 
-# benchmarks or upper estimates of Sgens (e.g., all CUs are just below their lower benchmarks). The mean of this distribution is 
+# Idea is to parameterize (mu and sigma) the aggregate abundance 
+# associated with a very low proportion (essentially 0; p=0.01) of
+# CUs being above their benchmark. The idea is to have 95% of this 
+# estimate between the CU Sgen and the sum of all their Sgen 
+# benchmarks or upper estimates of Sgens (e.g., all CUs are just 
+# below their lower benchmarks). The mean of this distribution is 
 # halfway between these lower (2.5% quantile) and upper (97.5% quantile) values. 
 
 # get Sgen estimates from running integrated model without penalty
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_90/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
-# ests1 <- ests[,-c(1:3)]
-# ests2 <- ests1 %>% pivot_longer(cols=2:8, names_to="parameter", values_to="estimate", values_drop_na=TRUE)
-# ests3 <- ests2 %>% pivot_wider(names_from=parameter, values_from=estimate)
-# ests4 <-  ests3[ests3$retroYr ==max(ests3$retroYr),] # get just last retro year for estimates
-
-# make lower limit the lowest CU Sgen (this gives essentially the same results as using the average abundance of
-# the smallest CU)
+# make lower limit the lowest CU Sgen (this gives essentially the same results as 
+# using the average abundance of the smallest CU)
 low_lim <- min(ests1$est_Sgen) 
 # make upper limit the sum of CU benchmarks
 #hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
-
-# extra columns getting added to estimate ouput with stuff for model diagnostics, but messes up rows. Just remove
-# for now to get upper estimates 
-
-hi_lim <- sum(na.omit(ests1$up_Sgen)) # sum upper CI of Sgen estimates to get upper limit for penalty mu
+# sum upper CI of Sgen estimates to get upper limit for penalty mu
+hi_lim <- sum(na.omit(ests1$up_Sgen)) 
 
 
 # make mu of penalty value mean of these two values, divide by scale
@@ -197,6 +202,7 @@ TMB_Inputs_IM_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                       B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
 
 
+# Section below is obsolete
 #B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2) # test with 1.5 and 2 times SD
 # Effect of increasing SD:
 #   Without CUs with CU infilling:
@@ -204,8 +210,10 @@ TMB_Inputs_IM_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
 #   With using CUs with CU infilling:
 #    Using 1.5 times SD makes logistic curve flip in one year, and 2 times SD makes it flip several years (with p=0.9)
 
+# -------------------------------------#
 # Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
 #       (to bring logistic curve intercept down)
+# -------------------------------------#
 
 for(pp in 1:length(ps)){
   #for (i in 1:length(B_penalty_sigmas)){ # for testing sensitivity to B_penalty_sigma
@@ -215,23 +223,20 @@ for(pp in 1:length(ps)){
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_", ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   # Without CU-level infilling
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", "sigma", i, "_", ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigmas[i])
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T )
   #}
 }
 
-source(paste0(codeDir, "/retroFunctions.r"))
-source(paste0(codeDir, "/LRPFunctions.r"))
-
 # ---------------------------#
 # Percentile benchmarks
 # ---------------------------#
+
+# Currently there is a discrepancy between CU_ID variable in percentile/subpop and Sgen 
+# based retrospective. Need to sort this out. 
+
 TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
                               Tau_dist = 0.1,
                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
@@ -240,7 +245,7 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
 # Run retrospective analysis using percentile benchmarks
 for(pp in 1:length(ps)){
   # Run with Binomial LRP with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
@@ -272,7 +277,7 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
 # Run retrospective analysis using percentile benchmarks
 for(pp in 1:length(ps)){
   # Run with Binomial LRP with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
