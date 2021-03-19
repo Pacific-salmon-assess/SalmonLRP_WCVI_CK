@@ -1,5 +1,4 @@
 # Code by Luke Warkentin & Kendra Holt
-
 # This file contains the code required to explore South Coast Chum escapement datasets and run retrospective analyses of 
 #   data-based LRPs that use logistic regressions
 
@@ -95,7 +94,7 @@ years_not_use <- unique(ChumEscpDat$yr[which(is.na(ChumEscpDat$Escape))])
 # spawners or recruits. 
 # Spawners = CU-infilled years + max age of fish
 # Recruits = CU-infilled years - max age of fish
-# max age of fish is 6 years
+# max age of fish is 6 years # FLAG change to 3-6 yrs. 
 # make vector of years not to use, all cu-level infilled years and all the years 
 # Make vector that includes the 6 years before and after each CU-level infilled year
 years_not_use2 <- unique(
@@ -274,18 +273,13 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                               B_penalty_mu = B_penalty_perc_mu, B_penalty_sigma = B_penalty_perc_sigma)
 
-# Run retrospective analysis using percentile benchmarks
+# Run retrospective analysis using percentile benchmarks, with likelihood penalty
 for(pp in 1:length(ps)){
-  # Run with Binomial LRP with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T)
   # with prior penalty on low aggregate abundance
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "LRP_Logistic_Only_LowAggPrior", LRPmodel="BinLogistic", integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
 }
 
 
