@@ -145,13 +145,13 @@ for(pp in 1:length(ps)){
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T)
   # Run with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T)
   
   # Run with years with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill_yrs, SRDat=ChumSRDat_no_CU_infill_yrs, startYr=1965, endYr=1972, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill_yrs, SRDat=ChumSRDat_no_CU_infill_yrs, startYr=1967, endYr=1972, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_yrs_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
@@ -222,7 +222,7 @@ for(pp in 1:length(ps)){
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_", ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T, B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
   # Without CU-level infilling
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T )
@@ -244,7 +244,7 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
 # Run retrospective analysis using percentile benchmarks
 for(pp in 1:length(ps)){
   # Run with Binomial LRP with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
@@ -276,12 +276,11 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
 # Run retrospective analysis using percentile benchmarks, with likelihood penalty
 for(pp in 1:length(ps)){
   # with prior penalty on low aggregate abundance
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1965, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
 }
-
 
 
 # ----------------#
