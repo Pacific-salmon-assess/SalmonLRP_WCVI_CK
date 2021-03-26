@@ -346,7 +346,7 @@ Run_LRP <- function(Dat, Mod, useBern_Logistic,
   #dum2 <- dum2 %>% filter(yr %in% Mod_Yrs)
   #data$LM_Agg_Abund <- dum2$AggEscp.gm / Scale
   data$LM_yr <- Logistic_Dat$yr_num
-  data$LM_stk <- Logistic_Dat$CU_ID
+  #data$LM_stk <- Logistic_Dat$CU_ID
   # range of agg abund to predict from
   data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
   data$p <- p

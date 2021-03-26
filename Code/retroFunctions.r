@@ -108,19 +108,17 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           #dum2<- dum %>% group_by(yr) %>% summarise(AggEscp.gm=sum(Gen_Mean))
           
 
-      # Call specified LRP function:
-        LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
+          # Call specified LRP function:
+          LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                          useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
-        # This version with dum2=dum2 as an input was created to test consistency with M. Arbeider code; 
-        # ---- if wanting to run with geometric means calculated at subpopulation level, will need to add AggEscp_gmBySP arguement to LRP_Mod function
-        #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
-        #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
-        }
+          # This version with dum2=dum2 as an input was created to test consistency with M. Arbeider code; 
+          # ---- if wanting to run with geometric means calculated at subpopulation level, will need to add AggEscp_gmBySP arguement to LRP_Mod function
+            #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
+            #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
+          }
        
         # Case 3: BM model is percentile-based benchmark model (e.g., for Inside South Coast Chum)
         #"if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior )) {
-          
-        
         
         if (BMmodel %in% c("Percentile")) {
           LBM_status_byCU <- EscpDat.yy %>% group_by(CU_Name) %>%  # make new column with 25% benchmark

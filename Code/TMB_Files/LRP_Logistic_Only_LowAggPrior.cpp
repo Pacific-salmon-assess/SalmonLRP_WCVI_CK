@@ -11,7 +11,6 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(LM_CU_Status);
   DATA_VECTOR(LM_Agg_Abund);
   DATA_IVECTOR(LM_yr);
-  DATA_IVECTOR(LM_stk);
   DATA_VECTOR(Pred_Abund);
   DATA_SCALAR(p);
   DATA_SCALAR(B_penalty_mu); // for likelihood penalty on low aggregate abundance; average value of aggregate abundance at low p
