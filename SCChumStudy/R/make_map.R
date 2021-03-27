@@ -5,6 +5,9 @@ library(ggplot2)
 library(sf)
 library(stars)
 library(ggspatial)
+#devtools::install_github('Chrisjb/basemapR')
+#library(basemapR)
+
 #install.packages('bcmapsdata', repos='https://bcgov.github.io/drat/', lib="C:/R/R-4.0.3/library" ) # only have to run once
 
 # Download chum CU data shapefile from:
@@ -26,13 +29,19 @@ nb <- bc_neighbours()
 # get bounds 
 bounds <- as.numeric(st_bbox(scc))
 
+# Get base map
+rosm::osm.types() # check available open street map layers
+
 # plot
 png("Figures/fig_chum_CU_map.png", width=8, height=7, units="in", res=300)
 ggplot(data = scc) + 
   geom_sf(data=bc, fill="antiquewhite") +
   geom_sf(data=nb[nb$name=="Washington",], fill="antiquewhite") +
-  geom_sf(data=scc, aes(fill=CU_name)) +
-  #geom_sf(data=riv5, colour="dodgerblue") +
+  geom_sf(data=scc, aes(fill=CU_name)) + 
+  #annotation_map_tile(zoom=5, type="hillshade") + # this takes a while
+  #annotation_map_tile(zoom=10, type="osm", labels=) + # this takes a while
+  #geom_sf(data=riv5, colour="dodgerblue") + # poor resolution river layer
+  #base_map(bbox=st_bbox(scc), increase_zoom = 0, basemap="hydda") + # unsuccessful base map. Proxy issue?
   geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name), size=3) +
   annotate( geom="text", label = "British Columbia", x = -121.8, y = 49.5, fontface = "italic", color = "grey22", size = 4) +
   annotate( geom="text", label = "Washington", x = -121.8, y = 48.5, fontface = "italic", color = "grey22", size = 4) +
@@ -49,6 +58,5 @@ ggplot(data = scc) +
                          pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
                          style = north_arrow_fancy_orienteering, width=unit(0.3, "in")) +
   theme_classic() +
-  theme(panel.background = element_rect(fill="aliceblue", colour="black"))
+  theme(panel.background = element_rect(fill="aliceblue") )
 dev.off()
-
