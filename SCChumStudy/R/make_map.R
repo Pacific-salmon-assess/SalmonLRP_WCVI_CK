@@ -30,7 +30,7 @@ nb <- bc_neighbours()
 bounds <- as.numeric(st_bbox(scc))
 
 # Get base map
-rosm::osm.types() # check available open street map layers
+#rosm::osm.types() # check available open street map layers
 
 # plot
 png("Figures/fig_chum_CU_map.png", width=8, height=7, units="in", res=300)
