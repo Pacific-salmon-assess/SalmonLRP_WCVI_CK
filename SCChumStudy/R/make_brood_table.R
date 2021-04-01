@@ -393,13 +393,13 @@ layout(mat=matrix(1:16, nrow=4, byrow=FALSE))
   CUs <- unique(cdat$CU_Name)
 for(i in 1:length(unique(CUs))) {
   dat <- cdat[cdat$CU_Name==CUs[i], ] 
-  par(mar=c(1,4,1,0)+1, bty="l", las=1)
+  par(mar=c(1,4,1,1)+0.1, bty="l", las=1)
   plot(y=dat$SiteEsc/1000, x=dat$Year, type="l", xlab="year", ylab="Escapement (thousands)", 
        main=CUs[i], xlim =c(yrs[1], yrs[2]), ylim=c(0,max(dat$Return, na.rm=TRUE)/1000*1.01))
   grid(ny=0)
   segments(y0=dat$SiteEsc[-1]/1000, y1=dat$Return[-1]/1000, x0=dat$Year[-1],x1=dat$Year[-1], col=adjustcolor("red", alpha=0.6), lwd=4)   # add harvest, remove first year, as there is a problem with returns
   points(y=dat$SiteEsc/1000, x=dat$Year, xlab="year", pch=16)
-  par(mar=c(2,4,1,0)+0.3, bty="l", las=1)
+  par(mar=c(2,4,1,1)+0.1, bty="l", las=1)
   plot(y=dat$RS, x=dat$Year, log="y", type="l", ylab="Recruits/Spawner", xlim =c(yrs[1], yrs[2]), 
       xlab="Year", ylim=c(min(cdat$RS, na.rm=TRUE), max(cdat$RS, na.rm=TRUE)), yaxt="n")
   axis(side=2, at=c(0.01, 0.1, 1, 10, 100), labels=c(0.01, 0.1, 1, 10, 100))

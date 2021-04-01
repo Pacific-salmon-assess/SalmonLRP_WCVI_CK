@@ -284,7 +284,7 @@ for(pp in 1:length(ps)){
                  bootstrapMode = F, plotLRP=T)
 }
 
-# Double check output
+# Double check percentile approach
 
 
 

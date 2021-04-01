@@ -3,12 +3,10 @@
 library(bcmaps)
 library(ggplot2)
 library(sf)
-library(stars)
 library(ggspatial)
-#devtools::install_github('Chrisjb/basemapR')
-#library(basemapR)
-
-#install.packages('bcmapsdata', repos='https://bcgov.github.io/drat/', lib="C:/R/R-4.0.3/library" ) # only have to run once
+library(rgdal)
+#library(leaflet)
+library(PNWColors)
 
 # Download chum CU data shapefile from:
 # https://open.canada.ca/data/en/dataset/f86c0867-d38d-4072-bd08-57cbbcbafa46
@@ -22,33 +20,27 @@ scc <- chum_cu[chum_cu$CU_name %in% sc_cus, ] # get sf object of just south coas
 
 # get bc_maps layers
 bc <- bc_bound_hres()
-riv5 <- watercourses_5M()
 nb <- bc_neighbours()
-#elv <- cded_stars(scc) # optional digital elevation data - takes a while
 
 # get bounds 
 bounds <- as.numeric(st_bbox(scc))
 
-# Get base map
-#rosm::osm.types() # check available open street map layers
+# Get palette
+pal <- pnw_palette("Cascades", length(scc$CU_name), type="continuous")
 
-# plot
+# plot with ggplot
 png("Figures/fig_chum_CU_map.png", width=8, height=7, units="in", res=300)
 ggplot(data = scc) + 
   geom_sf(data=bc, fill="antiquewhite") +
   geom_sf(data=nb[nb$name=="Washington",], fill="antiquewhite") +
   geom_sf(data=scc, aes(fill=CU_name)) + 
-  #annotation_map_tile(zoom=5, type="hillshade") + # this takes a while
-  #annotation_map_tile(zoom=10, type="osm", labels=) + # this takes a while
-  #geom_sf(data=riv5, colour="dodgerblue") + # poor resolution river layer
-  #base_map(bbox=st_bbox(scc), increase_zoom = 0, basemap="hydda") + # unsuccessful base map. Proxy issue?
   geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name), size=3) +
   annotate( geom="text", label = "British Columbia", x = -121.8, y = 49.5, fontface = "italic", color = "grey22", size = 4) +
   annotate( geom="text", label = "Washington", x = -121.8, y = 48.5, fontface = "italic", color = "grey22", size = 4) +
   annotate( geom="text", label = "Pacific Ocean", x = -127.7, y = 49.3, fontface = "italic", color = "darkblue", size = 4) +
   annotate( geom="text", label = "Salish Sea", x = -123.5, y = 49.2, fontface = "italic", color = "darkblue", size = 3, angle=320) +
-  scale_fill_discrete(guide=NULL) +
-  scale_colour_discrete(guide=NULL) +
+  scale_fill_manual( values=pal, guide=NULL) +
+  scale_colour_manual( values=pal, guide=NULL) +
   coord_sf(xlim = bounds[c(1,3)] + c(0,1) , ylim = bounds[c(2,4)]) +
   scale_x_continuous(breaks=seq(-128,-122,1)) +
   xlab(NULL) +
@@ -60,3 +52,22 @@ ggplot(data = scc) +
   theme_classic() +
   theme(panel.background = element_rect(fill="aliceblue") )
 dev.off()
+
+# plot with leaflet
+# cent <- as.data.frame(st_coordinates(st_centroid(scc)))
+# m <-   leaflet(scc) %>%
+#   #addTiles() %>%
+#   addWMSTiles(baseUrl = "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}.png",
+#               layers = "1", options = WMSTileOptions(format = "image/png", transparent = TRUE)) %>%
+#   addPolygons(color= pal, fillColor=pal) %>%
+#   addLabelOnlyMarkers(lat=cent$Y, lng=cent$X, label=scc$CU_name, 
+#                       labelOptions = labelOptions(textOnly = TRUE, permanent=TRUE, direction="centre",
+#                                                   style= list(
+#                                                     "color" = pal,
+#                                                     "font-family" = "serif",
+#                                                     "font-style" = "italic",
+#                                                     "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
+#                                                     "font-size" = "12px",
+#                                                     "border-color" = "rgba(0,0,0,0.5)"))) 
+# mapshot(m, file="Figures/fig_chum_CU_map.png")
+
