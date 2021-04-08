@@ -6,6 +6,36 @@ Primary contacts: Luke Warkentin (Luke.Warkentin@dfo-mpo.gc.ca), Kendra Holt (Ke
 
 > The SCChumStudy folder contains the files that are specific to the Limit Reference Point retrospective analysis for the Inside South Coast Chum (non-Fraser) Stock Management Unit. This includes raw input data, code to prepare data and run analyses, case study-specific functions, and outputs (data and figures). 
 
+```r
+echo=FALSE
+
+library(sf)
+library(ggplot2)
+library(leaflet)
+library(PNWColors)
+
+# Download chum CU data shapefile from:
+# https://open.canada.ca/data/en/dataset/f86c0867-d38d-4072-bd08-57cbbcbafa46
+chum_cu <- st_read("DataIn/chum_CU_boundary_shapefile/Chum Salmon CU Boundary_En.shp")
+# get south coast chum CUs 
+sc_cus <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Upper Knight", "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet")
+# Get just the 5 CUs without CU-level infilling
+sc_cus_no_CU_infilled <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Loughborough","Georgia Strait", "Howe Sound-Burrard Inlet")
+#scc <- chum_cu[chum_cu$CU_name %in% sc_cus_no_CU_infilled, ] # get sf object of just south coast chum CUs 
+scc <- chum_cu[chum_cu$CU_name %in% sc_cus, ] # get sf object of just south coast chum CUs 
+
+# Get palette
+pal <- pnw_palette("Cascades", length(scc$CU_name), type="continuous")
+
+m <- leaflet(scc) %>%
+  addTiles() %>%
+  #addWMSTiles(baseUrl = "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}.png",
+  #            layers = "1", options = WMSTileOptions(format = "image/png", transparent = TRUE)) %>%
+  addPolygons(color= pal, fillColor=pal)
+m
+  
+```
+
 ## Contents
 
 ### DataIn  

@@ -92,24 +92,38 @@ years_not_use <- unique(ChumEscpDat$yr[which(is.na(ChumEscpDat$Escape))])
 # to reconstruct the brood table? 
 # Any years that use these escapement values in the reconstruction of 
 # spawners or recruits. 
-# Spawners = CU-infilled years + max age of fish
-# Recruits = CU-infilled years - max age of fish
-# max age of fish is 6 years # FLAG change to 3-6 yrs. 
-# make vector of years not to use, all cu-level infilled years and all the years 
-# Make vector that includes the 6 years before and after each CU-level infilled year
-years_not_use2 <- unique(
-                     as.vector(
-                        sapply( years_not_use, function(x) {
-                                 yf <- x - 6 # FLAG: can include yrs 1-2 after and before brood.
-                                 yl <- x + 6
-                                 y <- yf:yl 
-                                 y })))
+# Fish return at 3,4,5, or 6 years old. 
+# Each brood year x with CU-level infilling cannot be used for spawners or recruits.
+# Cannot use years x-(3:6) which are the brood years with recruits returning as 3-6 yr olds in year x
+# cannot use years x+(3:6) which are the years with 3-6 year old recruits from brood year x
+linked_yrs <- function(no_count_yrs) {
+  y <- as.vector(sapply(no_count_yrs, function(x){
+      c((x-6):(x-3),x,(x+3):(x+6))
+  }))
+  unique(y)
+}
+
+linked_yrs(2000)
+
+years_not_use2 <- linked_yrs(years_not_use)
+
 ChumEscpDat_no_CU_infill_yrs <- ChumEscpDat[!(ChumEscpDat$yr %in% years_not_use2), ]
 ChumSRDat_no_CU_infill_yrs <- ChumSRDat[!(ChumSRDat$BroodYear %in% years_not_use2), ]
-range(ChumEscpDat_no_CU_infill_yrs$yr) 
+length(unique(ChumEscpDat_no_CU_infill_yrs$yr))
 # Note that there are only 15 years of data after removing
 # years with CU-level infilling. May make it not feasible to
 # check effect. 
+
+# Get data frame that only drops the least monitored CU (Upper Knight) and the years 
+# (and associated spawner/recruit years as above) with CU-level infilling in Bute Inlet
+# removed
+# get years that Bute wasn't monitored
+years_not_use_bute <- ChumEscpDat$yr[intersect(which(is.na(ChumEscpDat$Escape)), which(ChumEscpDat$CU_Name=="Bute Inlet"))]
+# expand these years to include recruits/spawners that are linked to these years
+years_not_use_bute2 <- linked_yrs(years_not_use_bute)
+# remove Upper Knight, and any years linked to uncounted years in Bute Inlet
+ChumEscpDat_no_knight <- ChumEscpDat[ !(ChumEscpDat$CU_Name=="Upper Knight" | ChumEscpDat$yr %in% years_not_use_bute2), ]
+ChumSRDat_no_knight <- ChumSRDat[  !(ChumSRDat$CU_Name=="Upper Knight" | ChumSRDat$BroodYear %in% years_not_use_bute2),  ]
 
 # Specify p value for logistic regression
 ps <- c(seq(0.6, 0.95,.05), 0.99) 
@@ -156,6 +170,12 @@ for(pp in 1:length(ps)){
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_yrs_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
   
+  # Run with no Upper Knight CU, no CU-level infilled yrs
+  runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_no_knight",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+  
   # Run with Bernoulli LRP model with individual model Ricker
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BernLogistic", integratedModel=T,
@@ -165,7 +185,6 @@ for(pp in 1:length(ps)){
 
 # -----------------------------------------------------#
 # Get values for low aggregate likelihood penalty model 
-# FLAG: need to redo this for the 5 CUs without CU-level infilling.
 # -----------------------------------------------------#
 # Idea is to parameterize (mu and sigma) the aggregate abundance 
 # associated with a very low proportion (essentially 0; p=0.01) of
@@ -227,6 +246,11 @@ for(pp in 1:length(ps)){
                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T )
+  # Run without Upper Knight CU
+  runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_no_knight_", ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T )
   #}
 }
 
@@ -249,6 +273,12 @@ for(pp in 1:length(ps)){
                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T)
+  # Run without Upper Knight CU
+  runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_no_knight_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+  
   # Run with Bernouli regression with CUs with CU-level infilling removed
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "Percentile", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,

@@ -5,12 +5,20 @@ library(ggplot2)
 library(sf)
 library(ggspatial)
 library(rgdal)
-#library(leaflet)
+# library(rnaturalearth)
+# library(rnaturalearthdata)
+# library(ggmap)
+#remotes::install_github("ropensci/rnaturalearthhires")
+library(leaflet)
 library(PNWColors)
 
 # Download chum CU data shapefile from:
 # https://open.canada.ca/data/en/dataset/f86c0867-d38d-4072-bd08-57cbbcbafa46
 chum_cu <- st_read("DataIn/chum_CU_boundary_shapefile/Chum Salmon CU Boundary_En.shp")
+# Dowdload DFO Fishery Management areas shapefile from:
+# https://catalogue.data.gov.bc.ca/dataset/dfo-statistical-areas-boundaries#edc-pow
+fma <- st_read("DataIn/dfo_fishery_mgmt_areas_shapefile/DFO_STAT_A_polygon.shp")
+fma <- fma[!fma$MNGMNTR==0, ] # remove small areas (?)
 # get south coast chum CUs 
 sc_cus <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Upper Knight", "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet")
 # Get just the 5 CUs without CU-level infilling
@@ -30,11 +38,13 @@ pal <- pnw_palette("Cascades", length(scc$CU_name), type="continuous")
 
 # plot with ggplot
 png("Figures/fig_chum_CU_map.png", width=8, height=7, units="in", res=300)
-ggplot(data = scc) + 
+ggplot(scc) +
   geom_sf(data=bc, fill="antiquewhite") +
   geom_sf(data=nb[nb$name=="Washington",], fill="antiquewhite") +
+  geom_sf(data=fma,colour="coral", size=1.1, fill=NA) +
   geom_sf(data=scc, aes(fill=CU_name)) + 
-  geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name), size=3) +
+  geom_sf_text(data=fma, aes(label = MNGMNTR), size=3, fontface="bold" ) +
+  geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name), fill=adjustcolor("white", alpha=0.7), size=3) +
   annotate( geom="text", label = "British Columbia", x = -121.8, y = 49.5, fontface = "italic", color = "grey22", size = 4) +
   annotate( geom="text", label = "Washington", x = -121.8, y = 48.5, fontface = "italic", color = "grey22", size = 4) +
   annotate( geom="text", label = "Pacific Ocean", x = -127.7, y = 49.3, fontface = "italic", color = "darkblue", size = 4) +
@@ -49,25 +59,29 @@ ggplot(data = scc) +
   annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
                          style = north_arrow_fancy_orienteering, width=unit(0.3, "in")) +
-  theme_classic() +
-  theme(panel.background = element_rect(fill="aliceblue") )
+  theme_classic() 
+  #theme(panel.background = element_rect(fill="aliceblue") )
 dev.off()
 
 # plot with leaflet
 # cent <- as.data.frame(st_coordinates(st_centroid(scc)))
+# cent$X[1] <- -122 # adjust Howe Sound Burrard Inlet label position
 # m <-   leaflet(scc) %>%
 #   #addTiles() %>%
 #   addWMSTiles(baseUrl = "https://services.arcgisonline.com/arcgis/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}.png",
 #               layers = "1", options = WMSTileOptions(format = "image/png", transparent = TRUE)) %>%
 #   addPolygons(color= pal, fillColor=pal) %>%
-#   addLabelOnlyMarkers(lat=cent$Y, lng=cent$X, label=scc$CU_name, 
-#                       labelOptions = labelOptions(textOnly = TRUE, permanent=TRUE, direction="centre",
-#                                                   style= list(
-#                                                     "color" = pal,
-#                                                     "font-family" = "serif",
-#                                                     "font-style" = "italic",
-#                                                     "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
-#                                                     "font-size" = "12px",
-#                                                     "border-color" = "rgba(0,0,0,0.5)"))) 
-# mapshot(m, file="Figures/fig_chum_CU_map.png")
-
+#   addPolygons(color="black", fillColor=NULL) %>%
+#   addLabelOnlyMarkers(lat=cent$Y, lng=cent$X, label=scc$CU_name,
+#                       labelOptions = labelOptions(textOnly = TRUE, permanent=TRUE, direction="centre" ,
+#                                                    style= list(
+#                                                      "color" = pal[1:7],
+#                                                   #   "font-family" = "serif",
+#                                                      "font-style" = "bold",
+#                                                   #   "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
+#                                                      "font-size" = "14px"
+#                                                   #   "border-color" = "rgba(0,0,0,0.5)"
+#                                                   ) ))
+# m 
+# mapview::mapshot(m, file="Figures/fig_chum_CU_map.png")
+# 
