@@ -43,6 +43,13 @@ bounds <- as.numeric(st_bbox(scc))
 # Get palette
 pal <- pnw_palette("Cascades", length(scc$CU_name), type="continuous")
 
+# function to get fishery management areas with multiple polygons
+drop_multi_poly <- function(y) {
+  a <- as.data.frame(y[ y$MNGMNTR %in% names(which(table(y$MNGMNTR) >1)), ]) # get multi-polygon area rows
+  small_areas <- aggregate(formula = AREA_SQM ~ MNGMNTR, data=a, FUN="min") # get smallest polygons in sets
+  y[!y$AREA_SQM %in% small_areas$AREA_SQM, ] # select not small polygons
+}
+
 # plot with ggplot
 png("Figures/fig_chum_CU_map.png", width=8, height=7, units="in", res=300)
 ggplot(scc) +
@@ -53,7 +60,7 @@ ggplot(scc) +
   geom_sf(data=lakes, fill="cornflowerblue", colour="cornflowerblue", size=0.001) +
   geom_sf(data=riv, fill="cornflowerblue", colour="cornflowerblue", size=0.001) +
   geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name),  size=3, fontface="bold") +
-  geom_sf_label(data=fma, aes(label = MNGMNTR), size=3,label.size=0.1, colour="coral",alpha=0.7, fontface="bold") +
+  geom_sf_label(data=drop_multi_poly(fma), aes(label = MNGMNTR), size=3,label.size=0.1, colour="coral",alpha=0.7, fontface="bold") +
   annotate( geom="text", label = "BRITISH COLUMBIA", x = -121.8, y = 49.5, color = "grey22", size = 4) +
   annotate( geom="text", label = "WASHINGTON", x = -121.8, y = 48.5, color = "grey22", size = 4) +
   annotate( geom="text", label = "Pacific Ocean", x = -127.7, y = 49.3, fontface = "italic", color = "darkblue", size = 4) +

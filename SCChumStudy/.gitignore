@@ -6,7 +6,7 @@
 
 # Large GIS files
 *.shp
-*.dpf
+*.dbf
 
 notes.docx
 old_code_reference/
