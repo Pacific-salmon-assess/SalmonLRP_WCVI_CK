@@ -18,7 +18,14 @@ chum_cu <- st_read("DataIn/chum_CU_boundary_shapefile/Chum Salmon CU Boundary_En
 # Dowdload DFO Fishery Management areas shapefile from:
 # https://catalogue.data.gov.bc.ca/dataset/dfo-statistical-areas-boundaries#edc-pow
 fma <- st_read("DataIn/dfo_fishery_mgmt_areas_shapefile/DFO_STAT_A_polygon.shp")
+areas <- c(12:19,28,29) # make vector of areas used in chum analysis
 fma <- fma[!fma$MNGMNTR==0, ] # remove small areas (?)
+fma <- fma[fma$MNGMNTR %in% areas, ] # keep only areas used in chum analysis 
+# Freshwater Atlas Large Rivers (polygons)  https://catalogue.data.gov.bc.ca/dataset/freshwater-atlas-rivers
+riv <- st_read("DataIn/rivers/FWRVRSPL_polygon.shp")
+# Freshwater Atlas Lakes https://catalogue.data.gov.bc.ca/dataset/freshwater-atlas-lakes#edc-pow
+lakes <- st_read("DataIn/lakes/FWLKSPL_polygon.shp")
+lakes <- lakes[lakes$AREA_HA >100, ] # select lakes larger than 100 ha
 # get south coast chum CUs 
 sc_cus <- c("Southern Coastal Streams", "Northeast Vancouver Island", "Upper Knight", "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet")
 # Get just the 5 CUs without CU-level infilling
@@ -39,16 +46,18 @@ pal <- pnw_palette("Cascades", length(scc$CU_name), type="continuous")
 # plot with ggplot
 png("Figures/fig_chum_CU_map.png", width=8, height=7, units="in", res=300)
 ggplot(scc) +
-  geom_sf(data=bc, fill="antiquewhite") +
-  geom_sf(data=nb[nb$name=="Washington",], fill="antiquewhite") +
-  geom_sf(data=fma,colour="coral", size=1.1, fill=NA) +
-  geom_sf(data=scc, aes(fill=CU_name)) + 
-  geom_sf_text(data=fma, aes(label = MNGMNTR), size=3, fontface="bold" ) +
-  geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name), fill=adjustcolor("white", alpha=0.7), size=3) +
-  annotate( geom="text", label = "British Columbia", x = -121.8, y = 49.5, fontface = "italic", color = "grey22", size = 4) +
-  annotate( geom="text", label = "Washington", x = -121.8, y = 48.5, fontface = "italic", color = "grey22", size = 4) +
+  geom_sf(data=fma,colour="coral", size=1, fill=NA) +
+  geom_sf(data=bc, fill="antiquewhite", size=0) +
+  geom_sf(data=nb[nb$name=="Washington",], fill="antiquewhite", size=0) +
+  geom_sf(data=scc, aes(fill=CU_name), size=0) + 
+  geom_sf(data=lakes, fill="cornflowerblue", colour="cornflowerblue", size=0.001) +
+  geom_sf(data=riv, fill="cornflowerblue", colour="cornflowerblue", size=0.001) +
+  geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name),  size=3, fontface="bold") +
+  geom_sf_label(data=fma, aes(label = MNGMNTR), size=3,label.size=0.1, colour="coral",alpha=0.7, fontface="bold") +
+  annotate( geom="text", label = "BRITISH COLUMBIA", x = -121.8, y = 49.5, color = "grey22", size = 4) +
+  annotate( geom="text", label = "WASHINGTON", x = -121.8, y = 48.5, color = "grey22", size = 4) +
   annotate( geom="text", label = "Pacific Ocean", x = -127.7, y = 49.3, fontface = "italic", color = "darkblue", size = 4) +
-  annotate( geom="text", label = "Salish Sea", x = -123.5, y = 49.2, fontface = "italic", color = "darkblue", size = 3, angle=320) +
+  annotate( geom="text", label = "Salish Sea", x = -123.8, y = 49.3, fontface = "italic", color = "darkblue", size = 3, angle=320) +
   scale_fill_manual( values=pal, guide=NULL) +
   scale_colour_manual( values=pal, guide=NULL) +
   coord_sf(xlim = bounds[c(1,3)] + c(0,1) , ylim = bounds[c(2,4)]) +
@@ -59,9 +68,13 @@ ggplot(scc) +
   annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
                          style = north_arrow_fancy_orienteering, width=unit(0.3, "in")) +
-  theme_classic() 
-  #theme(panel.background = element_rect(fill="aliceblue") )
+  theme_classic() +
+  theme(panel.background = element_rect(fill="aliceblue") )
 dev.off()
+
+ggplot(fma) +
+  geom_sf(data=fma) +
+  geom_sf_label(aes(label=MNGMNTR))
 
 # plot with leaflet
 # cent <- as.data.frame(st_coordinates(st_centroid(scc)))
@@ -85,3 +98,4 @@ dev.off()
 # m 
 # mapview::mapshot(m, file="Figures/fig_chum_CU_map.png")
 # 
+

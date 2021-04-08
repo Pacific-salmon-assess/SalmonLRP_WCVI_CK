@@ -4,6 +4,10 @@
 .Ruserdata
 =======
 
+# Large GIS files
+*.shp
+*.dpf
+
 notes.docx
 old_code_reference/
 old_code_reference/*
