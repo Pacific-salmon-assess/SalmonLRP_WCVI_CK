@@ -369,7 +369,7 @@ ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   scale_x_discrete(breaks=seq(1960,2010,10)) +
   theme(axis.text.x = element_text(angle=90, vjust=0.5),
         axis.line.x = element_line(colour=NULL, size=0),
-        strip.background = element_rect(fill=NULL, colour=NULL))
+        strip.background = element_blank())
 dev.off()
 
 # Plot escapement and R/S time series on same x axis for each CU --------
