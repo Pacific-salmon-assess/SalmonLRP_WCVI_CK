@@ -372,6 +372,25 @@ ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
         strip.background = element_blank())
 dev.off()
 
+# Plot all infilled escapement with 25% benchmark
+benchmarks <- cdat%>% group_by(CU_Name) %>% summarise(benchmark_25 = quantile(SiteEsc, 0.25, na.rm=TRUE))
+png("Figures/fig_escapement_infilled_w_25_benchmark.png", height=5, width=10, res=300, units="in")
+ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
+  geom_point() + # infill by CU is in red
+  geom_path(aes(group=CU_Name)) +
+  geom_hline(aes(yintercept=0))+
+  geom_hline(data=benchmarks, aes(yintercept=benchmark_25),alpha=0.7, colour="dodgerblue", linetype=1, size=1.1) +
+  ylab("Escapement") +
+  facet_wrap(~CU_Name, scales="free_y") +
+  coord_cartesian(expand=FALSE, clip="off") +
+  #scale_y_log10() +
+  theme_classic() +
+  scale_x_discrete(breaks=seq(1960,2010,10)) +
+  theme(axis.text.x = element_text(angle=90, vjust=0.5),
+        axis.line.x = element_line(colour=NULL, size=0),
+        strip.background = element_blank())
+dev.off()
+
 # Plot escapement and R/S time series on same x axis for each CU --------
 # Merge escapement and recruitment data by CU and year
 cdat <- merge(wild_infill_by_CU[[1]], Btable, by.x=c("CU_Name", "Year"), by.y=c("CU", "Year"), all=TRUE)
