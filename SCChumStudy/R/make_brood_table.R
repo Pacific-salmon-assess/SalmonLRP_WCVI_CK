@@ -12,7 +12,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-
+options(scipen = 1000000)
 # ===========================================================================================
 # Read-in Chum Data & Run Data Prep Functions:  
 # ===========================================================================================
@@ -167,7 +167,7 @@ write.csv(wild_infill_by_CU[[1]], "DataOut/wild_spawners_CU_infilled_by_site_CU.
 WildEsc <- wild_infill_by_CU[[1]]
 WildEsc$CUinfill <- ifelse(is.na(WildEsc$Escape), TRUE, FALSE) # Flag 'Escape = NA' sites
 
-# Read in Return data from Pieter Van Will received 2021-02-24
+# Read in estimated wild return data (wild spawners + wild harvest, by year) from Pieter Van Will received 2021-02-24
 WildRetWide <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A84:BP101", trim_ws = TRUE)
 names(WildRetWide)[2] <- "Area"
 
@@ -360,12 +360,16 @@ ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   geom_point(data = infill_by_stream_no_fraser, aes(y=GroupEsc, x=Year), colour="dodgerblue") + # infill by stream is blue
   geom_point(data = infill_by_stream_no_fraser, aes(y=SumRawEsc, x=Year)) + # raw escapement data
   geom_path(data = infill_by_stream_no_fraser, aes(y=SumRawEsc, x=Year, group=CU_Name)) +
+  geom_hline(aes(yintercept=0))+
   ylab("Escapement") +
   facet_wrap(~CU_Name, scales="free_y") +
+  coord_cartesian(expand=FALSE, clip="off") +
   #scale_y_log10() +
   theme_classic() +
   scale_x_discrete(breaks=seq(1960,2010,10)) +
-  theme(axis.text.x = element_text(angle=90, vjust=0.5))
+  theme(axis.text.x = element_text(angle=90, vjust=0.5),
+        axis.line.x = element_line(colour=NULL, size=0),
+        strip.background = element_rect(fill=NULL, colour=NULL))
 dev.off()
 
 # Plot escapement and R/S time series on same x axis for each CU --------
@@ -395,9 +399,10 @@ for(i in 1:length(unique(CUs))) {
   dat <- cdat[cdat$CU_Name==CUs[i], ] 
   par(mar=c(1,4,1,1)+0.1, bty="l", las=1)
   plot(y=dat$SiteEsc/1000, x=dat$Year, type="l", xlab="year", ylab="Escapement (thousands)", 
-       main=CUs[i], xlim =c(yrs[1], yrs[2]), ylim=c(0,max(dat$Return, na.rm=TRUE)/1000*1.01))
+       main=CUs[i], xlim =c(yrs[1], yrs[2]), ylim=c(0,max(dat$SiteEsc, na.rm=TRUE)/1000*1.04), yaxs="i")
   grid(ny=0)
-  segments(y0=dat$SiteEsc[-1]/1000, y1=dat$Return[-1]/1000, x0=dat$Year[-1],x1=dat$Year[-1], col=adjustcolor("red", alpha=0.6), lwd=4)   # add harvest, remove first year, as there is a problem with returns
+  # FLAG: upper Knight has returns greater than spawners in some years, impossible. Must be error.
+  # segments(y0=dat$SiteEsc[-1]/1000, y1=dat$Return[-1]/1000, x0=dat$Year[-1],x1=dat$Year[-1], col=adjustcolor("red", alpha=0.6), lwd=4)   # add harvest, remove first year, as there is a problem with returns
   points(y=dat$SiteEsc/1000, x=dat$Year, xlab="year", pch=16)
   par(mar=c(2,4,1,1)+0.1, bty="l", las=1)
   plot(y=dat$RS, x=dat$Year, log="y", type="l", ylab="Recruits/Spawner", xlim =c(yrs[1], yrs[2]), 
@@ -407,10 +412,50 @@ for(i in 1:length(unique(CUs))) {
     grid(ny=0)
     abline(h=1, lty=3)
     abline(h=median(dat$RS, na.rm=TRUE),lty=2, col="orange")
-    text(x=2013, y= median(dat$RS, na.rm=TRUE), col="orange", label=paste0("Median\nR/S=", round(median(dat$RS, na.rm=TRUE), 1)), adj=c(1,-0.5))
+    text(x=2020, y= median(dat$RS, na.rm=TRUE), col="orange", label=round(median(dat$RS, na.rm=TRUE), 1), adj=c(1,-0.5), )
 }
 dev.off()
 
+# Plot abundance on y axis and productivity on x axis
+ggplot(cdat[!is.na(cdat$Recruit), ], aes(y=SiteEsc, x=RS, fill=Year)) +
+  geom_vline(aes(xintercept=1), colour="gray", linetype=2) +
+  geom_hline(aes(yintercept=0)) +
+  geom_segment(aes(x=RS, xend=RS, y=SiteEsc, yend=Return), colour="coral", alpha=0.4, size=1.5) +
+  geom_path(aes(colour=Year)) +
+  geom_point(shape=21, size=4, alpha=0.8) +
+  scale_x_log10() +
+  scale_fill_viridis_c() +
+  scale_colour_viridis_c() +
+  coord_cartesian(expand=FALSE, clip="off") +
+  ylab("Spawners") +
+  xlab("Recruits/Spawner") +
+  facet_wrap(~CU_Name, scales="free_y") +
+  theme_classic()
+
+ggplot(cdat, aes(x=SiteEsc, y=RS, fill=Year)) +
+  geom_hline(aes(yintercept=1), colour="gray", linetype=2) +
+  #geom_segment(aes(y=RS, yend=RS, x=SiteEsc, xend=Return), colour="coral", alpha=0.4, size=1.5) +
+  geom_path(aes(colour=Year)) +
+  geom_point(shape=21, size=4, alpha=0.8) +
+  scale_y_log10() +
+  scale_fill_viridis_c() +
+  scale_colour_viridis_c() +
+  xlab("Spawners") +
+  ylab("Recruits/Spawner") +
+  facet_wrap(~CU_Name, scales="free") +
+  theme_classic()
+
+
+# Look at density of spawners
+png(filename="Figures/fig_spawner_distribution.png", width=8, height=4,units="in", res=300)
+ggplot(cdat, aes(x=SiteEsc, colour=CU_Name, fill=CU_Name)) +
+  geom_point(aes(y=0, x=SiteEsc), shape=108, colour="black", size=2) +
+  geom_density(alpha=0.5) + 
+  scale_x_log10( breaks= c(10^(1:10))) +
+  xlab(bquote("log"[10]~"(spawners)")) +
+  ylab("Density") +
+  theme_classic()
+dev.off()
 
 # -----------#
 # Compare sum of max escapement summed across streams to infilling data - LW 
