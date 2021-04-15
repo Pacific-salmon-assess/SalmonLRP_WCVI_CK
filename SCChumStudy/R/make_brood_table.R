@@ -33,6 +33,9 @@ source("R/chumDataFunctions.r")
 
 # Read in raw escapement data from Pieter Van Will. 
 rawdat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb152021).xlsx", sheet="Updated 2018", trim_ws=TRUE) # strip.white for leading and trailing white spaces in Source and SummerRun columns
+# save data summary table for sharing with Island Marine Aquatic Working Group
+share <- rawdat %>% group_by(CU_Name, NME, Area, SummerRun, Rabcode) %>% summarise(n=n()) 
+write.csv(share[ , -which(names(share)=="n")], "DataOut/streams_counted.csv", row.names = FALSE)
 
 # Get number of summer vs fall run streams for each CU (for reference)
 table(rawdat$CU_Name, rawdat$SummerRun)
@@ -128,7 +131,6 @@ write.csv(wild_infill_join, "DataOut/wild_spawners_stream_infilled_by_site_CU.cs
 
 # Save data by CU
 write.csv(wild_infill_by_CU[[1]], "DataOut/wild_spawners_CU_infilled_by_site_CU.csv")
-
 
 # Compare to infilling for run reconstruction
 # # Read in what was done for run reconstruction
@@ -228,7 +230,7 @@ write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
 
 # ----------------------------------------------------#
-# Explore data with figures - LW
+# Explore data with figures - LW ------------
 # ----------------------------------------------------#
 
 # format data
@@ -256,70 +258,32 @@ rdl[rdl$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")
   theme_bw() +
   theme(axis.text.x = element_text(angle=90, vjust=0.5))
 
-# Plot raw escapement, normal vs. summer run, 1 page per CU
-options(scipen = 100000)
-CUs <- unique(rdl$CU_Name)
-make_CU_figs <- function(CU) {
-  rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
-    geom_point() +
-    geom_path() +
-    scale_y_log10() +
-    #facet_grid(NME~.) +
-    scale_colour_manual(values=c("black", "red")) +
-    ggtitle(CU) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle=90, vjust=0.5))
-}
-fig_list <- as.list(CUs)
-fig_list <- lapply(fig_list, make_CU_figs)
-fig_list[[1]] # check
-pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
-for (i in 1:length(fig_list)){
-  print(fig_list[[i]])
-}
-dev.off()
-
-
 #------------#
 # Look at by-stream infilled data - LW
 #------------#
-
-# Plot actual vs. infilled data by stream, one page per CU
-infill_by_stream <- wild_infill_by_stream_list[[1]] # get by-steam infilled data
-
-CUs <- unique(infill_by_stream$CU_Name)
-make_CU_figs <- function(CU) {
-  infill_by_stream[infill_by_stream$CU_Name==CU,] %>% ggplot( aes(y=SiteEsc, x=Year, group=NME)) +
-    geom_point(colour="dodgerblue", shape=1) +
-    #geom_path() +
-    #geom_point(aes(y=ContrEsc, x=Year), colour="dodgerblue") +
-    geom_point(aes(y=Escape, x=Year), colour="black", shape=1) +
-    ggtitle(CU) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle=90, vjust=0.5))
-}
-fig_list <- as.list(CUs)
-fig_list <- lapply(fig_list, make_CU_figs)
-fig_list[[1]] # check
-pdf("Figures/fig_by-CU_infill_escapement.pdf", width=7, height=4, pointsize=8)
-for (i in 1:length(fig_list)){
-  print(fig_list[[i]])
-}
-dev.off()
-
 # Plot observed and infilled escapement for each CU, one panel per stream
+infill_by_stream <- wild_infill_by_stream_list[[1]] # get by-stream infilled data
 CUs <- unique(infill_by_stream$CU_Name)
+# add column with data type
+infill_by_stream$data_type <- if_else(!is.na(infill_by_stream$Escape), "observed",
+                                            ifelse (infill_by_stream$GroupEsc=="NaN" , "infilled by CU",
+                                                    "infilled by stream"))
+infill_by_stream1 <- infill_by_stream[!infill_by_stream$data_type=="infilled by CU", ]
 make_stream_figs <- function(CU) {
-  infill_by_stream[infill_by_stream$CU_Name==CU,] %>% 
-    ggplot( aes(y=SiteEsc, x=Year, group=NME)) + # infilled
-    geom_point(colour="dodgerblue", shape=1) +
-    geom_point(aes(y=Escape, x=Year), colour="black") + # observed
-    #scale_y_log10() +
+  infill_by_stream1[infill_by_stream1$CU_Name==CU,] %>% 
+    ggplot() +
+    geom_path(aes(x=Year, y=SiteEsc, group=NME), colour="gray")+
+    geom_point(aes(x=Year, y=SiteEsc, colour=data_type)) +
     facet_wrap(~NME, scales="free_y") +
     scale_x_discrete(breaks=seq(1960,2010,10)) +
     ggtitle(CU) +
+    geom_hline(aes(yintercept=0))+
+    coord_cartesian(expand=FALSE, clip="off")+
+    scale_colour_manual(values=c("observed"= "black", "infilled by stream" = "dodgerblue"))+
     theme_bw() +
-    theme(axis.text.x = element_text(angle=90, vjust=0.5))
+    theme(axis.text.x = element_text(angle=90, vjust=0.5),
+          strip.background = element_blank(),
+          strip.text = element_text(hjust=0, size=10))
 }
 fig_list <- as.list(CUs)
 fig_list <- lapply(fig_list, make_stream_figs)
@@ -575,7 +539,53 @@ ACdat %>% pivot_longer(cols=grep("Age", names(ACdat)), names_to="Age", values_to
   geom_col()
 
 
+# OBS
 
+
+# Plot raw escapement, normal vs. summer run, 1 page per CU
+# options(scipen = 100000)
+# CUs <- unique(rdl$CU_Name)
+# make_CU_figs <- function(CU) {
+#   rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
+#     geom_point() +
+#     geom_path() +
+#     scale_y_log10() +
+#     #facet_grid(NME~.) +
+#     scale_colour_manual(values=c("black", "red")) +
+#     ggtitle(CU) +
+#     theme_bw() +
+#     theme(axis.text.x = element_text(angle=90, vjust=0.5))
+# }
+# fig_list <- as.list(CUs)
+# fig_list <- lapply(fig_list, make_CU_figs)
+# fig_list[[1]] # check
+# pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
+# for (i in 1:length(fig_list)){
+#   print(fig_list[[i]])
+# }
+# dev.off()
+
+# Plot actual vs. infilled data by stream, one page per CU
+
+# CUs <- unique(infill_by_stream$CU_Name)
+# make_CU_figs <- function(CU) {
+#   infill_by_stream[infill_by_stream$CU_Name==CU,] %>% ggplot( aes(y=SiteEsc, x=Year, group=NME)) +
+#     geom_point(colour="dodgerblue", shape=1) +
+#     #geom_path() +
+#     #geom_point(aes(y=ContrEsc, x=Year), colour="dodgerblue") +
+#     geom_point(aes(y=Escape, x=Year), colour="black", shape=1) +
+#     ggtitle(CU) +
+#     theme_bw() +
+#     theme(axis.text.x = element_text(angle=90, vjust=0.5))
+# }
+# fig_list <- as.list(CUs)
+# fig_list <- lapply(fig_list, make_CU_figs)
+# fig_list[[1]] # check
+# pdf("Figures/fig_by-CU_infill_escapement.pdf", width=7, height=4, pointsize=8)
+# for (i in 1:length(fig_list)){
+#   print(fig_list[[i]])
+# }
+# dev.off()
 
 
 

@@ -76,6 +76,35 @@ ggplot(scc) +
   theme(panel.background = element_rect(fill="aliceblue") )
 dev.off()
 
+# plot with ggplot with fisheries management areas
+png("Figures/fig_chum_CU_map_w_fishing_areas.png", width=8, height=7, units="in", res=300)
+ggplot(scc) +
+  geom_sf(data=fma,colour="coral", size=1, fill=NA) +
+  geom_sf(data=bc, fill="antiquewhite", size=0) +
+  geom_sf(data=nb[nb$name=="Washington",], fill="antiquewhite", size=0) +
+  geom_sf(data=scc, aes(fill=CU_name), size=0) + 
+  geom_sf(data=lakes, fill="cornflowerblue", colour="cornflowerblue", size=0.001) +
+  geom_sf(data=riv, fill="cornflowerblue", colour="cornflowerblue", size=0.001) +
+  geom_sf_label(data=scc, aes(label = CU_name, colour=CU_name),  size=4.5, fontface="bold") +
+  geom_sf_label(data=drop_multi_poly(fma), aes(label = MNGMNTR), size=3,label.size=0.1, colour="coral",alpha=0.7, fontface="bold") +
+  annotate( geom="text", label = "BRITISH COLUMBIA", x = -121.8, y = 49.5, color = "grey22", size = 4) +
+  annotate( geom="text", label = "WASHINGTON", x = -121.8, y = 48.5, color = "grey22", size = 4) +
+  annotate( geom="text", label = "Pacific Ocean", x = -127.7, y = 49.3, fontface = "italic", color = "darkblue", size = 4) +
+  annotate( geom="text", label = "Salish Sea", x = -123.8, y = 49.3, fontface = "italic", color = "darkblue", size = 3, angle=327) +
+  scale_fill_manual( values=pal, guide=NULL) +
+  scale_colour_manual( values=pal, guide=NULL) +
+  coord_sf(xlim = bounds[c(1,3)] + c(0,1) , ylim = bounds[c(2,4)]) +
+  scale_x_continuous(breaks=seq(-128,-122,1)) +
+  xlab(NULL) +
+  ylab(NULL) +
+  annotation_scale(location = "bl", width_hint = 0.5) +
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
+                         style = north_arrow_fancy_orienteering, width=unit(0.3, "in")) +
+  theme_classic() +
+  theme(panel.background = element_rect(fill="aliceblue") )
+dev.off()
+
 # plot with leaflet - nice basemap but harder to do label
 # cent <- as.data.frame(st_coordinates(st_centroid(scc)))
 # cent$X[1] <- -122 # adjust Howe Sound Burrard Inlet label position
