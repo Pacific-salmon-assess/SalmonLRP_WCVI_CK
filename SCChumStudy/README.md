@@ -32,16 +32,16 @@ Infilled wild spawners by CU
 * wild_spawners_stream_infilled_by_site_CU.csv
 Infilled wild spawners by stream
 
-* SRdatWild.csv  
+* SRdatWild.csv
 Time series of spawners and recruits, made by make_brood_table.R
 
-* streams_counted.csv  
+* streams_counted.csv
 Summary of the streams in the data set
 
 * summary_n_infilled_by_year.csv
 Summary of how many streams in each CU were infilled each year
 
-* AnnualRetrospective  
+* AnnualRetrospective
 Folder containing output data .csv files from LRP retrospective analysis
 
 * infill_escapement_for_external_run_reconstruction
