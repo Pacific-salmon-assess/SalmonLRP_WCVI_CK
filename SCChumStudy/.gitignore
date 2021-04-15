@@ -8,6 +8,9 @@
 *.shp
 *.dbf
 
+# Include chum CU map
+!fig_chum_CU_map.png
+
 notes.docx
 old_code_reference/
 old_code_reference/*
