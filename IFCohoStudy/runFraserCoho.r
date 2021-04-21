@@ -113,14 +113,14 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # ==================================================================================
 # Call functions to plot data availability:
 # ====================================================================================
-# plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
-# plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
-# 
-# # Note: these next 2 two escpt plots need to have formatting fixed
-# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
-# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc Separate", samePlot = F)
-# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
-# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
+plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
+plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
+
+# Note: these next 2 two escpt plots need to have formatting fixed
+plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
+plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc Separate", samePlont = F)
+plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
+plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
 
 
 # ==================================================================================================================
@@ -194,7 +194,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sig
 # Note: BroodYrLag = the number of years to subract from the current year to get to the most recent brood year
 
 # Loop over p values and run annual retrospective analyses for each level of p
-  ps <- c(0.6, 0.7, 0.8, 0.9, 0.99)
+  ps <- c(0.5, 0.66, 0.9, 0.99)
   for(pp in 1:length(ps)){
     
     
@@ -240,7 +240,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sig
 
 # Run annual restrospective analyses using subpopulations ===========================
 
-ps <- c(0.6, 0.7, 0.8, 0.9, 0.99)
+ps <- c(0.5, 0.66, 0.9, 0.99)
 for(pp in 1:length(ps)){
 
 runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
@@ -248,11 +248,11 @@ runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018,
                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
                bootstrapMode = F, plotLRP=T)
 
-
-runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-               BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior",integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""),
-               bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+# 
+# runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+#                BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior",integratedModel=F,
+#                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""),
+#                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
 }
 
@@ -263,36 +263,49 @@ runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018,
 # For CU approach ===========================================================
 
 nCUs<-c(5,3,4) 
-ps<-c(0.60, 0.80,0.99)
+ps<-c(0.50, 0.66, 0.90,0.99)
 
 
 for (pp in 1:length(ps)){
 
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
+  #              genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+  #              useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
+  #              runLogisticDiag=F)
+  # 
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
+  #              genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+  #              useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep=""),
+  #              runLogisticDiag=F) 
+  # 
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
+  #            genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+  #            useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""),
+  #            runLogisticDiag=F)
+  # 
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
+  #              genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+  #              useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep=""),
+  #              runLogisticDiag=F) 
+  # 
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2,
+  #              genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
+  #              useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""),
+  #              runLogisticDiag=F)
+
+  
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
-               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurv_",ps[pp]*100, sep=""),
+               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                runLogisticDiag=F)
-
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
-               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bin.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-               runLogisticDiag=F) 
   
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2,
-             genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-             useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bin.HierRickerSurv_",ps[pp]*100, sep=""),
-             runLogisticDiag=F)
-
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, 
-               genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bin.HierRickerSurvCap_",ps[pp]*100, sep=""),
-               runLogisticDiag=F) 
   
+
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2018, BroodYrLag=2,
-               genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bin.SPopAbundThreshST_",ps[pp]*100, sep=""),
+               genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only", integratedModel=F,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
                runLogisticDiag=F)
-
+  
 }
 
 
@@ -307,22 +320,29 @@ for (pp in 1:length(ps)){
 
 yearList<-2015:2018
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_Surv",p=0.99, Dir=cohoDir,
-                     inputPrefix="Bin.HierRickerSurv_99",plotAveLine=TRUE)
+# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_Surv",p=0.99, Dir=cohoDir,
+#                      inputPrefix="Bin.HierRickerSurv_99",plotAveLine=TRUE)
+# 
+# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.99, Dir=cohoDir,
+#                      inputPrefix="Bin.IndivRickerSurv_99",plotAveLine=TRUE)
+# 
+# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_SurvCap",p=0.99, Dir=cohoDir,
+#                       inputPrefix="Bin.HierRickerSurvCap_99",plotAveLine=TRUE)
+# 
+# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.99, Dir=cohoDir,
+#                       inputPrefix="Bin.IndivRickerSurvCap_99",plotAveLine=TRUE)
+# 
+# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.99, Dir=cohoDir,
+#                      inputPrefix="Bin.SPopAbundThreshST_99", plotAveLine=TRUE)
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.99, Dir=cohoDir,
-                     inputPrefix="Bin.IndivRickerSurv_99",plotAveLine=TRUE)
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_HierRicker_SurvCap",p=0.99, Dir=cohoDir,
-                      inputPrefix="Bin.HierRickerSurvCap_99",plotAveLine=TRUE)
-
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.99, Dir=cohoDir,
-                      inputPrefix="Bin.IndivRickerSurvCap_99",plotAveLine=TRUE)
-
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BinLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.99, Dir=cohoDir,
-                     inputPrefix="Bin.SPopAbundThreshST_99", plotAveLine=TRUE)
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.50, Dir=cohoDir,
+                     inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
 
 
+
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.50, Dir=cohoDir,
+                     inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE)
 
 
 

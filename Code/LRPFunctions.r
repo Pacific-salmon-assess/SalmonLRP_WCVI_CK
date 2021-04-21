@@ -145,7 +145,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   }
   
   # Call optimization:
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10)) # Flag, check if higher iterations help ricker fits
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5)) # Flag, check if higher iterations help ricker fits
   
   # Parameter estimate after phase 1 optimization:
   pl <- obj$env$parList(opt$par) # Parameter estimates after phase 1
@@ -284,7 +284,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
                           upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
 
     out$Diagnostic_Data<-diagDat
-    
+
     out
     
 }

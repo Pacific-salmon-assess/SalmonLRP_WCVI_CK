@@ -78,7 +78,7 @@ plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T) {
   
   theme_update(plot.title = element_text(hjust = 0.5))
   
-  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""), height = 7, width = 10)
+  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""), height = 6, width = 5)
 
   p <- list()
   
@@ -334,10 +334,10 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
   # If LRP$lwr is <0, assume can't fit LRP
   if(LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
     annual_LRP_plot <- annual_LRP_plot + 
-      geom_vline(xintercept=LRP$fit, linetype="dashed", color="orange", size = 1) +
-      geom_hline(yintercept= p, linetype="dashed", color="orange", size = 1) +
-      geom_vline(xintercept = LRP$lwr, linetype = "dotted", color = "orange", size = 1) +
-      geom_vline(xintercept = LRP$upr, linetype = "dotted", color = "orange", size = 1) 
+      geom_vline(xintercept=LRP$fit, color="orange", size = 1) +
+      geom_hline(yintercept= p, linetype="dotted", color="black", size = 0.5) + 
+      geom_vline(xintercept = LRP$lwr, linetype = "dashed", color = "orange", size = 1) +
+      geom_vline(xintercept = LRP$upr, linetype = "dashed", color = "orange", size = 1) 
   }
   
   # Save plot

@@ -119,13 +119,26 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.base"
+scenarioName <- "IM.base.nyrs100_nsims2000"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=NA, nProj=2000, cvER = 0.456, recCorScalar=1)
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.base"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
                                 nMCMC=NA, nProj=5000, cvER = 0.456, recCorScalar=1)
+
+
+
 
 
 scenarioName <- "HM.base"
@@ -159,7 +172,7 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmode
 
 
 # ==================================================================
-# Start of senstivity analyses 
+# Start of sensitivity analyses 
 # ====================================================================
 
 # Create samSim input files for current scenario
@@ -347,7 +360,6 @@ OMsToInclude<-c("IM.Base", "HM.Base", "IMCap.base", "HMCap.base",
                 "IM-.20RecCor","IM-.40RecCor",
                 "IM.cvER1.25", "IM.cvER1.5","IM.cvER2.0","IM.cvER2.5","IM.cvER3.0")
  
-
 for (i in 1:length(OMsToInclude)) {
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
   dat.i<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
@@ -383,6 +395,118 @@ LRPs<-bind_rows(LRPs_byOM, LRPs_combined)
 # Write LRP estimates
 
 write.csv(as.data.frame(LRPs),paste(cohoDir,"DataOut/ProjectedLRPs/ProjectedLRPs.csv", sep="/"), row.names=F)
+
+
+
+# ===================================================================
+# Estimate Alternate LRPs
+# ==================================================================
+
+# Read in projection outputs to create input lists for logistic regression
+
+OMsToInclude<-c("IM.Base")
+probThresh<-0.50
+
+for (i in 1:length(OMsToInclude)) {
+  filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
+  dat.i<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
+  dat.i<-dat.i %>% filter(year > max(SRDat$yr_num)+4)
+  dat.i$OM.Name<-OMsToInclude[i]
+  if (i == 1) projLRPDat<-dat.i
+  if (i > 1) projLRPDat<-rbind(projLRPDat,dat.i)
+  
+  filename<-paste( "projSpwnDat_",OMsToInclude[i],".csv",sep="")
+  spDat.i<-read.csv(here(cohoDir,"SamSimOutputs", "simData",filename))
+  spDat.i$OM.Name<-OMsToInclude[i]
+  if (i == 1) projCUSpDat<-spDat.i
+  if (i > 1) projCUSpDat<-rbind(projCUSpDat,spDat.i)
+}
+
+
+minBreak<-round(min(projLRPDat$sAg),digits=-2)
+maxBreak<-round(max(projLRPDat$sAg),digits=-2)
+
+breaks<-seq(minBreak, maxBreak,by=1000)
+
+projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+
+tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+
+tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == 1.0]))) %>%
+  add_column(nSims=tmp$nSims)
+
+projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
+
+
+LRP<-projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]
+
+plot(projLRPDat$bins,projLRPDat$prob, pch=19, 
+     xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
+abline(h=probThresh, lty=2)
+abline(v=LRP, col="orange", lwd=2)
+
+  
+  #tmp<-projLRPDat %>% group_by(bins) %>% summarise(prob=count(ppnCUsLowerBM==1.0))
+
+
+#plot(tmp$bins,tmp$prob)
+
+
+
+# ===================================================================
+# Estimate Alternate LRPs - Method 2
+# ==================================================================
+
+# Read in projection outputs to create input lists for logistic regression
+
+OMsToInclude<-c("IM.Base")
+probThresh<-0.50
+
+for (i in 1:length(OMsToInclude)) {
+  filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
+  dat.i<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
+  dat.i<-dat.i %>% filter(year > max(SRDat$yr_num)+4)
+  dat.i$OM.Name<-OMsToInclude[i]
+  if (i == 1) projLRPDat<-dat.i
+  if (i > 1) projLRPDat<-rbind(projLRPDat,dat.i)
+  
+  filename<-paste( "projSpwnDat_",OMsToInclude[i],".csv",sep="")
+  spDat.i<-read.csv(here(cohoDir,"SamSimOutputs", "simData",filename))
+  spDat.i$OM.Name<-OMsToInclude[i]
+  if (i == 1) projCUSpDat<-spDat.i
+  if (i > 1) projCUSpDat<-rbind(projCUSpDat,spDat.i)
+}
+
+
+
+minBreak<-round(min(projLRPDat$sAg),digits=-2)
+maxBreak<-round(max(projLRPDat$sAg),digits=-2)
+
+breaks<-seq(minBreak, maxBreak,by=1000)
+
+projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+
+tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+
+tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == 1.0]))) %>%
+  add_column(nSims=tmp$nSims)
+
+projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
+
+
+LRP<-projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]
+
+plot(projLRPDat$bins,projLRPDat$prob, pch=19, 
+     xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
+abline(h=probThresh, lty=2)
+abline(v=LRP, col="orange", lwd=2)
+
+
+
+
+
 
 
 # ===================================================================
