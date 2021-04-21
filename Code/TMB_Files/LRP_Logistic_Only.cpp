@@ -11,7 +11,7 @@ Type objective_function<Type>::operator() ()
   DATA_VECTOR(LM_CU_Status);
   DATA_VECTOR(LM_Agg_Abund);
   DATA_IVECTOR(LM_yr);
-  DATA_IVECTOR(LM_stk);
+  //DATA_IVECTOR(LM_stk); // FLAG maybe take this out. Redundant?
   DATA_VECTOR(Pred_Abund);
   DATA_SCALAR(p);
  

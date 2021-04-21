@@ -17,8 +17,6 @@
 
 # Some modifications by Luke Warkentin (DFO) in 2020-2021
 
-setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
-
 library(dplyr)
 library(tidyr)
 library(readxl)

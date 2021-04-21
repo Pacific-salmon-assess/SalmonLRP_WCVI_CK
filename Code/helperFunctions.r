@@ -105,3 +105,13 @@ PredInt <- function(x,y,Newx=x, Predy){
   
 }
 
+# Function to compile and load each TMB cpp file iteratively using purrr:walk()
+compile_load_TMB <- function(dir, files) {
+  fpaths <- paste0(dir, "/TMB_Files/", files)
+  fpaths_cpp <- paste0(fpaths, ".cpp")
+  walk2(fpaths,fpaths_cpp, function(a,b) {
+    compile(b)
+    dyn.load(dynlib(a))
+  }
+  )
+}

@@ -12,10 +12,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-
-# Only need if running independently from runSouthCoastChum.R
-setwd("C:/github/SalmonLRP_RetroEval/SCChumStudy")
-
+options(scipen = 1000000)
 # ===========================================================================================
 # Read-in Chum Data & Run Data Prep Functions:  
 # ===========================================================================================
@@ -36,6 +33,9 @@ source("R/chumDataFunctions.r")
 
 # Read in raw escapement data from Pieter Van Will. 
 rawdat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb152021).xlsx", sheet="Updated 2018", trim_ws=TRUE) # strip.white for leading and trailing white spaces in Source and SummerRun columns
+# save data summary table for sharing with Island Marine Aquatic Working Group
+share <- rawdat %>% group_by(CU_Name, NME, Area, SummerRun, Rabcode) %>% summarise(n=n()) 
+write.csv(share[ , -which(names(share)=="n")], "DataOut/streams_counted.csv", row.names = FALSE)
 
 # Get number of summer vs fall run streams for each CU (for reference)
 table(rawdat$CU_Name, rawdat$SummerRun)
@@ -132,7 +132,6 @@ write.csv(wild_infill_join, "DataOut/wild_spawners_stream_infilled_by_site_CU.cs
 # Save data by CU
 write.csv(wild_infill_by_CU[[1]], "DataOut/wild_spawners_CU_infilled_by_site_CU.csv")
 
-
 # Compare to infilling for run reconstruction
 # # Read in what was done for run reconstruction
 # zz <- read.csv( "DataOut/infill_escapement_for_external_run_reconstruction/wild_spawners_infilled_by_site.csv")
@@ -170,7 +169,7 @@ write.csv(wild_infill_by_CU[[1]], "DataOut/wild_spawners_CU_infilled_by_site_CU.
 WildEsc <- wild_infill_by_CU[[1]]
 WildEsc$CUinfill <- ifelse(is.na(WildEsc$Escape), TRUE, FALSE) # Flag 'Escape = NA' sites
 
-# Read in Return data from Pieter Van Will received 2021-02-24
+# Read in estimated wild return data (wild spawners + wild harvest, by year) from Pieter Van Will received 2021-02-24
 WildRetWide <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A84:BP101", trim_ws = TRUE)
 names(WildRetWide)[2] <- "Area"
 
@@ -231,7 +230,7 @@ write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
 
 # ----------------------------------------------------#
-# Explore data with figures - LW
+# Explore data with figures - LW ------------
 # ----------------------------------------------------#
 
 # format data
@@ -259,70 +258,32 @@ rdl[rdl$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")
   theme_bw() +
   theme(axis.text.x = element_text(angle=90, vjust=0.5))
 
-# Plot raw escapement, normal vs. summer run, 1 page per CU
-options(scipen = 100000)
-CUs <- unique(rdl$CU_Name)
-make_CU_figs <- function(CU) {
-  rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
-    geom_point() +
-    geom_path() +
-    scale_y_log10() +
-    #facet_grid(NME~.) +
-    scale_colour_manual(values=c("black", "red")) +
-    ggtitle(CU) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle=90, vjust=0.5))
-}
-fig_list <- as.list(CUs)
-fig_list <- lapply(fig_list, make_CU_figs)
-fig_list[[1]] # check
-pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
-for (i in 1:length(fig_list)){
-  print(fig_list[[i]])
-}
-dev.off()
-
-
 #------------#
 # Look at by-stream infilled data - LW
 #------------#
-
-# Plot actual vs. infilled data by stream, one page per CU
-infill_by_stream <- wild_infill_by_stream_list[[1]] # get by-steam infilled data
-
-CUs <- unique(infill_by_stream$CU_Name)
-make_CU_figs <- function(CU) {
-  infill_by_stream[infill_by_stream$CU_Name==CU,] %>% ggplot( aes(y=SiteEsc, x=Year, group=NME)) +
-    geom_point(colour="dodgerblue", shape=1) +
-    #geom_path() +
-    #geom_point(aes(y=ContrEsc, x=Year), colour="dodgerblue") +
-    geom_point(aes(y=Escape, x=Year), colour="black", shape=1) +
-    ggtitle(CU) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle=90, vjust=0.5))
-}
-fig_list <- as.list(CUs)
-fig_list <- lapply(fig_list, make_CU_figs)
-fig_list[[1]] # check
-pdf("Figures/fig_by-CU_infill_escapement.pdf", width=7, height=4, pointsize=8)
-for (i in 1:length(fig_list)){
-  print(fig_list[[i]])
-}
-dev.off()
-
 # Plot observed and infilled escapement for each CU, one panel per stream
+infill_by_stream <- wild_infill_by_stream_list[[1]] # get by-stream infilled data
 CUs <- unique(infill_by_stream$CU_Name)
+# add column with data type
+infill_by_stream$data_type <- if_else(!is.na(infill_by_stream$Escape), "observed",
+                                            ifelse (infill_by_stream$GroupEsc=="NaN" , "infilled by CU",
+                                                    "infilled by stream"))
+infill_by_stream1 <- infill_by_stream[!infill_by_stream$data_type=="infilled by CU", ]
 make_stream_figs <- function(CU) {
-  infill_by_stream[infill_by_stream$CU_Name==CU,] %>% 
-    ggplot( aes(y=SiteEsc, x=Year, group=NME)) + # infilled
-    geom_point(colour="dodgerblue", shape=1) +
-    geom_point(aes(y=Escape, x=Year), colour="black") + # observed
-    #scale_y_log10() +
+  infill_by_stream1[infill_by_stream1$CU_Name==CU,] %>% 
+    ggplot() +
+    geom_path(aes(x=Year, y=SiteEsc, group=NME), colour="gray")+
+    geom_point(aes(x=Year, y=SiteEsc, colour=data_type)) +
     facet_wrap(~NME, scales="free_y") +
     scale_x_discrete(breaks=seq(1960,2010,10)) +
     ggtitle(CU) +
+    geom_hline(aes(yintercept=0))+
+    coord_cartesian(expand=FALSE, clip="off")+
+    scale_colour_manual(values=c("observed"= "black", "infilled by stream" = "dodgerblue"))+
     theme_bw() +
-    theme(axis.text.x = element_text(angle=90, vjust=0.5))
+    theme(axis.text.x = element_text(angle=90, vjust=0.5),
+          strip.background = element_blank(),
+          strip.text = element_text(hjust=0, size=10))
 }
 fig_list <- as.list(CUs)
 fig_list <- lapply(fig_list, make_stream_figs)
@@ -363,12 +324,35 @@ ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   geom_point(data = infill_by_stream_no_fraser, aes(y=GroupEsc, x=Year), colour="dodgerblue") + # infill by stream is blue
   geom_point(data = infill_by_stream_no_fraser, aes(y=SumRawEsc, x=Year)) + # raw escapement data
   geom_path(data = infill_by_stream_no_fraser, aes(y=SumRawEsc, x=Year, group=CU_Name)) +
+  geom_hline(aes(yintercept=0))+
   ylab("Escapement") +
   facet_wrap(~CU_Name, scales="free_y") +
+  coord_cartesian(expand=FALSE, clip="off") +
   #scale_y_log10() +
   theme_classic() +
   scale_x_discrete(breaks=seq(1960,2010,10)) +
-  theme(axis.text.x = element_text(angle=90, vjust=0.5))
+  theme(axis.text.x = element_text(angle=90, vjust=0.5),
+        axis.line.x = element_line(colour=NULL, size=0),
+        strip.background = element_blank())
+dev.off()
+
+# Plot all infilled escapement with 25% benchmark
+benchmarks <- cdat%>% group_by(CU_Name) %>% summarise(benchmark_25 = quantile(SiteEsc, 0.25, na.rm=TRUE))
+png("Figures/fig_escapement_infilled_w_25_benchmark.png", height=5, width=10, res=300, units="in")
+ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
+  geom_point() + # infill by CU is in red
+  geom_path(aes(group=CU_Name)) +
+  geom_hline(aes(yintercept=0))+
+  geom_hline(data=benchmarks, aes(yintercept=benchmark_25),alpha=0.7, colour="dodgerblue", linetype=1, size=1.1) +
+  ylab("Escapement") +
+  facet_wrap(~CU_Name, scales="free_y") +
+  coord_cartesian(expand=FALSE, clip="off") +
+  #scale_y_log10() +
+  theme_classic() +
+  scale_x_discrete(breaks=seq(1960,2010,10)) +
+  theme(axis.text.x = element_text(angle=90, vjust=0.5),
+        axis.line.x = element_line(colour=NULL, size=0),
+        strip.background = element_blank())
 dev.off()
 
 # Plot escapement and R/S time series on same x axis for each CU --------
@@ -394,13 +378,16 @@ png("Figures/fig_escapement_RS.png", height=10, width=18, res=200, pointsize=20,
 layout(mat=matrix(1:16, nrow=4, byrow=FALSE))
   yrs <- range(cdat$Year)
   CUs <- unique(cdat$CU_Name)
-for(i in 1:14) {
+for(i in 1:length(unique(CUs))) {
   dat <- cdat[cdat$CU_Name==CUs[i], ] 
-  par(mar=c(1,4,1,0)+0.3, bty="l", las=1)
-  plot(y=dat$SiteEsc/1000, x=dat$Year, type="b", xlab="year", pch=16, ylab="Escapement (thousands)", 
-       main=CUs[i], xlim =c(yrs[1], yrs[2]))
-     grid(ny=0)
-  par(mar=c(2,4,1,0)+0.3, bty="l", las=1)
+  par(mar=c(1,4,1,1)+0.1, bty="l", las=1)
+  plot(y=dat$SiteEsc/1000, x=dat$Year, type="l", xlab="year", ylab="Escapement (thousands)", 
+       main=CUs[i], xlim =c(yrs[1], yrs[2]), ylim=c(0,max(dat$SiteEsc, na.rm=TRUE)/1000*1.04), yaxs="i")
+  grid(ny=0)
+  # FLAG: upper Knight has returns greater than spawners in some years, impossible. Must be error.
+  # segments(y0=dat$SiteEsc[-1]/1000, y1=dat$Return[-1]/1000, x0=dat$Year[-1],x1=dat$Year[-1], col=adjustcolor("red", alpha=0.6), lwd=4)   # add harvest, remove first year, as there is a problem with returns
+  points(y=dat$SiteEsc/1000, x=dat$Year, xlab="year", pch=16)
+  par(mar=c(2,4,1,1)+0.1, bty="l", las=1)
   plot(y=dat$RS, x=dat$Year, log="y", type="l", ylab="Recruits/Spawner", xlim =c(yrs[1], yrs[2]), 
       xlab="Year", ylim=c(min(cdat$RS, na.rm=TRUE), max(cdat$RS, na.rm=TRUE)), yaxt="n")
   axis(side=2, at=c(0.01, 0.1, 1, 10, 100), labels=c(0.01, 0.1, 1, 10, 100))
@@ -408,10 +395,50 @@ for(i in 1:14) {
     grid(ny=0)
     abline(h=1, lty=3)
     abline(h=median(dat$RS, na.rm=TRUE),lty=2, col="orange")
-    text(x=2013, y= median(dat$RS, na.rm=TRUE), col="orange", label=paste0("Median\nR/S=", round(median(dat$RS, na.rm=TRUE), 1)), adj=c(1,-0.5))
+    text(x=2020, y= median(dat$RS, na.rm=TRUE), col="orange", label=round(median(dat$RS, na.rm=TRUE), 1), adj=c(1,-0.5), )
 }
 dev.off()
 
+# Plot abundance on y axis and productivity on x axis
+ggplot(cdat[!is.na(cdat$Recruit), ], aes(y=SiteEsc, x=RS, fill=Year)) +
+  geom_vline(aes(xintercept=1), colour="gray", linetype=2) +
+  geom_hline(aes(yintercept=0)) +
+  geom_segment(aes(x=RS, xend=RS, y=SiteEsc, yend=Return), colour="coral", alpha=0.4, size=1.5) +
+  geom_path(aes(colour=Year)) +
+  geom_point(shape=21, size=4, alpha=0.8) +
+  scale_x_log10() +
+  scale_fill_viridis_c() +
+  scale_colour_viridis_c() +
+  coord_cartesian(expand=FALSE, clip="off") +
+  ylab("Spawners") +
+  xlab("Recruits/Spawner") +
+  facet_wrap(~CU_Name, scales="free_y") +
+  theme_classic()
+
+ggplot(cdat, aes(x=SiteEsc, y=RS, fill=Year)) +
+  geom_hline(aes(yintercept=1), colour="gray", linetype=2) +
+  #geom_segment(aes(y=RS, yend=RS, x=SiteEsc, xend=Return), colour="coral", alpha=0.4, size=1.5) +
+  geom_path(aes(colour=Year)) +
+  geom_point(shape=21, size=4, alpha=0.8) +
+  scale_y_log10() +
+  scale_fill_viridis_c() +
+  scale_colour_viridis_c() +
+  xlab("Spawners") +
+  ylab("Recruits/Spawner") +
+  facet_wrap(~CU_Name, scales="free") +
+  theme_classic()
+
+
+# Look at density of spawners
+png(filename="Figures/fig_spawner_distribution.png", width=8, height=4,units="in", res=300)
+ggplot(cdat, aes(x=SiteEsc, colour=CU_Name, fill=CU_Name)) +
+  geom_point(aes(y=0, x=SiteEsc), shape=108, colour="black", size=2) +
+  geom_density(alpha=0.5) + 
+  scale_x_log10( breaks= c(10^(1:10))) +
+  xlab(bquote("log"[10]~"(spawners)")) +
+  ylab("Density") +
+  theme_classic()
+dev.off()
 
 # -----------#
 # Compare sum of max escapement summed across streams to infilling data - LW 
@@ -512,7 +539,53 @@ ACdat %>% pivot_longer(cols=grep("Age", names(ACdat)), names_to="Age", values_to
   geom_col()
 
 
+# OBS
 
+
+# Plot raw escapement, normal vs. summer run, 1 page per CU
+# options(scipen = 100000)
+# CUs <- unique(rdl$CU_Name)
+# make_CU_figs <- function(CU) {
+#   rdl[rdl$CU_Name==CU,] %>% ggplot( aes(y=escapement, x=year, colour=SummerRun, group=NME)) +
+#     geom_point() +
+#     geom_path() +
+#     scale_y_log10() +
+#     #facet_grid(NME~.) +
+#     scale_colour_manual(values=c("black", "red")) +
+#     ggtitle(CU) +
+#     theme_bw() +
+#     theme(axis.text.x = element_text(angle=90, vjust=0.5))
+# }
+# fig_list <- as.list(CUs)
+# fig_list <- lapply(fig_list, make_CU_figs)
+# fig_list[[1]] # check
+# pdf("Figures/fig_raw_escapement_by_CU.pdf", width=7, height=4, pointsize=8)
+# for (i in 1:length(fig_list)){
+#   print(fig_list[[i]])
+# }
+# dev.off()
+
+# Plot actual vs. infilled data by stream, one page per CU
+
+# CUs <- unique(infill_by_stream$CU_Name)
+# make_CU_figs <- function(CU) {
+#   infill_by_stream[infill_by_stream$CU_Name==CU,] %>% ggplot( aes(y=SiteEsc, x=Year, group=NME)) +
+#     geom_point(colour="dodgerblue", shape=1) +
+#     #geom_path() +
+#     #geom_point(aes(y=ContrEsc, x=Year), colour="dodgerblue") +
+#     geom_point(aes(y=Escape, x=Year), colour="black", shape=1) +
+#     ggtitle(CU) +
+#     theme_bw() +
+#     theme(axis.text.x = element_text(angle=90, vjust=0.5))
+# }
+# fig_list <- as.list(CUs)
+# fig_list <- lapply(fig_list, make_CU_figs)
+# fig_list[[1]] # check
+# pdf("Figures/fig_by-CU_infill_escapement.pdf", width=7, height=4, pointsize=8)
+# for (i in 1:length(fig_list)){
+#   print(fig_list[[i]])
+# }
+# dev.off()
 
 
 
