@@ -4,7 +4,7 @@ inv_logit <- function(x){
 }
 
 logit <- function(x){
-  log(x/1-x)
+  log(x/(1-x))
 }
 
 

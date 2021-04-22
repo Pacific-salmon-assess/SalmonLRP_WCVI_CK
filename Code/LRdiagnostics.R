@@ -57,18 +57,18 @@
 # plotname = filename for residual plots
 
 # # Carrie's inputs for testing
-zz <- Get.LRP(remove.EnhStocks = TRUE)
-All_Ests <- zz$out$All_Ests
-AggAbundRaw <- zz$SMU_Esc
-digits <- count.dig(AggAbundRaw)
-ScaleSMU <- min(10^(digits -1 ), na.rm=T)
-AggAbund <- AggAbundRaw/ScaleSMU
-AggAbund <- AggAbund[!is.na(AggAbund)]
-obsPpnAboveBM <- zz$out$Logistic_Data$yy
-p <- zz$LRPppn
-nLL <- zz$nLL
-dir <- "DataOut/"
-plotname <- "WCVI_ResidPlots"
+# zz <- Get.LRP(remove.EnhStocks = TRUE)
+# All_Ests <- zz$out$All_Ests
+# AggAbundRaw <- zz$SMU_Esc
+# digits <- count.dig(AggAbundRaw)
+# ScaleSMU <- min(10^(digits -1 ), na.rm=T)
+# AggAbund <- AggAbundRaw/ScaleSMU
+# AggAbund <- AggAbund[!is.na(AggAbund)]
+# obsPpnAboveBM <- zz$out$Logistic_Data$yy
+# p <- zz$LRPppn
+# nLL <- zz$nLL
+# dir <- "DataOut/"
+# plotname <- "WCVI_ResidPlots"
 # 
 # input<- list(All_Ests=All_Ests, AggAbund=AggAbund,
 #              obsPpnAboveBM=obsPpnAboveBM, p=p, nLL=nLL,dir="", plotname="test")
@@ -172,7 +172,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
           axis.title=element_text(size=14,face="bold"),
           plot.title = element_text(size = 20)
     ) 
-  
+    browser()
   p2 <- ggplot(diagData, aes(predPpnAboveBM, DevResid)) +
     geom_point(size=3) + 
     #geom_smooth(method="lm", formula=y~x) + 
@@ -185,6 +185,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
           axis.title=element_text(size=14,face="bold"),
           plot.title = element_text(size = 20)
     ) 
+
   
   # See ggplot.cor function in "helperFunctions.r"
   p3 <- ggplot.corr(data=PearResid, title="Pearsons's residuals") 
@@ -440,10 +441,7 @@ LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE, n=18){
 }# End of Function 2: LOO_LRdiagnostics()
 
 
-
-
-#NB the logit function from Brooke's helperFunction code needs an extra set of
-# ()s. I don't think it was actually implemented in the code...?
+# logit function
 
 logit <- function(x){
   log(x/(1-x))
