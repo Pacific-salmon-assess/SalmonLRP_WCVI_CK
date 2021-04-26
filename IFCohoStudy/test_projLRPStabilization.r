@@ -116,7 +116,7 @@ LRPs<-LRPs_byOM
 
 # Read in projection outputs to create input lists for logistic regression
 
-OMsToInclude<-c("IM.base.nyrs30_nsims5000")
+OMsToInclude<-c("IM.base")
 probThresh<-0.99
 
 for (i in 1:length(OMsToInclude)) {
