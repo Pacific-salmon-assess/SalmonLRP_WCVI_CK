@@ -1,3 +1,26 @@
+# ============================================================================
+# Calculation of Projected Limit Reference Points for Interior Fraser Coho
+# Kendra Holt, Last update: Apr 27, 2021
+# ================================================================================
+
+# Projected LRPs represent the aggregate abundance that is associated with a specified probability
+# that a required proportion of CUs will be above their lower benchmarks in projections
+#--  E.g., the LRP may represent the aggregate abundance that is projected to have a 50% probability
+# that all CUs (100% of CUs) will be above their lower benchmarks
+
+# Projections are done using the LRP branch of the samSim model (https://github.com/Pacific-salmon-assess/samSim)
+# The code in this file is divided into the following sections:
+#     (1) Read-in Coho data
+#     (2) Specify initial parameters & data sets for projections 
+#     (3) Run base projections (Using 4 different OM models at present)
+#     (4) Run sensitivity analysis projections
+#     (5) Estimate and save LRPs, and associated plots
+#     (6) Plot CU-level spawner abundance projections (Optional)
+#     (7) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+
+# ===============================================================================
+
+
 library(rsample)
 library(tidyverse)
 library(ggplot2)
@@ -22,7 +45,8 @@ sourceAll <- function(){
 }
 sourceAll()
 
-# Load TMB models
+# Load TMB models for fitting Bayesian Ricker stock recruit models;
+#   outputs from these model fits are used to parameterize samSim
 
 compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
@@ -38,7 +62,7 @@ dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
 
 
 # ======================================================================
-# Read-in Coho data:  
+#(1)  Read-in Coho data:  
 # =====================================================================
 setwd(cohoDir)
 
@@ -63,7 +87,7 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 
 
 # ======================================================================
-# Specify initial parameters & data sets for projections  
+# (2) Specify initial parameters & data sets for projections  
 # =====================================================================
 
 # TMB input parameters:
@@ -111,7 +135,7 @@ EscDat <- EscpDat.yy %>%  right_join(unique(SRDat[,c("CU_ID", "CU_Name")]))
 
 
 # ===================================================================
-# Run Projections
+# (3) Run Base Projections
 # ==================================================================
 
 setwd(codeDir)
@@ -159,7 +183,7 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmode
 
 
 # ==================================================================
-# Start of sensitivity analyses 
+# (4) Run Sensitivity Analyses 
 # ====================================================================
 
 
@@ -195,22 +219,28 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmode
 
 
 # ===================================================================
-#  Estimate LRPs & Save Associated Plots
+#  (5) Estimate and Save LRPs (and associated plots)
 # ==================================================================
+
+# Specify threshold to use when calculating LRP
+  # # Note: may want to loop over probThresholds as well; still needs to be added
+propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
+probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abundance that has this 
+                    # probability that the propCUThreshold is met
+
+# Specify scenarios to calculate LRPs and make plots for.
+# These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
+OMsToInclude<-c("IM.base","HM.base") 
+
 
 figDir <- here(cohoDir, "Figures", "ProjectedLRPs")
 if (file.exists(figDir) == FALSE){
   dir.create(figDir)
 }
 
-
-OMsToInclude<-c("IM.base") # Specify scenarios to plot
-probThresh<-0.50 # Note: may want to loop pver probThresholds as well
-
-
 # Loop over OM Scenarios 
 for (i in 1:length(OMsToInclude)) {
-  
+ 
   # Read in samSim outputs for OM
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
   projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
@@ -219,7 +249,8 @@ for (i in 1:length(OMsToInclude)) {
   # Create bins for projected spawner abundances
   minBreak<-0
   maxBreak<-round(max(projLRPDat$sAg),digits=-2)
-  breaks<-seq(minBreak, maxBreak,by=200)  # Note: bin size is currently set here
+  binSize<-200 # Note: bin size is currently set here
+  breaks<-seq(minBreak, maxBreak,by=binSize)  
 
   # Set bin labels as the mid-point
   projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
@@ -228,7 +259,7 @@ for (i in 1:length(OMsToInclude)) {
   tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
 
   # Filter out bins with < 100 nSims
-  tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == 1.0]))) %>%
+  tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
     add_column(nSims=tmp$nSims) %>% filter(nSims>=100)
 
   # For each bin, calculate probability that required proportion of CUs above benchmark
@@ -236,22 +267,24 @@ for (i in 1:length(OMsToInclude)) {
   # For each bin, calculate the difference between the threshold probability and the calculated probability 
   projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
 
-  
+  # Save projection summaries used to create plots
   projLRPDat$OM.Name<-OMsToInclude[i]
   if (i == 1) projLRPDat.plot<-projLRPDat
   if (i > 1) projLRPDat.plot<-rbind(projLRPDat.plot,projLRPDat)
   
-  
   # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
   LRP<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
   
+  # Create a table of LRP estimates to be saved for each OM model
   if (i ==1) {
-    LRP_Ests<-data.frame(OMsToInclude[i], probThresh, LRP)
+    LRP_Ests<-data.frame(OMsToInclude[i], probThresh, propCUThresh, LRP, binSize)
+    names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
   } else {
-    LRP_Ests<-rbind(LRP_Ests,data.frame(OMsToInclude[i], probThresh, LRP))
+    tmp.df<-data.frame(OMsToInclude[i], probThresh, propCUThresh, LRP, binSize)
+    names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+    LRP_Ests<-rbind(LRP_Ests,tmp.df)
   }
-  names(LRP_Ests)<-c("OM", "ProbThresh", "LRP")
-  
+ 
   # Plot projected LRP abundance relationship =============================================================== 
   pdf(paste(cohoDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""), 
       width=6, height=6) 
@@ -270,13 +303,16 @@ for (i in 1:length(OMsToInclude)) {
 
 # Save LRPs for all OM scenarios
 write.csv(LRP_Ests, paste(cohoDir,"DataOut/ProjectedLRPs/ProjectedLRPs.csv", sep="/"), row.names=F)
+# Save LRP projection summaries used for calculating and plotting LRP (Optional)
+write.csv(projLRPDat.plot, paste(cohoDir,"DataOut/ProjectedLRPs/ProjectedLRP_data.csv", sep="/"), row.names=F)
+
 
 
 
 
 
 # ===================================================================
-# Plot CU-level Spawner Abundance Projections
+# (6) Plot CU-level Spawner Abundance Projections (Optional)
 # ==================================================================
 
 
@@ -317,7 +353,7 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # ===================================================================
-# Make Comparison Plots Among Scenarios
+# (7) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
 # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
