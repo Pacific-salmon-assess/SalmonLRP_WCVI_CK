@@ -1,5 +1,0 @@
-"","retroYear","LRP","LRP_lwr","LRP_upr","BMmodel","LRPmodel","useGenMean","integratedModel"
-"1",2015,22560.9505784073,19824.2813501099,25297.6198067048,"SR_IndivRicker_SurvCap_LowAggPrior","BinLogistic",FALSE,TRUE
-"2",2016,22560.9220456828,19824.2992761018,25297.5448152639,"SR_IndivRicker_SurvCap_LowAggPrior","BinLogistic",FALSE,TRUE
-"3",2017,22802.6403934521,20181.7397619335,25423.5410249707,"SR_IndivRicker_SurvCap_LowAggPrior","BinLogistic",FALSE,TRUE
-"4",2018,22765.5188390949,20171.4192698,25359.6184083897,"SR_IndivRicker_SurvCap_LowAggPrior","BinLogistic",FALSE,TRUE

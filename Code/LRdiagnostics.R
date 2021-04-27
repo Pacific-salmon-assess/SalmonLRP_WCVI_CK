@@ -96,7 +96,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
   
   #-------------------------------------------------------------------------------
   # Source functions and libraries
-  source("R/helperFunctions.r")
+ # source("R/helperFunctions.r")
   library(patchwork)
   #-------------------------------------------------------------------------------
   
@@ -172,7 +172,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
           axis.title=element_text(size=14,face="bold"),
           plot.title = element_text(size = 20)
     ) 
-    browser()
+   
   p2 <- ggplot(diagData, aes(predPpnAboveBM, DevResid)) +
     geom_point(size=3) + 
     #geom_smooth(method="lm", formula=y~x) + 
@@ -191,7 +191,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
   p3 <- ggplot.corr(data=PearResid, title="Pearsons's residuals") 
   p4 <- ggplot.corr(data=DevResid, title="Deviance residuals") 
   
-  ggsave(filename=paste0(dir, plotname, ".png"), p1+p2+p3+p4)
+  ggsave(filename=paste0(dir,"/", plotname, ".png"), p1+p2+p3+p4)
   #ggsave(filename=paste0(dir, plotname, "1.png"), p2)
   #ggsave(filename=paste0(dir, plotname, "2.png"), p4)
   
@@ -338,31 +338,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
 #   What is the out-of-sample classification accuracy?
 
 # Note, this function will have to be adapted to case studies based no the 
-# logistic regression model used for those stocks. I revised my Get.LRP() 
-# function by adding an argument LOO, where LOO = numeric for leave-one-out
-# cross validation of the logistic regression. This number is the index of 
-# the time-series of ppn of CUs and aggregate abundances that are removed
-# prior to implementing the logistic regression in TMB. It is set to NA as 
-# a default (no values removed). Note, the outputted time-series ('out') 
-# contain all the data, but parameter estimates are derived from 
-# time-series without LOO index value. Within the Get.LRP function, I added 
-# the following code when setting up data list for TMB:
-# if(!is.na(LOO)) {
-#  data$LM_Agg_Abund <- data$LM_Agg_Abund[-LOO]
-#  data$N_Above_BM <- data$N_Above_BM[-LOO]
-# }
-
-
-
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# Arguments:
-# remove.EnhStocks = logical specifying if enhanced stocks are removed 
-  # (PNI<0.5)
-# n = length of time-series over with to iteravely remove a data point in the 
-  # logistic regression
-
+# logistic regression model used for those stocks. 
 
 # Note, LOO_LRdiagnists() calls the function Get.LRP() which generates the 
 # following outputs required for calculation of this diagnostic:
@@ -382,64 +358,171 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
 #-------------------------------------------------------------------------------
 
 
-
-#-------------------------------------------------------------------------------
-# Function 2:
-
-LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE, n=18){
+LOO_LRdiagnostics_cohoModel <- function(year, p, useBern_Logistic,
+                                        RunName,outputDir, TMB_Inputs) {
+  
+  # Step 1: Extract logistic regression data from .rda file
+  load(paste(outputDir,"/logisticFit_",year,".rda",sep=""))
+  print(LRP_Mod$Logistic_Data)
+  
+  # Save "observed" data from logistic model fit with all data
+  # how Carrie scaled aggregate abundance data:
+  AggAbundRaw<-LRP_Mod$Logistic_Data$xx
+  digits <- count.dig(AggAbundRaw)
+  ScaleSMU <- min(10^(digits -1 ), na.rm=T)
+  obsAggAbund <- AggAbundRaw/ScaleSMU
+  # an alternative that seems to give the same thing ...
+  #obsAggAbund<-LRP_Mod$Logistic_Data$xx/TMB_Inputs$Scale
+  
+  obsPpnAboveBM <- LRP_Mod$Logistic_Data$yy
+  
+  LRPmodel<-"LRP_BasicLogistic_Only_LowAggPrior"
   
   
-  # Step 1: estimate logistic regression iteratively, removing a single year 
-  # each time
-  
+  # Loop over nyears and leave-one-out of data set
   predPpnAboveBM <- NA
   
-  for (i in 1:n){
-    # Estimate logistic regression using function Get.LRP
-    zz <- Get.LRP(remove.EnhStocks = TRUE, LOO=i)
-    All_Ests <- zz$out$All_Ests
-
-    if(i==1){ # These remain constant over iterations
-      # Step 2: Get observed time-series of aggregate raw abundances that includes all
-      # data and then scale to units near 1-10 
-      AggAbundRaw <- zz$out$Logistic_Data$xx
-      digits <- count.dig(AggAbundRaw)
-      ScaleSMU <- min(10^(digits -1 ), na.rm=T)
-      AggAbund <- AggAbundRaw/ScaleSMU
-      # Get time-series of observed ppns of CUs> benchamark, including all
-      # data
-      obsPpnAboveBM <- zz$out$Logistic_Data$yy
-      # Get threshold p value (ppn of CUs>benchmark) used to estimate LRP
-      p <- zz$LRPppn
-      #dir <- "DataOut/"
-    }
- 
-   # Step 3: Get predicted ppn of CUs above their lower benchmark for the year 
+  for (i in 1:nrow(LRP_Mod$Logistic_Data)) {
+    
+    # Step 2: Get observed time-series of aggregate raw abundances that includes all
+    # data and then scale to units near 1-10
+    
+    # ---- 2a) Set-up data and parameter inputs ---------------------
+    Logistic_Data<-LRP_Mod$Logistic_Data[-i,]
+    
+    # Test: Used following to confirm that logistic only model fit with all data gave the same LRP estimate
+    # as the original integrated model (K.Holt, March 2021).Estimates and S.Error match.
+    #Logistic_Data<-LRP_Mod$Logistic_Data
+    
+    Logistic_Data$yr_num <- group_by(as.data.frame(Logistic_Data), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+    
+    
+    data<-list()
+    data$N_Stks <- 5
+    data$LM_N_Above_BM <- Logistic_Data$yy * data$N_Stks
+    data$LM_Agg_Abund <- Logistic_Data$xx / TMB_Inputs$Scale
+    data$LM_yr <- Logistic_Data$yr_num
+    data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
+    data$p <- p
+    data$B_penalty_mu <- TMB_Inputs$B_penalty_mu/TMB_Inputs$Scale
+    data$B_penalty_sigma <- TMB_Inputs$B_penalty_sigma/TMB_Inputs$Scale 
+    data$Bern_Logistic <- as.numeric(useBern_Logistic)
+    
+    param<-list()
+    param$B_0 <- 2
+    param$B_1 <- 0.1
+    
+    
+    #  ---- 2b) Run TMB code to fit logistic model ---------------------
+    obj <- MakeADFun(data, param, DLL=LRPmodel, silent=TRUE)
+    opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
+    
+    #  ---- 2c) Create table of outputs ----------------------
+    All_Ests <- data.frame(summary(sdreport(obj)))
+    All_Ests$Param <- row.names(All_Ests)  
+    
+    # Put together readable data frame of values
+    All_Ests$Param <- sapply(All_Ests$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
+    All_Ests[All_Ests$Param == "Agg_LRP", ] <-  All_Ests %>% filter(Param == "Agg_LRP") %>% 
+      mutate(Estimate = Estimate*TMB_Inputs$Scale) %>% mutate(Std..Error = Std..Error*TMB_Inputs$Scale)
+    Preds <- All_Ests %>% filter(Param == "Logit_Preds")
+    All_Ests <- All_Ests %>% filter(!(Param == "Logit_Preds")) 
+    
+    
+    # Step 3: Get predicted ppn of CUs above their lower benchmark for the year
     # that was held out
     B_0 <- All_Ests %>% filter(Param=="B_0") %>% pull(Estimate)
     B_1 <- All_Ests %>% filter(Param=="B_1") %>% pull(Estimate)
-    #predPpnAboveBM <- inv_logit(B_0 + B_1*AggAbund)
-    predPpnAboveBM[i] <- inv_logit(B_0 + B_1*AggAbund[i])
-  } # End of for i in 1:18
+    # Step 3a: Calculate predicted ppn of CUs above lower benchmark for the year that was held out
+    predPpnAboveBM[i] <- inv_logit(B_0 + B_1*obsAggAbund[i])
+    
+    # Testing plots
+    #Preds.plot<-Preds %>% mutate(PredProp=inv_logit(Estimate))
+    #plot(data$Pred_Abund,Preds.plot$PredProp)
+    
+    
+  } # End of for i in 1:nyears
+  
   
   # Step 4: Calculate Hit Ratio
-  
   # In which years did the model predict aggregate abundances >LRP?
   yHat <- predPpnAboveBM > p
+  
   # In which years were observed aggregate abundances >LRP?
   y <- obsPpnAboveBM > p
-  
+  #   
   # Confusion Matrix
   confMat <- table(y, yHat)
   
   # What is the accuracy in classifying observed aggregate abundances?
-  # Hit ratio = ratio of correct classification
+   # Hit ratio = ratio of correct classification
   hitRatio <- sum(diag(confMat))/sum(confMat)
   hitRatio <- round(hitRatio, digits=2)
   
-  return(hitRatio=hitRatio)
-}# End of Function 2: LOO_LRdiagnostics()
+  return(hitRatio)
+  
+  
+  
+}
 
+
+
+
+# 
+# LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE, n=18){
+#   
+#   
+#   # Step 1: estimate logistic regression iteratively, removing a single year 
+#   # each time
+#   
+#   predPpnAboveBM <- NA
+#   
+#   for (i in 1:n){
+#     # Estimate logistic regression using function Get.LRP
+#     zz <- Get.LRP(remove.EnhStocks = TRUE, LOO=i)
+#     All_Ests <- zz$out$All_Ests
+# 
+#     if(i==1){ # These remain constant over iterations
+#       # Step 2: Get observed time-series of aggregate raw abundances that includes all
+#       # data and then scale to units near 1-10 
+#       AggAbundRaw <- zz$out$Logistic_Data$xx
+#       digits <- count.dig(AggAbundRaw)
+#       ScaleSMU <- min(10^(digits -1 ), na.rm=T)
+#       AggAbund <- AggAbundRaw/ScaleSMU
+#       # Get time-series of observed ppns of CUs> benchamark, including all
+#       # data
+#       obsPpnAboveBM <- zz$out$Logistic_Data$yy
+#       # Get threshold p value (ppn of CUs>benchmark) used to estimate LRP
+#       p <- zz$LRPppn
+#       #dir <- "DataOut/"
+#     }
+#  
+#    # Step 3: Get predicted ppn of CUs above their lower benchmark for the year 
+#     # that was held out
+#     B_0 <- All_Ests %>% filter(Param=="B_0") %>% pull(Estimate)
+#     B_1 <- All_Ests %>% filter(Param=="B_1") %>% pull(Estimate)
+#     #predPpnAboveBM <- inv_logit(B_0 + B_1*AggAbund)
+#     predPpnAboveBM[i] <- inv_logit(B_0 + B_1*AggAbund[i])
+#   } # End of for i in 1:18
+#   
+#   # Step 4: Calculate Hit Ratio
+#   
+#   # In which years did the model predict aggregate abundances >LRP?
+#   yHat <- predPpnAboveBM > p
+#   # In which years were observed aggregate abundances >LRP?
+#   y <- obsPpnAboveBM > p
+#   
+#   # Confusion Matrix
+#   confMat <- table(y, yHat)
+#   
+#   # What is the accuracy in classifying observed aggregate abundances?
+#   # Hit ratio = ratio of correct classification
+#   hitRatio <- sum(diag(confMat))/sum(confMat)
+#   hitRatio <- round(hitRatio, digits=2)
+#   
+#   return(hitRatio=hitRatio)
+# }# End of Function 2: LOO_LRdiagnostics()
+# 
 
 # logit function
 
