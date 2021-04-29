@@ -159,7 +159,7 @@ BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=3, cvER = 0.456, recCorScalar=1)
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
 
 
 scenarioName <- "HM.base"
