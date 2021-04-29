@@ -105,7 +105,7 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
   write.csv(CUpars, paste(scenInputDir,"CUPars.csv", sep="/"), row.names=F)
   
   # Read-in sim par file and re-write with updated scenario pars =====================
-  simPars<-read.csv(paste(outDir, "SamSimInputs/SimPar.csv",sep="/"))
+  simPars<-read.csv(paste(outDir, "SamSimInputs/SimPars.csv",sep="/"))
   simPars$nameOM<-rep(scenarioName,nrow(simPars))
   simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
   
