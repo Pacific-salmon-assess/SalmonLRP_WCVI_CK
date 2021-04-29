@@ -115,13 +115,22 @@ TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
 
 
 # Create output directories for Projected LRP outputs
-figDir <- here(cohoDir, "Figures", "ProjectedLRPs")
+figDir <- here(cohoDir, "Figures")
 if (file.exists(figDir) == FALSE){
   dir.create(figDir)
 }
-projOutDir <- here(cohoDir, "DataOut", "ProjectedLRPs")
+figDir2 <- here(figDir, "ProjectedLRPs")
+if (file.exists(figDir2) == FALSE){
+  dir.create(figDir2)
+}
+
+projOutDir <- here(cohoDir, "DataOut")
 if (file.exists(projOutDir) == FALSE){
   dir.create(projOutDir)
+}
+projOutDir2 <- here(projOutDir, "ProjectedLRPs")
+if (file.exists(projOutDir2) == FALSE){
+  dir.create(projOutDir2)
 }
 
 
