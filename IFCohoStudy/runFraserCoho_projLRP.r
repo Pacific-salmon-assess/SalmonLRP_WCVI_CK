@@ -86,6 +86,16 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, genYrs, gm_mean, fill = NA, align="right"))
 
 
+# Create output directories for Projected LRP outputs
+figDir <- here(cohoDir, "Figures", "ProjectedLRPs")
+if (file.exists(figDir) == FALSE){
+  dir.create(figDir)
+}
+projOutDir <- here(cohoDir, "DataOut", "ProjectedLRPs")
+if (file.exists(projOutDir) == FALSE){
+  dir.create(projOutDir)
+}
+
 # ======================================================================
 # (2) Specify initial parameters & data sets for projections  
 # =====================================================================
@@ -144,12 +154,12 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.base"
+scenarioName <- "IM.base_test"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=3, cvER = 0.456, recCorScalar=1)
 
 
 scenarioName <- "HM.base"
@@ -233,11 +243,6 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 OMsToInclude<-c("IM.base","HM.base") 
 
 
-figDir <- here(cohoDir, "Figures", "ProjectedLRPs")
-if (file.exists(figDir) == FALSE){
-  dir.create(figDir)
-}
-
 # Loop over OM Scenarios 
 for (i in 1:length(OMsToInclude)) {
  
@@ -301,10 +306,11 @@ for (i in 1:length(OMsToInclude)) {
   
 }
 
+
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(cohoDir,"DataOut/ProjectedLRPs/ProjectedLRPs.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir, "ProjectedLRPs.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-write.csv(projLRPDat.plot, paste(cohoDir,"DataOut/ProjectedLRPs/ProjectedLRP_data.csv", sep="/"), row.names=F)
+write.csv(projLRPDat.plot, paste(projOutDir, "ProjectedLRP_data.csv", sep="/"), row.names=F)
 
 
 

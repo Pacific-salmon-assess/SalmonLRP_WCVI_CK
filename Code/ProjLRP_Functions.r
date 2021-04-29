@@ -125,8 +125,7 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
   lapply(listOfPackages, require, character.only = TRUE)
   
   dimnames(corMatrix)=NULL
-  
-  
+
   dirNames <- simPars$nameOM
   
   simsToRun <- split(simPars, seq(nrow(simPars)))
