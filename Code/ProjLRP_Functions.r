@@ -1,6 +1,6 @@
 
 
-run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, genYrs, TMB_Inputs, outDir,
+run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs, TMB_Inputs, outDir,
                         runMCMC, nMCMC, nProj, ERScalar=NULL, cvER, recCorScalar) {
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
@@ -19,7 +19,7 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
   corMatrix<-mpdOut$corMatrix
   corMatrix<-corMatrix * recCorScalar
   corMatrix[col(corMatrix)==row(corMatrix)] <- 1
-  write.table(corMatrix, paste(scenInputDir,"cohoCorrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
+  write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
 
   # Run MCMC fit to parameterize samSim projections =======
   if (runMCMC == T) {
@@ -40,16 +40,13 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
       }
 
     mcmcOut<-as.data.frame(mcmcOut)
-
-    write.csv(mcmcOut, paste(scenInputDir,"cohoRickerSurv_mcmc.csv", sep="/"), row.names=F)
+    write.csv(mcmcOut, paste(scenInputDir,"RickerSurv_mcmc.csv", sep="/"), row.names=F)
   }
 
   if (runMCMC == F) {
     mcmcOut<-read.csv(paste(outDir,"/SamSimInputs/", BMmodel,"_mcmc.csv", sep=""))
   }
-
-  # Create recruitment input file in required samSim format ==========================
-  cohoRecDatTrim<-data.frame(stk=(SRDat$CU_ID + 1),
+  recDatTrim<-data.frame(stk=(SRDat$CU_ID + 1),
                              yr=SRDat$BroodYear,
                              ets=SRDat$Spawners,
                              totalSpwn=SRDat$Spawners,
@@ -58,11 +55,10 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
                              rec4=SRDat$Age_4_Recruits,
                              rec5=rep(0,length(SRDat$BroodYear)),
                              rec6=rep(0,length(SRDat$BroodYear)))
-  write.csv(cohoRecDatTrim, paste(scenInputDir,"cohoRecDatTrim.csv", sep="/"), row.names=F)
-
+  write.csv(recDatTrim, paste(scenInputDir,"recDatTrim.csv", sep="/"), row.names=F)
 
   # Read-in CU pars file and re-write with updated scenario pars =====================
-  CUpars<-read.csv(paste(outDir, "SamSimInputs/cohoCUPars.csv",sep="/"))
+  CUpars<-read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
   # -- specify ER scenario
   CUpars$cvER <- rep(cvER,length(unique(SRDat$CU_ID)))
   # -- fill-in MPD fits
@@ -102,14 +98,13 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
   CUpars$lowQRec <- quantRec$lowQ
   CUpars$highQRec <- quantRec$highQ
 
-  write.csv(CUpars, paste(scenInputDir,"cohoCUPars.csv", sep="/"), row.names=F)
+  write.csv(CUpars, paste(scenInputDir,"CUPars.csv", sep="/"), row.names=F)
 
   # Read-in sim par file and re-write with updated scenario pars =====================
-  simPars<-read.csv(paste(outDir, "SamSimInputs/cohoSimPar.csv",sep="/"))
+  simPars<-read.csv(paste(outDir, "SamSimInputs/SimPars.csv",sep="/"))
   simPars$nameOM<-rep(scenarioName,nrow(simPars))
   simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
-
-  write.csv(simPars, paste(scenInputDir,"cohoSimPars.csv", sep="/"), row.names=F)
+  write.csv(simPars, paste(scenInputDir,"SimPars.csv", sep="/"), row.names=F)
 
 
   ## Run projections =================================================================================
@@ -126,7 +121,6 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
 
   dimnames(corMatrix)=NULL
 
-
   dirNames <- simPars$nameOM
 
   simsToRun <- split(simPars, seq(nrow(simPars)))
@@ -136,12 +130,11 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
   clusterEvalQ(cl, c(library(samSim)))
 
   clusterExport(cl, c("simsToRun", "CUpars", "nProj",
-                       "cohoRecDatTrim", "corMatrix", "mcmcOut"), envir=environment())
-
+                       "recDatTrim", "corMatrix", "mcmcOut"), envir=environment())
 
   tic("run in parallel")
   parLapply(cl, simsToRun, function(x) {
-    genericRecoverySim(x, cuPar=CUpars, srDat=cohoRecDatTrim,
+    genericRecoverySim(x, cuPar=CUpars, srDat=recDatTrim,
                 variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
                 nTrials=nProj, makeSubDirs=FALSE,
                 random=FALSE, outDir=outDir)
@@ -151,7 +144,7 @@ run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, g
 
   # for (i in 1:nrow(simPars)) {
   #
-  # genericRecoverySim(simPars[i, ], cuPar=CUpars, srDat=cohoRecDatTrim,
+  # genericRecoverySim(simPars[i, ], cuPar=CUpars, srDat=recDatTrim,
   #         variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
   #          nTrials=nProj, makeSubDirs=FALSE, random=FALSE, outDir=outDir)
   #
