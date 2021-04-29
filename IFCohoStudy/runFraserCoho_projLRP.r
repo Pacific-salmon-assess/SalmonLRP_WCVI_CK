@@ -66,40 +66,26 @@ dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
 # =====================================================================
 setwd(cohoDir)
 
-CoEscpDat <- read.csv("DataIn/IFCoho_escpByCU.csv")
-# Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
-colnames(CoEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
-colnames(CoEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
-colnames(CoEscpDat)[colnames(CoEscpDat)=="ReturnYear"] <- "yr"
-colnames(CoEscpDat)[colnames(CoEscpDat)=="Escapement"] <- "Escp"
+  CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
+ # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
+ CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
-CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
-
-
-# Restrict data set to years 1998+ based on recommendation from Michael Arbeider
-CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
-CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
-
-# Roll up escapements, and get Gen Mean of that
-genYrs <- 3
-AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
-  mutate(Gen_Mean = rollapply(Agg_Escp, genYrs, gm_mean, fill = NA, align="right"))
-
-
-# Create output directories for Projected LRP outputs
-figDir <- here(cohoDir, "Figures", "ProjectedLRPs")
-if (file.exists(figDir) == FALSE){
-  dir.create(figDir)
-}
-projOutDir <- here(cohoDir, "DataOut", "ProjectedLRPs")
-if (file.exists(projOutDir) == FALSE){
-  dir.create(projOutDir)
-}
 
 # ======================================================================
-# (2) Specify initial parameters & data sets for projections  
+# (2) Specify initial parameters & datasets for projections  
 # =====================================================================
 
+# Subset data up to current year
+ year <- 2018 # - last year of data for parameterization
+ BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
+ 
+ # Only use SR data for brood years that have recruited by specified year
+ # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
+ SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
+ SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+ SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+ 
+ 
 # TMB input parameters:
 TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
@@ -127,21 +113,16 @@ TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
 
 
-# Additional projection parameters
-BroodYrLag <- 2
-pList <- seq(0.2,1,by=0.2)
-year <- 2018
 
- 
-# Only use SR data for brood years that have recruited by specified year
-# (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
-SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
-EscpDat.yy <- CoEscpDat %>% filter(yr <= year)
-
-SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-EscDat <- EscpDat.yy %>%  right_join(unique(SRDat[,c("CU_ID", "CU_Name")]))
-
+# Create output directories for Projected LRP outputs
+figDir <- here(cohoDir, "Figures", "ProjectedLRPs")
+if (file.exists(figDir) == FALSE){
+  dir.create(figDir)
+}
+projOutDir <- here(cohoDir, "DataOut", "ProjectedLRPs")
+if (file.exists(projOutDir) == FALSE){
+  dir.create(projOutDir)
+}
 
 
 # ===================================================================
@@ -154,19 +135,19 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.base_test"
+scenarioName <- "IM.base"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=3, cvER = 0.456, recCorScalar=1)
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
 
 
 scenarioName <- "HM.base"
 BMmodel <- "SR_HierRicker_Surv"
 TMB_Inputs <- TMB_Inputs_HM
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
                                 nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
 
@@ -175,7 +156,7 @@ scenarioName <- "IMCap.base"
 BMmodel <- "SR_IndivRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_IM_priorCap
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
                                 nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
 
@@ -185,7 +166,7 @@ scenarioName <- "HMCap.base"
 BMmodel <- "SR_HierRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_HM_priorCap
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
                                 nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
 
@@ -202,7 +183,7 @@ scenarioName <- "IM.cvER1.5"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
                                 nMCMC=NA, nProj=5000, cvER = 0.456*1.5, recCorScalar=1)
 
@@ -212,7 +193,7 @@ scenarioName <- "IM.cvER2.0"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
                                 nMCMC=NA, nProj=5000, cvER = 0.456*2, recCorScalar=1)
 
@@ -221,7 +202,7 @@ scenarioName <- "IM.cvER3.0"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, EscDat = EscDat, BMmodel = BMmodel, scenarioName=scenarioName,
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
                                 nMCMC=NA, nProj=5000, cvER = 0.456*3.0, recCorScalar=1)
 

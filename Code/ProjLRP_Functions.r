@@ -1,6 +1,6 @@
 
 
-run_ScenarioProj <- function(SRDat, EscDat, BMmodel, scenarioName, useGenMean, genYrs, TMB_Inputs, outDir,
+run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs, TMB_Inputs, outDir,
                         runMCMC, nMCMC, nProj, ERScalar=NULL, cvER, recCorScalar) {
   
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
