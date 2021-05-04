@@ -2,11 +2,11 @@ genericRecoverySim(simPars[i, ], cuPar=CUpars, srDat=cohoRecDatTrim,
         variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
          nTrials=nProj, makeSubDirs=FALSE, random=FALSE, outDir=outDir)
 
-simPar <- simPars[1,]
+simPar <- simPars[4,]
 cuPar <- CUpars
-srDat <- cohoRecDatTrim
+srDat <- recDatTrim%>%mutate(rec2=NA, rec3=NA, rec4=NA, rec5=NA, rec6=NA)
 variableCU <- FALSE
-ricPars <- mcmcOut
+ricPars <- NULL#mcmcOut
 cuCustomCorrMat <- corMatrix
 nTrials <- nProj
 makeSubDirs <- FALSE
@@ -20,3 +20,5 @@ erCorrMat <- NULL
 uniqueProd <- TRUE
 uniqueSurv <- FALSE
 
+
+recDatTrim <- recDatTrim%>%mutate(rec2=NA, rec3=NA, rec4=NA, rec5=NA, rec6=NA)

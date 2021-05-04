@@ -130,12 +130,14 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs, T
   clusterEvalQ(cl, c(library(samSim)))
 
   clusterExport(cl, c("simsToRun", "CUpars", "nProj",
-                       "recDatTrim", "corMatrix", "mcmcOut"), envir=environment())
+                       "recDatTrim", "corMatrix", "mcmcOut"),
+                envir=environment())
 
   tic("run in parallel")
   parLapply(cl, simsToRun, function(x) {
     genericRecoverySim(x, cuPar=CUpars, srDat=recDatTrim,
-                variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
+                variableCU=FALSE, ricPars=mcmcOut,
+                cuCustomCorrMat = corMatrix,
                 nTrials=nProj, makeSubDirs=FALSE,
                 random=FALSE, outDir=outDir)
   })
