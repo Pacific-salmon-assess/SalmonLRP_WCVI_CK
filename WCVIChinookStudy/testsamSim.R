@@ -1,4 +1,4 @@
-genericRecoverySim(simPars[i, ], cuPar=CUpars, srDat=cohoRecDatTrim,
+genericRecoverySim(simPars[1, ], cuPar=CUpars, srDat=recDatTrim,
         variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
          nTrials=nProj, makeSubDirs=FALSE, random=FALSE, outDir=outDir)
 

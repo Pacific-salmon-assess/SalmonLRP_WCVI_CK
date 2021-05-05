@@ -1,6 +1,6 @@
 # ============================================================================
 # Calculation of Projected Limit Reference Points for Interior Fraser Coho
-# Carrie Holt, Last update: Apr 29, 2021
+# Carrie Holt, Last update: May 4, 2021
 # ================================================================================
 
 # Projected LRPs represent the aggregate abundance that is associated with a specified probability
@@ -33,8 +33,8 @@ library(zoo)
 
 setwd('..')
 rootDir<-getwd()
-codeDir<-paste(rootDir,"/Code",sep="")
-cohoDir<-paste(rootDir,"/WCVIChinookStudy",sep="")
+wcviCKDir<-paste(rootDir,"/Code",sep="")
+wcviCKDir<-paste(rootDir,"/WCVIChinookStudy",sep="")
 
 setwd(codeDir)
 
@@ -62,9 +62,9 @@ dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
 
 
 # ======================================================================
-#(1)  Read-in Coho data:
+#(1)  Read-in WCVI Chinook data:
 # =====================================================================
-setwd(cohoDir)
+setwd(wcviCKDir)
 
 CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
 # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
@@ -115,7 +115,7 @@ TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
 
 
 # Create output directories for Projected LRP outputs
-figDir <- here(cohoDir, "Figures")
+figDir <- here(wcviCKDir, "Figures")
 if (file.exists(figDir) == FALSE){
   dir.create(figDir)
 }
@@ -124,7 +124,7 @@ if (file.exists(figDir2) == FALSE){
   dir.create(figDir2)
 }
 
-projOutDir <- here(cohoDir, "DataOut")
+projOutDir <- here(wcviCKDir, "DataOut")
 if (file.exists(projOutDir) == FALSE){
   dir.create(projOutDir)
 }
@@ -148,7 +148,7 @@ scenarioName <- "IM.base"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
                                 nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1)
 
 
@@ -157,7 +157,7 @@ BMmodel <- "SR_HierRicker_Surv"
 TMB_Inputs <- TMB_Inputs_HM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
                                 nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1)
 
 
@@ -166,7 +166,7 @@ BMmodel <- "SR_IndivRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_IM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
 
 
@@ -176,7 +176,7 @@ BMmodel <- "SR_HierRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_HM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
 
 
@@ -193,7 +193,7 @@ BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
                                 nMCMC=NA, nProj=5000, cvER = 0.456*1.5, recCorScalar=1)
 
 
@@ -203,7 +203,7 @@ BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
                                 nMCMC=NA, nProj=5000, cvER = 0.456*2, recCorScalar=1)
 
 
@@ -212,7 +212,7 @@ BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
                                 nMCMC=NA, nProj=5000, cvER = 0.456*3.0, recCorScalar=1)
 
 
@@ -230,7 +230,7 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("IM.base","HM.base")
+OMsToInclude<-c("IM.base")#,"HM.base")
 
 
 # Loop over OM Scenarios
@@ -238,7 +238,7 @@ for (i in 1:length(OMsToInclude)) {
 
   # Read in samSim outputs for OM
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
-  projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
+  projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
   projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
 
   # Create bins for projected spawner abundances
@@ -281,7 +281,7 @@ for (i in 1:length(OMsToInclude)) {
   }
 
   # Plot projected LRP abundance relationship ===============================================================
-  pdf(paste(cohoDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
+  pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
       width=6, height=6)
 
   plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), cex=0.2,
@@ -316,7 +316,7 @@ for (i in 1:length(OMsToInclude)) {
 
 
   filename<-paste( "projSpwnDat_",OMsToInclude[i],".csv",sep="")
-  spDat.i<-read.csv(here(cohoDir,"SamSimOutputs", "simData",filename))
+  spDat.i<-read.csv(here(wcviCKDir,"SamSimOutputs", "simData",filename))
   spDat.i$OM.Name<-OMsToInclude[i]
   # if (i == 1) projCUSpDat<-spDat.i
   # if (i > 1) projCUSpDat<-rbind(projCUSpDat,spDat.i)
@@ -338,7 +338,7 @@ for (i in 1:length(OMsToInclude)) {
 
   ps<-lapply(1:length(unique(SRDat$CU_Name)), makeCUSpawnerProjPlot, projSpwnDat = projCUSpDat.i,CUNames=unique(SRDat$CU_Name))
 
-  pdf(paste(cohoDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_CUSpawnerProj.pdf", sep=""),
+  pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_CUSpawnerProj.pdf", sep=""),
       width=9, height=6)
   do.call(grid.arrange,  ps)
   dev.off()
@@ -366,7 +366,7 @@ for (i in 1:length(OMsToInclude)) {
 #              xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
 #               scale_x_discrete(limits=c("IM.Base","IMCap.base","HM.Base","HMCap.base"),
 #                                labels=c("IM", "IM.Cap", "HM", "HM.Cap"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 #
@@ -377,7 +377,7 @@ for (i in 1:length(OMsToInclude)) {
 #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
 #   scale_x_discrete(limits=c("IM.Base","IMCap.base","HM.Base","HMCap.base"),
 #                    labels=c("IM", "IM.Cap", "HM", "HM.Cap"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 #
@@ -395,7 +395,7 @@ for (i in 1:length(OMsToInclude)) {
 #   scale_x_discrete(limits=c("IM.Base","IMCap.base", "CombinedIM"),
 #                    labels=c("IM", "IM.Cap", "IM.Composite"))
 #
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_compositeIM_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareLRP_compositeIM_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 #
@@ -412,7 +412,7 @@ for (i in 1:length(OMsToInclude)) {
 #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
 #   scale_x_discrete(limits=c("IM.Base","IM.60RecCor","IM.40RecCor","IM.10RecCor", "IM-.20RecCor","IM-.40RecCor"),
 #                    labels=c("Base(MPD)", "60%Corr", "40%Corr","20%Corr","-20%Corr","-40%Corr"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 # p<-0.8
@@ -422,21 +422,21 @@ for (i in 1:length(OMsToInclude)) {
 #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
 #   scale_x_discrete(limits=c("IM.Base","IM.80RecCor","IM.60RecCor","IM.40RecCor","IM.10RecCor"),
 #                    labels=c("Base(MPD)", "80%Corr", "60%Corr","40%Corr","10%Corr"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 #
 #
 # # ---- Temporary code to test effect of correlation scalar on projected correlations
 #
-# MPD_recCormat<-read.csv(paste(cohoDir,"/SamSimInputs/IM.base/cohoCorrMat.csv", sep=""), header=F)
+# MPD_recCormat<-read.csv(paste(wcviCKDir,"/SamSimInputs/IM.base/cohoCorrMat.csv", sep=""), header=F)
 #
 # OMsToTest<-c("IM.Base","IM.80RecCor","IM.60RecCor","IM.40RecCor","IM.40RecCor","IM-.40RecCor")
 #
 # #OMsToTest<-c("IM.cvER1.25", "IM.cvER1.5","IM.cvER2.0","IM.cvER2.5","IM.cvER3.0")
 #
 # filename<-paste( "projSpwnDat_",OMsToTest[6],".csv",sep="")
-# spDat<-read.csv(here(cohoDir,"SamSimOutputs", "simData",filename))
+# spDat<-read.csv(here(wcviCKDir,"SamSimOutputs", "simData",filename))
 #
 # # Calculate correlation matrix in MPD recruitment residuals ========================
 # #resids<-as_tibble(data.frame(stock=data$stk,year=data$yr, resid=obj$report()$R_Resid))
@@ -478,7 +478,7 @@ for (i in 1:length(OMsToInclude)) {
 #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
 #   scale_x_discrete(limits=c("IM.Base", "IM.cvER1.5","IM.cvER2.0", "IM.cvER2.5","IM.cvER3.0"),
 #                    labels=c("Base", "1.5CV","2.0CV", "2.5CV","3.0CV"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalCvER_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareLRP_SAnalCvER_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 # p<-0.8
@@ -488,7 +488,7 @@ for (i in 1:length(OMsToInclude)) {
 #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
 #   scale_x_discrete(limits=c("IM.Base", "IM.cvER1.5","IM.cvER2.0", "IM.cvER2.5","IM.cvER3.0"),
 #                    labels=c("Base", "1.5CV","2.0CV", "2.5CV","3.0CV"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalCvER_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareLRP_SAnalCvER_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 #
@@ -531,7 +531,7 @@ for (i in 1:length(OMsToInclude)) {
 #
 #
 #
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareProjVsEmp_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareProjVsEmp_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 # # ---- with p = 0.80
@@ -568,7 +568,7 @@ for (i in 1:length(OMsToInclude)) {
 #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
 #   labs(colour = "Method")
 #
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareProjVsEmp_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareProjVsEmp_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 #
@@ -607,14 +607,14 @@ for (i in 1:length(OMsToInclude)) {
 #
 #
 #
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareProjVsEmp_p=",p,".pdf",sep=""), plot = g,
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareProjVsEmp_p=",p,".pdf",sep=""), plot = g,
 #        width = 4, height = 3, units = "in")
 #
 #
 #
 # # Plot correlation matrix to show scenarios
 # library(ggcorrplot)
-# cormat<-read.csv(paste(cohoDir,"/SamSimInputs/IM.base/cohoCorrMat.csv", sep=""), header=F)
+# cormat<-read.csv(paste(wcviCKDir,"/SamSimInputs/IM.base/cohoCorrMat.csv", sep=""), header=F)
 # rownames(cormat) <- unique(SRDat$CU_Name)
 # colnames(cormat) <- unique(SRDat$CU_Name)
 # ggcorrplot(cormat,
