@@ -33,7 +33,7 @@ library(zoo)
 
 setwd('..')
 rootDir<-getwd()
-wcviCKDir<-paste(rootDir,"/Code",sep="")
+codeDir<-paste(rootDir,"/Code",sep="")
 wcviCKDir<-paste(rootDir,"/WCVIChinookStudy",sep="")
 
 setwd(codeDir)
@@ -147,9 +147,26 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 scenarioName <- "IM.base"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
+# Create a correlation matrix from spawner time-series, as a proxy for
+# correlation in recruitment residuals assuming no density dependence and
+# constant harvest. Only used if recruitment time-series are missing
+dum <- SRDat %>% select(CU_ID, BroodYear, Spawners)
+dum <- dum %>% pivot_wider(id_cols=c(CU_ID, BroodYear), names_from=CU_ID,
+                           values_from=Spawners) %>% select (!BroodYear)
+corMat <- cor(dum)
+
+#-------------------------------------------------------------------------------
+# #TESTING
+# SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
+#                                                      'Age_4_Recruits',
+#                                                      'STAS_Age_3', 'STAS_Age_4',
+#                                                      'ER_Age_3', 'ER_Age_4',
+#                                                      'Hatchery'))
+#-------------------------------------------------------------------------------
+
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1)
+                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1, corMat=corMat)
 
 
 scenarioName <- "HM.base"

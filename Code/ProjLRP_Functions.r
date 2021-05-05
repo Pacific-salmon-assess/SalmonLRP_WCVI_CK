@@ -1,7 +1,8 @@
 
 
-run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs, TMB_Inputs, outDir,
-                        runMCMC, nMCMC, nProj, ERScalar=NULL, cvER, recCorScalar) {
+run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
+                             TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
+                             ERScalar=NULL, cvER, recCorScalar, corMat=NULL){
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -47,20 +48,45 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs, T
     if (runMCMC == F) {
         mcmcOut<-read.csv(paste(outDir,"/SamSimInputs/", BMmodel,"_mcmc.csv", sep=""))
     }
+  }# end of if all recruitment=NA
 
-    recDatTrim<-data.frame(stk=(SRDat$CU_ID + 1),
-                           yr=SRDat$BroodYear,
-                           ets=SRDat$Spawners,
-                           totalSpwn=SRDat$Spawners,
-                           rec2=rep(0,length(SRDat$BroodYear)),
-                           rec3=SRDat$Age_3_Recruits,
-                           rec4=SRDat$Age_4_Recruits,
-                           rec5=rep(0,length(SRDat$BroodYear)),
-                           rec6=rep(0,length(SRDat$BroodYear)))
-    write.csv(recDatTrim, paste(scenInputDir,"recDatTrim.csv", sep="/"), row.names=F)
 
-  }# end of if recruitment=NA
+  # If there are recruitment data for some ages, but not all, fill in the
+  # remaining ages with 0s
+  if (all(is.na(SRDat$Recruits)) == FALSE){
+    if(is.null(SRDat$Age_2_Recruits)){ rec2<-0} else {rec2 <-
+      SRDat$Age_2_Recruits}
+    if(is.null(SRDat$Age_3_Recruits)){ rec3<-0} else {rec3 <-
+      SRDat$Age_3_Recruits}
+    if(is.null(SRDat$Age_4_Recruits)){ rec4<-0} else {rec4 <-
+      SRDat$Age_4_Recruits}
+    if(is.null(SRDat$Age_5_Recruits)){ rec5<-0} else {rec5 <-
+      SRDat$Age_5_Recruits}
+    if(is.null(SRDat$Age_6_Recruits)){ rec6<-0} else {rec6 <-
+      SRDat$Age_6_Recruits}
+  } #End of if (all(is.na(SRDat$Recruits)) == FALSE){
 
+  #If there are NO recruitment data for any ages, fill in  with NAs
+  if (all(is.na(SRDat$Recruits)) == TRUE) {
+    rec2 <- rec3 <- rec4 <- rec5 <- rec6 <- NA
+  }
+
+  recDatTrim<-data.frame(stk=(SRDat$CU_ID + 1),
+                         yr=SRDat$BroodYear,
+                         ets=SRDat$Spawners,
+                         totalSpwn=SRDat$Spawners,
+                         rec2=rec2,#rep(0,length(SRDat$BroodYear)),
+                         rec3=rec3,#SRDat$Age_3_Recruits,
+                         rec4=rec4,#SRDat$Age_4_Recruits,
+                         rec5=rec5,#rep(0,length(SRDat$BroodYear)),
+                         rec6=rec6)#rep(0,length(SRDat$BroodYear)))
+  write.csv(recDatTrim, paste(scenInputDir,"recDatTrim.csv", sep="/"), row.names=F)
+
+  # If there are no recruitment data, then pull correlation matrix from inputs
+  if (all(is.na(SRDat$Recruits)) == TRUE){
+    corMatrix <- corMat
+    mcmcOut <- NULL
+  }
 
   # Read-in CU pars file and re-write with updated scenario pars =====================
   CUpars<-read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
