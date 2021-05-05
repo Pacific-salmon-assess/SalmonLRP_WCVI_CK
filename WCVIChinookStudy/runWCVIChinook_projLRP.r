@@ -167,6 +167,7 @@ SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
                                                      'STAS_Age_3', 'STAS_Age_4',
                                                      'ER_Age_3', 'ER_Age_4',
                                                      'Hatchery'))
+SRDat <- NULL
 #-------------------------------------------------------------------------------
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
@@ -261,7 +262,8 @@ for (i in 1:length(OMsToInclude)) {
   # Read in samSim outputs for OM
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
   projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
-  projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+  CUpars <- read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
+  projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*4)#)max(SRDat$yr_num)+4)
 
   # Create bins for projected spawner abundances
   minBreak<-0
@@ -358,7 +360,7 @@ for (i in 1:length(OMsToInclude)) {
       theme_classic()
   }
 
-  ps<-lapply(1:length(unique(SRDat$CU_Name)), makeCUSpawnerProjPlot, projSpwnDat = projCUSpDat.i,CUNames=unique(SRDat$CU_Name))
+  ps<-lapply(1:length(unique(cuPar$stkName)), makeCUSpawnerProjPlot, projSpwnDat = projCUSpDat.i,CUNames=unique(cuPar$stkName))
 
   pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_CUSpawnerProj.pdf", sep=""),
       width=9, height=6)
