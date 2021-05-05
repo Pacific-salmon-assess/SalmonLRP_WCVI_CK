@@ -70,7 +70,11 @@ CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
 # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
 CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
-
+wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")
+SRDat <- wcviCKSRDat
+SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+SRDat$CU_ID <- group_by(SRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+SRDat
 # ======================================================================
 # (2) Specify initial parameters & datasets for projections
 # =====================================================================
@@ -82,6 +86,7 @@ BroodYrLag <- 2 # - number of years between brood year and first age of return (
 # Only use SR data for brood years that have recruited by specified year
 # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
 SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
+
 SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 
@@ -156,12 +161,12 @@ dum <- dum %>% pivot_wider(id_cols=c(CU_ID, BroodYear), names_from=CU_ID,
 corMat <- cor(dum)
 
 #-------------------------------------------------------------------------------
-# #TESTING
-# SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
-#                                                      'Age_4_Recruits',
-#                                                      'STAS_Age_3', 'STAS_Age_4',
-#                                                      'ER_Age_3', 'ER_Age_4',
-#                                                      'Hatchery'))
+#TESTING
+SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
+                                                     'Age_4_Recruits',
+                                                     'STAS_Age_3', 'STAS_Age_4',
+                                                     'ER_Age_3', 'ER_Age_4',
+                                                     'Hatchery'))
 #-------------------------------------------------------------------------------
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
@@ -272,7 +277,7 @@ for (i in 1:length(OMsToInclude)) {
 
   # Filter out bins with < 100 nSims
   tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
-    add_column(nSims=tmp$nSims) %>% filter(nSims>=100)
+    add_column(nSims=tmp$nSims) #%>% filter(nSims>=100)
 
   # For each bin, calculate probability that required proportion of CUs above benchmark
   projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
