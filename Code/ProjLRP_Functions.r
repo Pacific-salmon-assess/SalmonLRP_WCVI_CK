@@ -91,7 +91,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   # Read-in CU pars file and re-write with updated scenario pars =====================
   CUpars<-read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
   # -- specify ER scenario
-  CUpars$cvER <- rep(cvER,length(unique(SRDat$CU_ID)))
+  CUpars$cvER <- rep(cvER,length(unique(CUpars$stk)))
 
   # -- fill-in MPD fits, only for stocks with SR data
   if (all(is.na(SRDat$Recruits)) == FALSE){
