@@ -14,65 +14,74 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
       dir.create(scenOutputDir)
     }
 
-  if (all(is.na(SRDat$Recruits)) == FALSE){
-    # Run MPD fit to parameterize samSim projections ==========
-    mpdOut<-get_MPD_Fit(SRDat, BMmodel, TMB_Inputs, outDir)
-    # save correlation matrix
-    corMatrix<-mpdOut$corMatrix
-    corMatrix<-corMatrix * recCorScalar
-    corMatrix[col(corMatrix)==row(corMatrix)] <- 1
-    write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
+  if(!is.null(SRDat)){
+    if (all(is.na(SRDat$Recruits)) == FALSE){
+      # Run MPD fit to parameterize samSim projections ==========
+      mpdOut<-get_MPD_Fit(SRDat, BMmodel, TMB_Inputs, outDir)
+      # save correlation matrix
+      corMatrix<-mpdOut$corMatrix
+      corMatrix<-corMatrix * recCorScalar
+      corMatrix[col(corMatrix)==row(corMatrix)] <- 1
+      write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
 
-    
-    # Run MCMC fit to parameterize samSim projections =======
-    if (runMCMC == T) {
-      mcmcOut<-get_MCMC_Fit(scenarioName, obj= mpdOut$obj, init=mpdOut$par,
-                            upper=mpdOut$upper, lower=mpdOut$lower, nMCMC=nMCMC, Scale = TMB_Inputs$Scale)
+      # Run MCMC fit to parameterize samSim projections =======
+      if (runMCMC == T) {
+        mcmcOut<-get_MCMC_Fit(scenarioName, obj= mpdOut$obj, init=mpdOut$par,
+                              upper=mpdOut$upper, lower=mpdOut$lower, nMCMC=nMCMC, Scale = TMB_Inputs$Scale)
 
-      # Need to convert capacity parameters to beta if prior on capacity is used
-      if (BMmodel %in% c("SR_IndivRicker_SurvCap","SR_HierRicker_SurvCap")) {
-        # -- calculate muLSurv (needed to get beta)
-        muSurv <- SRDat %>% group_by(CU_ID) %>%
-          summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
-        muLSurv <- log(muSurv$muSurv)
-        # -- expand muLSurv for number of MCMC samples
-        muLSurv<-rep(muLSurv,length=nrow(mcmcOut))
-        # -- update mcmcOut
-        mcmcOut <- mcmcOut %>% add_column(beta = (mcmcOut$alpha + mcmcOut$gamma * muLSurv) / mcmcOut$cap, .after="alpha") %>% select(-cap)
+        # Need to convert capacity parameters to beta if prior on capacity is used
+        if (BMmodel %in% c("SR_IndivRicker_SurvCap","SR_HierRicker_SurvCap")) {
+          # -- calculate muLSurv (needed to get beta)
+          muSurv <- SRDat %>% group_by(CU_ID) %>%
+            summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+          muLSurv <- log(muSurv$muSurv)
+          # -- expand muLSurv for number of MCMC samples
+          muLSurv<-rep(muLSurv,length=nrow(mcmcOut))
+          # -- update mcmcOut
+          mcmcOut <- mcmcOut %>% add_column(beta = (mcmcOut$alpha + mcmcOut$gamma * muLSurv) / mcmcOut$cap, .after="alpha") %>% select(-cap)
 
+        }
+
+        mcmcOut<-as.data.frame(mcmcOut)
+        write.csv(mcmcOut, paste(scenInputDir,"RickerSurv_mcmc.csv", sep="/"), row.names=F)
       }
 
-      mcmcOut<-as.data.frame(mcmcOut)
-      write.csv(mcmcOut, paste(scenInputDir,"RickerSurv_mcmc.csv", sep="/"), row.names=F)
-    }
-
-    if (runMCMC == F) {
+      if (runMCMC == F) {
         mcmcOut<-read.csv(paste(outDir,"/SamSimInputs/", BMmodel,"_mcmc.csv", sep=""))
+      }
+    }# End of if all recruitment=NA
+
+    # If there are recruitment data for some ages, but not all, fill in the
+    # remaining ages with 0s
+    if (all(is.na(SRDat$Recruits)) == FALSE){
+      if(is.null(SRDat$Age_2_Recruits)){ rec2<-0} else {rec2 <-
+        SRDat$Age_2_Recruits}
+      if(is.null(SRDat$Age_3_Recruits)){ rec3<-0} else {rec3 <-
+        SRDat$Age_3_Recruits}
+      if(is.null(SRDat$Age_4_Recruits)){ rec4<-0} else {rec4 <-
+        SRDat$Age_4_Recruits}
+      if(is.null(SRDat$Age_5_Recruits)){ rec5<-0} else {rec5 <-
+        SRDat$Age_5_Recruits}
+      if(is.null(SRDat$Age_6_Recruits)){ rec6<-0} else {rec6 <-
+        SRDat$Age_6_Recruits}
+    } #End of if (all(is.na(SRDat$Recruits)) == FALSE){
+
+
+  }# End of if(!is.null(SRDat)){
+
+
+
+  #If there are NO recruitment data for any ages but SRDat dataset exists,
+  # fill in  with NAs
+  if(!is.null(SRDat)){
+    if (all(is.na(SRDat$Recruits)) == TRUE) {
+      rec2 <- rec3 <- rec4 <- rec5 <- rec6 <- NA
     }
-  }# end of if all recruitment=NA
-
-
-  # If there are recruitment data for some ages, but not all, fill in the
-  # remaining ages with 0s
-  if (all(is.na(SRDat$Recruits)) == FALSE){
-    if(is.null(SRDat$Age_2_Recruits)){ rec2<-0} else {rec2 <-
-      SRDat$Age_2_Recruits}
-    if(is.null(SRDat$Age_3_Recruits)){ rec3<-0} else {rec3 <-
-      SRDat$Age_3_Recruits}
-    if(is.null(SRDat$Age_4_Recruits)){ rec4<-0} else {rec4 <-
-      SRDat$Age_4_Recruits}
-    if(is.null(SRDat$Age_5_Recruits)){ rec5<-0} else {rec5 <-
-      SRDat$Age_5_Recruits}
-    if(is.null(SRDat$Age_6_Recruits)){ rec6<-0} else {rec6 <-
-      SRDat$Age_6_Recruits}
-  } #End of if (all(is.na(SRDat$Recruits)) == FALSE){
-
-  #If there are NO recruitment data for any ages, fill in  with NAs
-  if (all(is.na(SRDat$Recruits)) == TRUE) {
-    rec2 <- rec3 <- rec4 <- rec5 <- rec6 <- NA
   }
 
-  recDatTrim<-data.frame(stk=(SRDat$CU_ID + 1),
+  # If SRDat exists, create recDatTrim for input into projections (for priming)
+  if(!is.null(SRDat)){
+    recDatTrim<-data.frame(stk=(SRDat$CU_ID + 1),
                          yr=SRDat$BroodYear,
                          ets=SRDat$Spawners,
                          totalSpwn=SRDat$Spawners,
@@ -81,10 +90,11 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                          rec4=rec4,#SRDat$Age_4_Recruits,
                          rec5=rec5,#rep(0,length(SRDat$BroodYear)),
                          rec6=rec6)#rep(0,length(SRDat$BroodYear)))
-  write.csv(recDatTrim, paste(scenInputDir,"recDatTrim.csv", sep="/"), row.names=F)
+    write.csv(recDatTrim, paste(scenInputDir,"recDatTrim.csv", sep="/"), row.names=F)
+  } else {recDatTrim <- NULL}
 
   # If there are no recruitment data, then pull correlation matrix from inputs
-  if (all(is.na(SRDat$Recruits)) == TRUE){
+  if(is.null(SRDat) || all(is.na(SRDat$Recruits)) ){
     corMatrix <- corMat
     mcmcOut <- NULL
   }
@@ -94,47 +104,49 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   CUpars<-read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
   
   # -- specify ER scenario
-  CUpars$cvER <- rep(cvER,length(unique(SRDat$CU_ID)))
+  CUpars$cvER <- rep(cvER,length(unique(CUpars$stk)))
 
   # -- fill-in MPD fits, only for stocks with SR data
-  if (all(is.na(SRDat$Recruits)) == FALSE){
-    CUpars$alpha <- mpdOut$All_Ests[grepl("logA", mpdOut$All_Ests$Param), "Estimate" ]
+  if(!is.null(SRDat)){
+    if (all(is.na(SRDat$Recruits)) == FALSE){
+      CUpars$alpha <- mpdOut$All_Ests[grepl("logA", mpdOut$All_Ests$Param), "Estimate" ]
 
-    if (BMmodel %in% c("SR_IndivRicker_SurvCap","SR_HierRicker_SurvCap")) {
-      CUpars$beta0 <- mpdOut$All_Ests[grepl("B", mpdOut$All_Ests$Param), "Estimate" ]/TMB_Inputs$Scale
-    }
-    else {
-      CUpars$beta0 <- exp(mpdOut$All_Ests[grepl("logB", mpdOut$All_Ests$Param), "Estimate" ])/TMB_Inputs$Scale
-    }
+      if (BMmodel %in% c("SR_IndivRicker_SurvCap","SR_HierRicker_SurvCap")) {
+        CUpars$beta0 <- mpdOut$All_Ests[grepl("B", mpdOut$All_Ests$Param), "Estimate" ]/TMB_Inputs$Scale
+      }
+      else {
+        CUpars$beta0 <- exp(mpdOut$All_Ests[grepl("logB", mpdOut$All_Ests$Param), "Estimate" ])/TMB_Inputs$Scale
+      }
 
-    # eliminate logASigma using dum before getting logSigma:
-    dum<-mpdOut$All_Ests[mpdOut$All_Ests$Param != "logSigmaA",]
-    CUpars$sigma <- exp(dum[grepl("logSigma",dum$Param),"Estimate"])
+      # eliminate logASigma using dum before getting logSigma:
+      dum<-mpdOut$All_Ests[mpdOut$All_Ests$Param != "logSigmaA",]
+      CUpars$sigma <- exp(dum[grepl("logSigma",dum$Param),"Estimate"])
 
-    CUpars$coef1 <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
-    # -- add initial marine survival covariate based on recent average
-    means<-SRDat %>% group_by(CU_ID) %>% filter(BroodYear > 1999) %>% summarise(coVariate=mean(STAS_Age_3))
-    CUpars$covarInit <- means$coVariate
-    # -- specify distribution for marine survival for annual sampling
-    means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
-    CUpars$mu_logCovar1 <- means_log$coVariate
-    sigs_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
-    CUpars$sig_logCovar1 <- sigs_log$coVariate
-    CUpars$min_logCovar <- rep(-5.914504,length(unique(SRDat$CU_ID)))
-    CUpars$max_logCovar <- rep(-2.701571,length(unique(SRDat$CU_ID)))
-    # -- add mean recruitment, by age
-    CUpars$meanRec2 <- rep(0,length(unique(SRDat$CU_ID)))
-    rec3<-SRDat %>% group_by(CU_ID) %>% summarize(rec3=Age_3_Recruits/Recruits)
-    CUpars$meanRec3 <- mean(rec3$rec3)
-    rec4<-SRDat %>% group_by(CU_ID) %>% summarize(rec4=Age_4_Recruits/Recruits)
-    CUpars$meanRec4 <- mean(rec4$rec4)
-    # -- add median annual recruitment and quantiles
-    quantRec<- SRDat %>% group_by(CU_ID) %>% summarize(med=median(Recruits), lowQ=quantile(Recruits,0.25),highQ=quantile(Recruits,0.75))
-    CUpars$medianRec <- quantRec$med
-    CUpars$lowQRec <- quantRec$lowQ
-    CUpars$highQRec <- quantRec$highQ
+      CUpars$coef1 <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
+      # -- add initial marine survival covariate based on recent average
+      means<-SRDat %>% group_by(CU_ID) %>% filter(BroodYear > 1999) %>% summarise(coVariate=mean(STAS_Age_3))
+      CUpars$covarInit <- means$coVariate
+      # -- specify distribution for marine survival for annual sampling
+      means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
+      CUpars$mu_logCovar1 <- means_log$coVariate
+      sigs_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
+      CUpars$sig_logCovar1 <- sigs_log$coVariate
+      CUpars$min_logCovar <- rep(-5.914504,length(unique(SRDat$CU_ID)))
+      CUpars$max_logCovar <- rep(-2.701571,length(unique(SRDat$CU_ID)))
+      # -- add mean recruitment, by age
+      CUpars$meanRec2 <- rep(0,length(unique(SRDat$CU_ID)))
+      rec3<-SRDat %>% group_by(CU_ID) %>% summarize(rec3=Age_3_Recruits/Recruits)
+      CUpars$meanRec3 <- mean(rec3$rec3)
+      rec4<-SRDat %>% group_by(CU_ID) %>% summarize(rec4=Age_4_Recruits/Recruits)
+      CUpars$meanRec4 <- mean(rec4$rec4)
+      # -- add median annual recruitment and quantiles
+      quantRec<- SRDat %>% group_by(CU_ID) %>% summarize(med=median(Recruits), lowQ=quantile(Recruits,0.25),highQ=quantile(Recruits,0.75))
+      CUpars$medianRec <- quantRec$med
+      CUpars$lowQRec <- quantRec$lowQ
+      CUpars$highQRec <- quantRec$highQ
 
-  }
+    }# End of if (all(is.na(SRDat$Recruits)) == FALSE)
+  }#  End of  if(!is.null(SRDat)){
 
   write.csv(CUpars, paste(scenInputDir,"CUPars.csv", sep="/"), row.names=F)
 
