@@ -225,7 +225,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     datCUSp.i$expRate<-simPars[i, "canER"] + simPars[i, "usER"]
     datLRP.i<-read.csv(here(outDir,"SamSimOutputs", "simData", dirNames[[i]], filename2))
     datLRP.i$expRate<-simPars[i, "canER"] + simPars[i, "usER"]
-
+    
     if (i == 1) {
       projSpwnDat<-datCUSp.i
       projLRPDat<-datLRP.i
