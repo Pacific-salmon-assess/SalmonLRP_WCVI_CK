@@ -169,6 +169,14 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=s
 
 
 
+# Create samSim input files for current scenario
+scenarioName <- "IM.base.test"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=500, nProj=10, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
+
 
 scenarioName <- "HM.base"
 BMmodel <- "SR_HierRicker_Surv"

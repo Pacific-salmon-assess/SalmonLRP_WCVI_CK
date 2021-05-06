@@ -43,7 +43,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
         }
 
         mcmcOut<-as.data.frame(mcmcOut)
-        write.csv(mcmcOut, paste(scenInputDir,"RickerSurv_mcmc.csv", sep="/"), row.names=F)
+        write.csv(mcmcOut, paste(scenInputDir,BMmodel, sep="/"), row.names=F)
       }
 
       if (runMCMC == F) {
