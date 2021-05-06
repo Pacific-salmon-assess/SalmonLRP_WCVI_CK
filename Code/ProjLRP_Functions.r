@@ -2,7 +2,7 @@
 
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
-                             ERScalar=NULL, cvER, recCorScalar, corMat=NULL){
+                             ERScalar=NULL, cvER, recCorScalar, gammaSigScalar=NULL,corMat=NULL){
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -23,6 +23,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     corMatrix[col(corMatrix)==row(corMatrix)] <- 1
     write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
 
+    
     # Run MCMC fit to parameterize samSim projections =======
     if (runMCMC == T) {
       mcmcOut<-get_MCMC_Fit(scenarioName, obj= mpdOut$obj, init=mpdOut$par,
@@ -88,8 +89,10 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     mcmcOut <- NULL
   }
 
+  
   # Read-in CU pars file and re-write with updated scenario pars =====================
   CUpars<-read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
+  
   # -- specify ER scenario
   CUpars$cvER <- rep(cvER,length(unique(SRDat$CU_ID)))
 
@@ -139,8 +142,21 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   simPars<-read.csv(paste(outDir, "SamSimInputs/SimPars.csv",sep="/"))
   simPars$nameOM<-rep(scenarioName,nrow(simPars))
   simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
+  
+  # If gammaSigScalar is specified in function call, add to simPars file 
+  if (is.null(gammaSigScalar)==FALSE) {
+    if (is.null(mcmcOut) == TRUE) {
+      # Use mpd fit standard error if no mcmc outputs available
+      gammaSig<-mpdOut$All_Ests[mpdOut$All_Ests$Param=="gamma","Std..Error"]
+    } else {
+      # Use standard deviation of gamma posterior is mcmc output is available
+      gammaSig<-as.numeric(mcmcOut %>% filter(stk==1) %>% summarize(sd(gamma)))
+    }
+    simPars$sampCU_coef1<-TRUE
+    simPars$sigCU_coef1<-gammaSig*gammaSigScalar
+  }
+    
   write.csv(simPars, paste(scenInputDir,"SimPars.csv", sep="/"), row.names=F)
-
 
   ## Run projections =================================================================================
 
