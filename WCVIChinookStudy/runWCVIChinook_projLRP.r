@@ -45,21 +45,21 @@ sourceAll <- function(){
 }
 sourceAll()
 
-# Load TMB models for fitting Bayesian Ricker stock recruit models;
-#   outputs from these model fits are used to parameterize samSim
-
-compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
-
-compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
-
-compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
-
-compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
-
+# # Load TMB models for fitting Bayesian Ricker stock recruit models;
+# #   outputs from these model fits are used to parameterize samSim
+#
+# compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
+#
+# compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
+#
+# compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
+#
+# compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
+#
 
 # ======================================================================
 #(1)  Read-in WCVI Chinook data:
@@ -71,51 +71,49 @@ CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
 CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
 wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")
-SRDat <- wcviCKSRDat
-SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat$CU_ID <- group_by(SRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat
+wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+wcviCKSRDat$CU_ID <- group_by(wcviCKSRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 # ======================================================================
 # (2) Specify initial parameters & datasets for projections
 # =====================================================================
 
-# Subset data up to current year
-year <- 2018 # - last year of data for parameterization
-BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
-
-# Only use SR data for brood years that have recruited by specified year
-# (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
-SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
-
-SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-
-
-# TMB input parameters:
-TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-                      logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
-TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
-                      Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
-
-TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
-
-TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
+# # Subset data up to current year
+# year <- 2018 # - last year of data for parameterization
+# BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
+#
+# # Only use SR data for brood years that have recruited by specified year
+# # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
+# SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
+#
+# SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+# SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+#
+#
+# # TMB input parameters:
+# TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+#                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+#
+#
+# TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
+#                       Tau_dist = 0.1,
+#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+#
+#
+# # Prior means come from running "compareRickerModelTypes.r"
+# cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+#
+# TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+#                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
+#
+# # Prior means come from running "compareRickerModelTypes.r"
+# cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+#
+# TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
+#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
 
 
 
@@ -149,58 +147,34 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.base"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
+scenarioName <- "Base"
+#BMmodel <- "SR_IndivRicker_Surv"
+
 # Create a correlation matrix from spawner time-series, as a proxy for
 # correlation in recruitment residuals assuming no density dependence and
 # constant harvest. Only used if recruitment time-series are missing
-dum <- SRDat %>% select(CU_ID, BroodYear, Spawners)
+dum <- wcviCKSRDat %>% select(CU_ID, BroodYear, Spawners)
 dum <- dum %>% pivot_wider(id_cols=c(CU_ID, BroodYear), names_from=CU_ID,
                            values_from=Spawners) %>% select (!BroodYear)
+dum <- dum %>% drop_na()
 corMat <- cor(dum)
 
 #-------------------------------------------------------------------------------
 #TESTING
-SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
-                                                     'Age_4_Recruits',
-                                                     'STAS_Age_3', 'STAS_Age_4',
-                                                     'ER_Age_3', 'ER_Age_4',
-                                                     'Hatchery'))
-SRDat <- NULL
+# SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
+#                                                      'Age_4_Recruits',
+#                                                      'STAS_Age_3', 'STAS_Age_4',
+#                                                      'ER_Age_3', 'ER_Age_4',
+#                                                      'Hatchery'))
+
 #-------------------------------------------------------------------------------
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1, corMat=corMat)
-
-
-scenarioName <- "HM.base"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1)
-
-
-scenarioName <- "IMCap.base"
-BMmodel <- "SR_IndivRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_IM_priorCap
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
-
-
-scenarioName <- "HMCap.base"
-
-BMmodel <- "SR_HierRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_HM_priorCap
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
+                                nMCMC=NULL, nProj=100, cvER = 0,#.456,
+                                recCorScalar=1, corMat=corMat)
 
 
 
@@ -209,36 +183,20 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=s
 # (4) Run Sensitivity Analyses
 # ====================================================================
 
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER1.5"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*1.5, recCorScalar=1)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER2.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*2, recCorScalar=1)
-
-
-scenarioName <- "IM.cvER3.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*3.0, recCorScalar=1)
-
-
+#
+# # Create samSim input files for current scenario
+# scenarioName <- "IM.cvER1.5"
+#
+# projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+#                                 scenarioName=scenarioName, useGenMean = F,
+#                                 genYrs = genYrs,  TMB_Inputs=NULL,
+#                                 outDir=wcviCKDir, runMCMC=F, nMCMC=NA,
+#                                 nProj=10, cvER = 0.456*1.5, recCorScalar=1)
+#
+#
+# # Create samSim input files for current scenario
+# scenarioName <- "IM.cvER2.0"
+# #etc. I should include variability in input Ricker a, b, sig, covar, as well as cvER
 
 
 # ===================================================================
@@ -253,7 +211,7 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("IM.base")#,"HM.base")
+OMsToInclude<-c("Base")
 
 
 # Loop over OM Scenarios

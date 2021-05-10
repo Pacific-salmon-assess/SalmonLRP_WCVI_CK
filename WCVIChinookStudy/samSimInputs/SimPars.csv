@@ -1,5 +1,5 @@
 scenario,nameOM,nameMP,keyVar,plotOrder,species,simYears,harvContRule,benchmark,canER,usER,propMixHigh,singleHCR,moveTAC,prodRegime,startYear,endYear,rho,arSigTransform,correlCU,corrMat,mu_logCovar1,sig_logCovar1,tauCatch,obsSig,mixOUSig,singOUSig,obsMixCatchSig,obsSingCatchSig,obsAgeErr,lowCatchThresh,highCatchThresh,extinctThresh,adjustSig,adjustAge,adjustForecast
-NA,NA,lowER,expRate,1,coho,100,fixedER,stockRecruit,0,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
-NA,NA,baseER,expRate,2,coho,100,fixedER,stockRecruit,0.125,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
-NA,NA,highER,expRate,3,coho,100,fixedER,stockRecruit,0.325,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
-NA,NA,highER2,expRate,4,coho,100,fixedER,stockRecruit,0.525,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
+NA,NA,lowER,expRate,1,chinook,100,fixedER,habitat,0,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
+NA,NA,baseER,expRate,2,chinook,100,fixedER,habitat,0.125,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
+NA,NA,highER,expRate,3,chinook,100,fixedER,habitat,0.325,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
+NA,NA,highER2,expRate,4,chinook,100,fixedER,habitat,0.525,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1
