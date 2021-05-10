@@ -229,7 +229,7 @@ abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2
 TMB_Inputs_IM_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                      B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
+                      B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma, extra_eval_iter=TRUE)
 
 
 # Section below is obsolete
@@ -251,12 +251,12 @@ for(pp in 1:length(ps)){
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
-                bootstrapMode = F, plotLRP=T , runLogisticDiag=T)
+                bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
   # Run without Upper Knight CU
   runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_no_knight_", ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T , runLogisticDiag=T)
+                 bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
   #}
 }
 

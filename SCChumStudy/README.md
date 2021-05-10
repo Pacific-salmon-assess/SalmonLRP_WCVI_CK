@@ -64,7 +64,7 @@ Prepares data for retrospective analysis, including infilling of raw escapement 
 Functions specifically for chum case study, including infilling
 
 #### infilling_for_reconstruction.R
-This code takes the raw escapement data and infills by stream and CU. The outputs of this code were sent to Pieter Van Will to do the run reconstruction, which uses percent wild spawners, and catch to give wild returns (WildReturnsPVW_2013 **NEED TO UPDATE TO 2018**). Does not need to be run to do LRP retrospective analysis.
+This code takes the raw escapement data and infills by stream and CU. The outputs of this code were sent to Pieter Van Will to do the run reconstruction, which uses percent wild spawners, and catch to give wild returns (*wild_ISC_chum_recruitment_PieterVanWill.xlsx*). Does not need to be run to do LRP retrospective analysis.
 
 #### make_map.R
 Make a map of the Conservation Unit areas.
