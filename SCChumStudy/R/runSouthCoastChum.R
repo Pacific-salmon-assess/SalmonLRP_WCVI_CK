@@ -169,7 +169,7 @@ for(pp in 1:length(ps)){
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T, runLogisticDiag = TRUE)
  # for some reason this gives errors if startYr is set to less than 1975. Perhaps there aren't enough stock-recruit 
-  # obseevations for the model to fit?
+  # obseevations for the model to fit? The residuals are large even when there are more points.
   
   # # Run with years with CU-level infilling removed
   # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill_yrs, SRDat=ChumSRDat_no_CU_infill_yrs, startYr=1967, endYr=1972, BroodYrLag=4, genYrs=4, p = ps[pp],
