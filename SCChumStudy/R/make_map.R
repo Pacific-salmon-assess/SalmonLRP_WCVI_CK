@@ -5,7 +5,7 @@ library(ggplot2)
 library(sf)
 library(ggspatial)
 library(rgdal)
-library(leaflet)
+#library(leaflet)
 library(PNWColors)
 
 # Download chum CU data shapefile from:

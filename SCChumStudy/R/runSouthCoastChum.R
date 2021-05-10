@@ -137,7 +137,7 @@ ps <- c(seq(0.6, 0.95,.05), 0.99)
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, extra_eval_iter=TRUE)
 
 # Loop over p values and run annual retrospective analyses for each level of p
 
@@ -161,11 +161,14 @@ for(pp in 1:length(ps)){
   #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T)
+  
   # Run with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1969, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T, runLogisticDiag = TRUE)
+  
+  # there is a problem with year 1968. If 
   # 
   # # Run with years with CU-level infilling removed
   # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill_yrs, SRDat=ChumSRDat_no_CU_infill_yrs, startYr=1967, endYr=1972, BroodYrLag=4, genYrs=4, p = ps[pp],
