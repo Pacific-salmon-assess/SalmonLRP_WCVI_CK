@@ -78,7 +78,7 @@ names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits"
 # First make full time series to use with percentile benchmarks (don't need recruit parameters so can use 1953-1957)
 ChumEscDat_full <- ChumEscpDat
 ChumSRDat_full <- ChumSRDat
-# remove years without full recruitment  - FLAG: still needing to run this, otherwise have NA recrtuiment going into model optimization
+# remove years without full recruitment  - FLAG: still needing to run this, otherwise have NA recruitment going into model optimization
 ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
 ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
@@ -137,7 +137,8 @@ ps <- c(seq(0.6, 0.95,.05), 0.99)
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
+                      extra_eval_iter=TRUE)
 
 # Loop over p values and run annual retrospective analyses for each level of p
 
@@ -161,12 +162,15 @@ for(pp in 1:length(ps)){
   #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T)
+  
   # Run with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T, runLogisticDiag = TRUE)
-  # 
+ # for some reason this gives errors if startYr is set to less than 1975. Perhaps there aren't enough stock-recruit 
+  # obseevations for the model to fit? The residuals are large even when there are more points.
+  
   # # Run with years with CU-level infilling removed
   # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill_yrs, SRDat=ChumSRDat_no_CU_infill_yrs, startYr=1967, endYr=1972, BroodYrLag=4, genYrs=4, p = ps[pp],
   #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
@@ -226,7 +230,7 @@ abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2
 TMB_Inputs_IM_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                      B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma)
+                      B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma, extra_eval_iter=TRUE)
 
 
 # Section below is obsolete
@@ -248,12 +252,12 @@ for(pp in 1:length(ps)){
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
-                bootstrapMode = F, plotLRP=T , runLogisticDiag=T)
+                bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
   # Run without Upper Knight CU
-  runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_no_knight_", ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T , runLogisticDiag=T)
+  # runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_no_knight_", ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
   #}
 }
 
@@ -272,15 +276,16 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
 # Run retrospective analysis using percentile benchmarks
 for(pp in 1:length(ps)){
   # Run with Binomial LRP with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # Run with CU-level infilling (to make plots with percentile benchmarks over time for all 7 CUs)
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1956, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T,  runLogisticDiag=T)
+  # Run with CU-level infilling (to make plots with percentile benchmarks over time for all 7 CUs)
+  # note problem with data - NAs in stock-recruit data?
+  # runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1956, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
   # Run without Upper Knight CU
   # runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
   #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
@@ -294,7 +299,6 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
   
 }
-
 
 # Get low aggregate penalty values
 pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
@@ -333,7 +337,7 @@ for(pp in 1:length(ps)){
 # Plot 25% benchmark over time
 pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
 #pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
-cudf <- data.frame("CU_Name_num" = unique(cdat$CU_Name), "b" = unique(pdat$CU_Name))
+cudf <- data.frame("CU_Name_num" = unique(pdat$CU_Name), "b" = unique(pdat$CU_Name))
 pdat2 <- merge(pdat, cudf, by.x="CU_Name", by.y="b") # fix names so consistent with other plots
 
 png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=4, res=300, units="in")
@@ -354,7 +358,7 @@ dev.off()
 # Look at stock recruit parameters over time
 # ---------------------------------------------#
 # Plot Sgen over time
-mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
+mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
 # Plot Sgen estimates over time
@@ -378,7 +382,7 @@ mdat1 %>% filter(param %in% c("est_A", "est_B")) %>%
 dev.off()
 
 # Plot ricker, SMSY, Sgen estimates from integrated model
-ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_95/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
+ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just one retro year for estimates
 t <- merge(ests1, ChumSRDat[, names(ChumSRDat) %in% c("BroodYear", "Spawners", "Recruits", "CU_Name")], by=c("CU_Name"))
 
@@ -492,3 +496,4 @@ for(i in 1:length(unique(ests$CU_ID))) {
   plot(dat$resid_logRS ~ dat$Recruits, type="p", main=CUs[i])
   abline(a=0, b=1, lty=2, col="orange")
 }
+

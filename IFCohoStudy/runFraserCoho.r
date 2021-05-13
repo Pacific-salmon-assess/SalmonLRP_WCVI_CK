@@ -134,13 +134,15 @@ B_penalty_sigma<-2048
 TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                 logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
                 gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
-                B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma)
+                B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                extra_eval_iter=FALSE)
 
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                      B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma)
+                      B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                      extra_eval_iter=FALSE)
 
 
 # Prior means come from running "compareRickerModelTypes.r"
@@ -149,14 +151,16 @@ cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
 TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                    logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma)
+                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                   extra_eval_iter=FALSE)
 
 # Prior means come from running "compareRickerModelTypes.r"
 cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma)
+                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                               extra_eval_iter=FALSE)
 
 # Calculate penalty for sub-population approach
 subPop_B_penalty_lwr<-1000 # set at abundance below which no one CU could be above subpop have at least half of subpops above 1000 fish
@@ -166,7 +170,8 @@ B_penalty_mu<-mean(c(subPop_B_penalty_lwr,subPop_B_penalty_upr))
 dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
 B_penalty_sigma<-dum$par
 
-TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma)
+TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                          extra_eval_iter=FALSE)
 
 
 

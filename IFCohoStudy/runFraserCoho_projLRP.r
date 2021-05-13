@@ -142,14 +142,40 @@ setwd(codeDir)
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
-
 # Create samSim input files for current scenario
 scenarioName <- "IM.base"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.highGammaSig"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=1.5)
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.medGammaSig"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=0.5)
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.base.test"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=500, nProj=10, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
 
 
 scenarioName <- "HM.base"
@@ -230,7 +256,8 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("IM.base","HM.base") 
+
+OMsToInclude<-c("IM.base","IM.highGammaSig", "IM.modGammaSig") 
 
 
 # Loop over OM Scenarios 
