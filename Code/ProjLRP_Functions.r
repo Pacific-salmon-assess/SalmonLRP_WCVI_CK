@@ -96,13 +96,14 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   # If there are no recruitment data, then pull correlation matrix from inputs
   if(is.null(SRDat) || all(is.na(SRDat$Recruits)) ){
     corMatrix <- corMat
-    mcmcOut <- NULL
+    if (runMCMC) mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv", sep="/"))
+    if (!runMCMC) mcmcOut <- NULL
   }
 
-  
+
   # Read-in CU pars file and re-write with updated scenario pars =====================
   CUpars<-read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
-  
+
   # -- specify ER scenario
   CUpars$cvER <- rep(cvER,length(unique(CUpars$stk)))
 
@@ -154,8 +155,8 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   simPars<-read.csv(paste(outDir, "SamSimInputs/SimPars.csv",sep="/"))
   simPars$nameOM<-rep(scenarioName,nrow(simPars))
   simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
-  
-  # If gammaSigScalar is specified in function call, add to simPars file 
+
+  # If gammaSigScalar is specified in function call, add to simPars file
   if (is.null(gammaSigScalar)==FALSE) {
     if (is.null(mcmcOut) == TRUE) {
       # Use mpd fit standard error if no mcmc outputs available
@@ -167,7 +168,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     simPars$sampCU_coef1<-TRUE
     simPars$sigCU_coef1<-gammaSig*gammaSigScalar
   }
-    
+
   write.csv(simPars, paste(scenInputDir,"SimPars.csv", sep="/"), row.names=F)
 
   ## Run projections =================================================================================
@@ -225,7 +226,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     datCUSp.i$expRate<-simPars[i, "canER"] + simPars[i, "usER"]
     datLRP.i<-read.csv(here(outDir,"SamSimOutputs", "simData", dirNames[[i]], filename2))
     datLRP.i$expRate<-simPars[i, "canER"] + simPars[i, "usER"]
-    
+
     if (i == 1) {
       projSpwnDat<-datCUSp.i
       projLRPDat<-datLRP.i
