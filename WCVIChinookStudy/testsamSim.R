@@ -1,8 +1,8 @@
 genericRecoverySim(simPars[4, ], cuPar=CUpars, srDat=recDatTrim,
         variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
-         nTrials=nProj, makeSubDirs=FALSE, random=FALSE, outDir=outDir)
+         nTrials=nProj, makeSubDirs=FALSE, random=FALSE, outDir="C:/github/SalmonLRP_RetroEval/WCVIChinookStudy")
 
-simPar <- simPars[1,]
+simPar <- simPars[4,]
 cuPar <- CUpars
 srDat <- NULL#recDatTrim#NULL#recDatTrim%>%mutate(rec2=NA, rec3=NA, rec4=NA, rec5=NA, rec6=NA)
 variableCU <- FALSE
