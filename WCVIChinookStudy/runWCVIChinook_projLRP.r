@@ -1,6 +1,6 @@
 # ============================================================================
 # Calculation of Projected Limit Reference Points for Interior Fraser Coho
-# Carrie Holt, Last update: May 4, 2021
+# Carrie Holt, Last update: May 12, 2021
 # ================================================================================
 
 # Projected LRPs represent the aggregate abundance that is associated with a specified probability
@@ -42,24 +42,25 @@ sourceAll <- function(){
   source("ProjLRP_Functions.r")
   source("plotFunctions.r")
   source("helperFunctions.r")
+  source("get.mv.logistic.tau.r")
 }
 sourceAll()
 
-# Load TMB models for fitting Bayesian Ricker stock recruit models;
-#   outputs from these model fits are used to parameterize samSim
-
-compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
-
-compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
-
-compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
-
-compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
-
+# # Load TMB models for fitting Bayesian Ricker stock recruit models;
+# #   outputs from these model fits are used to parameterize samSim
+#
+# compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
+#
+# compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
+#
+# compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
+#
+# compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
+#
 
 # ======================================================================
 #(1)  Read-in WCVI Chinook data:
@@ -71,51 +72,49 @@ CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
 CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
 wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")
-SRDat <- wcviCKSRDat
-SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat$CU_ID <- group_by(SRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat
+wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+wcviCKSRDat$CU_ID <- group_by(wcviCKSRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 # ======================================================================
 # (2) Specify initial parameters & datasets for projections
 # =====================================================================
 
-# Subset data up to current year
-year <- 2018 # - last year of data for parameterization
-BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
-
-# Only use SR data for brood years that have recruited by specified year
-# (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
-SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
-
-SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-
-
-# TMB input parameters:
-TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-                      logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
-TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
-                      Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
-
-TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
-
-TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
+# # Subset data up to current year
+# year <- 2018 # - last year of data for parameterization
+# BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
+#
+# # Only use SR data for brood years that have recruited by specified year
+# # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
+# SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
+#
+# SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+# SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+#
+#
+# # TMB input parameters:
+# TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+#                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+#
+#
+# TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
+#                       Tau_dist = 0.1,
+#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+#
+#
+# # Prior means come from running "compareRickerModelTypes.r"
+# cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+#
+# TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+#                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
+#
+# # Prior means come from running "compareRickerModelTypes.r"
+# cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+#
+# TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
+#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
 
 
 
@@ -148,97 +147,85 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
 
-# Create samSim input files for current scenario
-scenarioName <- "IM.base"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
+
 # Create a correlation matrix from spawner time-series, as a proxy for
 # correlation in recruitment residuals assuming no density dependence and
 # constant harvest. Only used if recruitment time-series are missing
-dum <- SRDat %>% select(CU_ID, BroodYear, Spawners)
+dum <- wcviCKSRDat %>% select(CU_ID, BroodYear, Spawners)
 dum <- dum %>% pivot_wider(id_cols=c(CU_ID, BroodYear), names_from=CU_ID,
                            values_from=Spawners) %>% select (!BroodYear)
+dum <- dum %>% drop_na()
 corMat <- cor(dum)
 
 #-------------------------------------------------------------------------------
 #TESTING
-SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
-                                                     'Age_4_Recruits',
-                                                     'STAS_Age_3', 'STAS_Age_4',
-                                                     'ER_Age_3', 'ER_Age_4',
-                                                     'Hatchery'))
-SRDat <- NULL
+# SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
+#                                                      'Age_4_Recruits',
+#                                                      'STAS_Age_3', 'STAS_Age_4',
+#                                                      'ER_Age_3', 'ER_Age_4',
+#                                                      'Hatchery'))
+
 #-------------------------------------------------------------------------------
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1, corMat=corMat)
+# Create samSim input files for current scenario
+scenarioName <- "Base.n100"
 
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
+                                nMCMC=NULL, nProj=100, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
 
-scenarioName <- "HM.base"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
+# Create samSim input files for current scenario
+scenarioName <- "Base.n500"
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1)
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
+                                nMCMC=NULL, nProj=500, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
 
+# Create samSim input files for current scenario
+scenarioName <- "Base.n1000"
 
-scenarioName <- "IMCap.base"
-BMmodel <- "SR_IndivRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_IM_priorCap
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
+                                nMCMC=NULL, nProj=1000, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+# Create samSim input files for current scenario
+scenarioName <- "Base.n2000"
 
-
-scenarioName <- "HMCap.base"
-
-BMmodel <- "SR_HierRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_HM_priorCap
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
-
-
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
+                                nMCMC=NULL, nProj=2000, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
 
 
 # ==================================================================
 # (4) Run Sensitivity Analyses
 # ====================================================================
 
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER1.5"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*1.5, recCorScalar=1)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER2.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*2, recCorScalar=1)
-
-
-scenarioName <- "IM.cvER3.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*3.0, recCorScalar=1)
-
-
+#
+# # Create samSim input files for current scenario
+# scenarioName <- "IM.cvER1.5"
+#
+# projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+#                                 scenarioName=scenarioName, useGenMean = F,
+#                                 genYrs = genYrs,  TMB_Inputs=NULL,
+#                                 outDir=wcviCKDir, runMCMC=F, nMCMC=NA,
+#                                 nProj=10, cvER = 0.456*1.5, recCorScalar=1)
+#
+#
+# # Create samSim input files for current scenario
+# scenarioName <- "IM.cvER2.0"
+# #etc. I should include variability in input Ricker a, b, sig, covar, as well as cvER
 
 
 # ===================================================================
@@ -253,7 +240,7 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("IM.base")#,"HM.base")
+OMsToInclude<-c("Base", "Base.n100", "Base.n500", "Base.n1000", "Base.n2000")
 
 
 # Loop over OM Scenarios
@@ -262,7 +249,7 @@ for (i in 1:length(OMsToInclude)) {
   # Read in samSim outputs for OM
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
   projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
-  CUpars <- read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
+  CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
   projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*4)#)max(SRDat$yr_num)+4)
 
   # Create bins for projected spawner abundances
@@ -305,13 +292,18 @@ for (i in 1:length(OMsToInclude)) {
   }
 
   # Plot projected LRP abundance relationship ===============================================================
-  pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
-      width=6, height=6)
+  png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i],
+            "_ProjLRPCurve_prob",probThresh,".png", sep=""), width=5, height=4,
+      units="in", res=500)
+  # pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
+  #     width=6, height=6)
 
-  plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), cex=0.2,
+  plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19,
+       xlim=c(0, max( as.numeric(as.character(projLRPDat$bins)), na.rm=T)/2 ),
+       cex=0.5, cex.lab=1.5,
        xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
   abline(h=probThresh, lty=2)
-  abline(v=LRP, col="orange", lwd=2)
+  abline(v=LRP, col="orange", lwd=4)
 
   dev.off()
 
@@ -329,6 +321,118 @@ write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"),
 
 
 
+# ===================================================================
+# Code to create mcmcOut for wCVI CK (move up)
+# ===================================================================
+
+remove.EnhStocks <- TRUE
+# SREP files are from github repository, Watershed-Area-Model and are from
+# "Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"
+
+# # Hard coding from Watershed-Area-Model directory
+# if (remove.EnhStocks) SREP <- data.frame(read.csv(
+#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"))
+# if (!remove.EnhStocks) SREP <- data.frame(read.csv(
+#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_wEnh.csv"))
+
+# For now, I have copied the SREP files to the SalmonLRP_RetroEval repository
+# If the watershed-area-model is updated, these files will need to be updated
+setwd(wcviCKDir)
+if (remove.EnhStocks) SREP <- data.frame(read.csv(
+  "DataIn/WCVI_SMSY_noEnh.csv"))
+if (!remove.EnhStocks) SREP <- data.frame(read.csv(
+  "DataIn/WCVI_SMSY_wEnh.csv"))
+
+
+
+#Inlet_Names <- c("Kyuquot", "Clayoquot", "Quatsino", "Barkley", "Nootka/Esperanza")
+
+SREP <- SREP %>% filter(Stock %in% Inlet_Names) %>% filter(Param=="SREP") %>%
+  select(!c(X, Param)) %>% rename(SREP=Estimate, inlets=Stock)
+
+
+read.csv(paste("samSimInputs/CUPars.csv")) %>% select(alpha,stk) %>% pull(alpha)
+
+lnalpha_inlet <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+  select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)#pull(alpha)
+
+Inlet_Names <- lnalpha_inlet$inlets
+
+
+out <- SREP %>% left_join(lnalpha_inlet, by="inlets")
+
+out
+nTrials <- 100
+#Draw alpha, then draw logSREP parameters,then calc beta for that draw (lnalpha/SREP) Look at KFrun.R.
+for (i in 1:length(Inlet_Names)){
+  meanSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(SREP)
+  logmeanSREP <- log(meanSREP)
+  ULSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(UL)
+  logULSREP <- log(ULSREP)
+  LLSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(LL)
+  logLLSREP <- log(LLSREP)
+  sigSREP <- (logmeanSREP-logLLSREP)/1.96
+  #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
+  rSREP <- exp(rnorm(nTrials, logmeanSREP,sigSREP))
+
+  meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)
+  # ULlnalpha <- 2
+  # LLlnalpha <- 0
+  siglnalpha <- 0.5 # Assuming 95% CIs at 0 and 2, sig ~0.5.
+
+  rlnalpha <- data.frame(a=rnorm(nTrials*1.5, meanlnalpha, siglnalpha))
+  #fix this!
+  rlnalpha <- rlnalpha %>% filter(a>0&a<2) %>% slice(1:nTrials)
+  rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+    filter(stkName==Inlet_Names[i]) %>% select(sigma,stk)
+  if (i==1) mcmcOut <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
+                                   beta=rlnalpha$a/rSREP, sigma= rsig$sigma )
+  if (i>1) mcmcOut <- mcmcOut %>% add_row(stk=rsig$stk, alpha=rlnalpha$a,
+                                          beta=rlnalpha$a/rSREP, sigma= rsig$sigma)
+
+}
+
+scenInputDir <- paste(wcviCKDir, "SamSimInputs", scenarioName, sep="/")
+write.csv(mcmcOut, paste(scenInputDir,"Ricker_mcmc.csv", sep="/"), row.names=F)
+
+
+
+
+# ===================================================================
+# Code to estimate uncertainy in age ppns in recruitmeny by BY (move up)
+# ===================================================================
+
+calcTau <- FALSE
+if(calcTau){
+  setwd(wcviCKDir)
+
+  Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+  CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
+  CU_inlet[Inlet_Names=="Barkley",2] <- "Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Clayoquot",2] <- "Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Kyuquot",2] <- "Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Quatsino",2] <- "Northwest_Vancouver_Island"
+
+  CUages <- data.frame(read.csv("DataIn/CUages.csv"))
+  CU.tau <- NA
+  for (i in 1: length(unique(CUages$CU_Names))){
+    CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% select(-c(Year, CU, CU_Names))
+    CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
+  }
+  df <- data.frame(CU_Names=unique(CUages$CU_Names), CU.tau=CU.tau)
+  inletTau <- left_join(CU_inlet, df)
+
+  # Use these tau values for `tauCycAge` in samSim- logistic variation in age
+  #  structure
+  # Inlet_Names                   CU_Names CU.tau
+  #           Kyuquot             Nootka_Kyuquot    0.6
+  #         Clayoquot Southwest_Vancouver_Island    0.7
+  #          Quatsino Northwest_Vancouver_Island    0.7
+  #           Barkley Southwest_Vancouver_Island    0.7
+  #  Nootka/Esperanza             Nootka_Kyuquot    0.6
+
+}
 
 
 # ===================================================================
