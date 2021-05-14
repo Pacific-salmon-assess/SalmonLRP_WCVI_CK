@@ -157,7 +157,9 @@ BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=1.5)
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=1)
+
+
 
 # Create samSim input files for current scenario
 scenarioName <- "IM.medGammaSig"
@@ -166,6 +168,24 @@ TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
                                 nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=0.5)
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.base_noERCV"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0, recCorScalar=1,gammaSigScalar=NULL)
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.base_noER0"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
 
 
 
@@ -257,8 +277,9 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 
-OMsToInclude<-c("IM.base","IM.highGammaSig", "IM.modGammaSig") 
+OMsToInclude<-c("IM.base","IM.base_noERCV", "IM.highGammaSig", "IM.medGammaSig", "IM.base_noER0") 
 
+#OMsToInclude<-c("IM.base","IM.highGammaSig") 
 
 # Loop over OM Scenarios 
 for (i in 1:length(OMsToInclude)) {
@@ -426,12 +447,10 @@ for (i in 1:length(OMsToInclude)) {
 #        width = 4, height = 3, units = "in")    
 # 
 # 
-# # Plot to show sensitivity analysis to recruitment correlation
-# 
-# #OMsToPlot<-c("IM.Base","IM.80RecCor","IM.60RecCor","IM.40RecCor","IM.10RecCor")
-# 
-# OMsToPlot<-c("IM.Base","IM.60RecCor","IM.40RecCor","IM.10RecCor", "IM-.20RecCor","IM-.40RecCor")
-# 
+# Plot to show sensitivity analysis to variability in gamma
+
+# OMsToPlot<-c("IM.Base","IM.medGammaSig","IM.medGammaSig")
+
 # p<-1.0
 # plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
 # g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
@@ -455,45 +474,73 @@ for (i in 1:length(OMsToInclude)) {
 # 
 # 
 # # ---- Temporary code to test effect of correlation scalar on projected correlations
-# 
-# MPD_recCormat<-read.csv(paste(cohoDir,"/SamSimInputs/IM.base/cohoCorrMat.csv", sep=""), header=F)
-# 
-# OMsToTest<-c("IM.Base","IM.80RecCor","IM.60RecCor","IM.40RecCor","IM.40RecCor","IM-.40RecCor")
-# 
-# #OMsToTest<-c("IM.cvER1.25", "IM.cvER1.5","IM.cvER2.0","IM.cvER2.5","IM.cvER3.0")
-# 
-# filename<-paste( "projSpwnDat_",OMsToTest[6],".csv",sep="")
-# spDat<-read.csv(here(cohoDir,"SamSimOutputs", "simData",filename))
-# 
-# # Calculate correlation matrix in MPD recruitment residuals ========================
-# #resids<-as_tibble(data.frame(stock=data$stk,year=data$yr, resid=obj$report()$R_Resid))
-# spDat<-as_tibble(spDat)
-# spDat<-spDat%>%select(-X)
-# 
-# RecCorMat<-array(NA,dim=c(5,5,max(spDat$iteration)))
-# SpwnCorMat<-array(NA,dim=c(5,5,max(spDat$iteration)))
-# 
-# for (i in 1:max(spDat$iteration)) {
-#   
-#   recruits.i<-spDat %>% filter(iteration==i & expRate==0.125) %>%  select(-spawners) 
-#   recruits.i<-recruits.i %>% select(-expRate, -iteration) 
-#   cor_mat<-recruits.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=recruits) %>% select(-year) %>% cor()
-#   RecCorMat[,,i]<-cor_mat
-# 
-#   spawners.i<-spDat %>% filter(iteration==i & expRate==0.125) %>%  select(-recruits) 
-#   spawners.i<-spawners.i %>% select(-expRate, -iteration) 
-#   cor_mat<-spawners.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
-#   SpwnCorMat[,,i]<-cor_mat
-# 
-# }
-# 
-# 
-# RecCorMat_Ave<-apply(RecCorMat, c(1,2), mean)
-# SpwnCorMat_Ave<-apply(SpwnCorMat, c(1,2), mean)
-# 
-# 
-# 
-# 
+
+#MPD_recCormat<-read.csv(paste(cohoDir,"/SamSimInputs/IM.base/corrMat.csv", sep=""), header=F)
+
+OMsToTest<-c("IM.base","IM.base_noERCV","IM.medGammaSig","IM.highGammaSig")
+
+
+for (j in 1:length(OMsToTest)) {
+
+  filename<-paste( "projSpwnDat_",OMsToTest[j],".csv",sep="")
+  spDat<-read.csv(here(cohoDir,"SamSimOutputs", "simData",filename))
+
+  spDat<-as_tibble(spDat)
+  spDat<-spDat%>%select(-X)
+
+  RecCorMat<-array(NA,dim=c(5,5,max(spDat$iteration)))
+  SpwnCorMat<-array(NA,dim=c(5,5,max(spDat$iteration)))
+
+  for (i in 1:max(spDat$iteration)) {
+
+    recruits.i<-spDat %>% filter(iteration==i & expRate==0.125) %>%  select(-spawners)
+    recruits.i<-recruits.i %>% select(-expRate, -iteration)
+    cor_mat<-recruits.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=recruits) %>% select(-year) %>% cor()
+    RecCorMat[,,i]<-cor_mat
+
+    spawners.i<-spDat %>% filter(iteration==i & expRate==0.125) %>%  select(-recruits)
+    spawners.i<-spawners.i %>% select(-expRate, -iteration)
+    cor_mat<-spawners.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
+    SpwnCorMat[,,i]<-cor_mat
+
+    if (i ==1) SpwnCorrValues<-SpwnCorMat[,,i][lower.tri(SpwnCorMat[,,i])==TRUE]
+    if (i > 1) SpwnCorrValues<-c(SpwnCorrValues,SpwnCorMat[,,i][lower.tri(SpwnCorMat[,,i])==TRUE])
+  }
+  
+  OM_Name<-rep(OMsToTest[j],max(spDat$iteration))
+  
+  if (j ==1) SpwnCorr.df<-data.frame(OM_Name,SpwnCorrValues)
+  if (j > 1) {
+    tmp<-data.frame(OM_Name,SpwnCorrValues)
+    SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
+  }
+  
+}
+
+
+# Add observed escapement correlations to correlation data frame
+spawners.obs<-data.frame(SRDat$BroodYear, SRDat$CU_ID, SRDat$Spawners)
+names(spawners.obs)<-c("year", "CU", "spawners")
+cor_mat<-spawners.obs %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
+SpwnCorrValues.Obs<-cor_mat[lower.tri(cor_mat)==TRUE]
+tmp<-data.frame(OM_Name = "Observed",SpwnCorrValues = SpwnCorrValues.Obs)
+SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
+  
+# Save LRPs for all OM scenarios
+write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
+
+
+factor(SpwnCorr.df$OM_Name,levels = c("Observed","IM.base_noERCV", 'IM.base' ,"IM.medGammaSig", "IM.highGammaSig"),ordered = TRUE)
+
+g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
+        scale_x_discrete(limits=c("Observed","IM.base", "IM.medGammaSig", "IM.highGammaSig","IM.base_noERCV"),
+          labels=c("Observed", "IM.Base", "IM.MedCorr", "IM.LowCorr","IM.noERCV")) +
+          xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
+  
+ ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareEscpCorrelation.png",sep=""), plot = g,
+        width = 4, height = 3, units = "in") 
+
+  
 # # Plot to show sensitivity analysis to ER variability
 # 
 # OMsToPlot<-c("IM.Base","IM.cvER1.5","IM.cvER2.0","IM.cvER2.5","IM.cvER3.0")
