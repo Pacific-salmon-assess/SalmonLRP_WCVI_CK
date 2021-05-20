@@ -610,7 +610,7 @@ if(calcTau){
 
   CUages <- data.frame(read.csv("DataIn/CUages.csv"))
   CU.tau <- NA
-  for (i in 1: length(unique(CUages$CU_Names))){
+  for (i in 1: length(unique(esCUag$CU_Names))){
     CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% select(-c(Year, CU, CU_Names))
     CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
   }
