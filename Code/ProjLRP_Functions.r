@@ -2,7 +2,9 @@
 
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
-                             ERScalar=NULL, cvER, recCorScalar, gammaSigScalar=NULL, cvERSMU=NULL, corMat=NULL){
+                             ERScalar=NULL, cvER, recCorScalar,
+                             gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
+                             corMat=NULL){
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -162,6 +164,9 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
 
   if(!is.null(cvERSMU)){
     simPars$cvERSMU <- cvERSMU
+  }
+  if(!is.null(agePpnConst)){
+    simPars$agePpnConst <- agePpnConst
   }
   # If gammaSigScalar is specified in function call, add to simPars file
   if (is.null(gammaSigScalar)==FALSE) {
