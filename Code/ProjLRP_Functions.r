@@ -2,7 +2,9 @@
 
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
-                             ERScalar=NULL, cvER, recCorScalar, gammaSigScalar=NULL,corMat=NULL){
+                             ERScalar=NULL, cvER, recCorScalar,
+                             gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
+                             corMat=NULL){
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -96,6 +98,10 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   # If there are no recruitment data, then pull correlation matrix from inputs
   if(is.null(SRDat) || all(is.na(SRDat$Recruits)) ){
     corMatrix <- corMat
+    corMatrix <- corMatrix * recCorScalar
+    corMatrix[col(corMatrix)==row(corMatrix)] <- 1
+    write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
+
     if (runMCMC) mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv", sep="/"))
     if (!runMCMC) mcmcOut <- NULL
   }
@@ -156,6 +162,12 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   simPars$nameOM<-rep(scenarioName,nrow(simPars))
   simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
 
+  if(!is.null(cvERSMU)){
+    simPars$cvERSMU <- cvERSMU
+  }
+  if(!is.null(agePpnConst)){
+    simPars$agePpnConst <- agePpnConst
+  }
   # If gammaSigScalar is specified in function call, add to simPars file
   if (is.null(gammaSigScalar)==FALSE) {
     if (is.null(mcmcOut) == TRUE) {
