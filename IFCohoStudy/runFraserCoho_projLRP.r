@@ -42,6 +42,7 @@ sourceAll <- function(){
   source("ProjLRP_Functions.r")
   source("plotFunctions.r")
   source("helperFunctions.r")
+  source("get.mv.logistic.tau.r")
 }
 sourceAll()
 
@@ -84,6 +85,21 @@ setwd(cohoDir)
  SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
  SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
  SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+ 
+ # 
+ # # Calculate tau for error in age-at-maturity and save to input data file
+ # CUages<-SRDat %>% select(Year = BroodYear, Age_3_Recruits, Recruits) %>% mutate(age3 = Age_3_Recruits/Recruits, age4=1-(Age_3_Recruits/Recruits))
+ # CUages<-CUages%>%select(-Age_3_Recruits, -Recruits) %>% add_column(CU=SRDat$CU_ID, CU_Names=SRDat$CU_Name)
+ # CU.tau <- NA
+ # for (i in 1: length(unique(SRDat$CU_Name))){
+ #   CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% select(-c(Year, CU, CU_Names))
+ #   # Added by K.Holt
+ #   CUages.byCU[CUages.byCU$age3 == 1,1]<-0.99
+ #   CUages.byCU[CUages.byCU$age4 == 0,2]<-0.01
+ #   
+ #   CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
+ # }
+ # 
  
  
 # TMB input parameters:
@@ -141,37 +157,45 @@ if (file.exists(projOutDir2) == FALSE){
 setwd(codeDir)
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
-
 # Create samSim input files for current scenario
-scenarioName <- "IM.base"
+scenarioName <- "IM_1.0cvER"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
                                 nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
 
-
 # Create samSim input files for current scenario
-scenarioName <- "IM.highGammaSig"
+scenarioName <- "IM_0.5cvER"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=1)
-
-
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL)
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.medGammaSig"
+scenarioName <- "IM_0.1cvER"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=0.5)
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
+
 
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.base_noERCV"
+scenarioName <- "IM_0cvER"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0, recCorScalar=1,gammaSigScalar=NULL)
+
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM_0cvER"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
@@ -180,50 +204,69 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=s
 
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.base_noER0"
+scenarioName <- "IM_0.1cvER"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
-
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
 
 
 # Create samSim input files for current scenario
-scenarioName <- "IM.base.test"
+scenarioName <- "IM_0.1cvER_hiGammaCV"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=500, nProj=10, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=1)
+
+# Create samSim input files for current scenario
+scenarioName <- "IM_0.1cvER_medGammaCV"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=0.7)
+
+# Create samSim input files for current scenario
+scenarioName <- "IM_0.1cvER_loGammaCV"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=0.2)
 
 
-scenarioName <- "HM.base"
+
+scenarioName <- "HM_0.1cvER"
 BMmodel <- "SR_HierRicker_Surv"
 TMB_Inputs <- TMB_Inputs_HM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
 
 
-scenarioName <- "IMCap.base"
+
+scenarioName <- "IMCap_0.1cvER"
 BMmodel <- "SR_IndivRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_IM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
 
 
-scenarioName <- "HMCap.base"
+scenarioName <- "HMCap_0.1cvER"
 
 BMmodel <- "SR_HierRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_HM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
+
+
 
 
 
@@ -277,9 +320,8 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 
-OMsToInclude<-c("IM.base","IM.base_noERCV", "IM.highGammaSig", "IM.medGammaSig", "IM.base_noER0") 
-
-#OMsToInclude<-c("IM.base","IM.highGammaSig") 
+OMsToInclude<-OMsToTest<-c("IM_1.0cvER", "IM_0.5cvER", "IM_0.1cvER","IM_0cvER", "IM_0.1cvER_hiGammaCV",
+                           "IM_0.1cvER_medGammaCV","IM_0.1cvER_loGammaCV","IMCap_0.1cvER")
 
 # Loop over OM Scenarios 
 for (i in 1:length(OMsToInclude)) {
@@ -400,84 +442,10 @@ for (i in 1:length(OMsToInclude)) {
 # (7) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
-# Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
+# # ---- Code to compare observed and projected among-CU correlations in spawner abundance
 
-
-# # Plot to compare LRP among different SRR structures =====================
-# 
-# OMsToPlot<-c("IM.Base", "HM.Base", "IMCap.base", "HMCap.base")
-# 
-# p<-1.0
-# plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
-# g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
-#              geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
-#              xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
-#               scale_x_discrete(limits=c("IM.Base","IMCap.base","HM.Base","HMCap.base"),
-#                                labels=c("IM", "IM.Cap", "HM", "HM.Cap"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
-#        width = 4, height = 3, units = "in")    
-# 
-# 
-# p<-0.8
-# plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
-# g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
-#   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
-#   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
-#   scale_x_discrete(limits=c("IM.Base","IMCap.base","HM.Base","HMCap.base"),
-#                    labels=c("IM", "IM.Cap", "HM", "HM.Cap"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
-#        width = 4, height = 3, units = "in")
-# 
-# 
-# # Plot to show combined OM scenarios =====================================
-# 
-# OMsToPlot<-c("IM.Base","IMCap.base", "CombinedIM")
-# 
-# p<-1.0
-# 
-# plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
-# 
-# g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
-#   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
-#   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
-#   scale_x_discrete(limits=c("IM.Base","IMCap.base", "CombinedIM"),
-#                    labels=c("IM", "IM.Cap", "IM.Composite"))
-# 
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_compositeIM_p=",p,".pdf",sep=""), plot = g,
-#        width = 4, height = 3, units = "in")    
-# 
-# 
-# Plot to show sensitivity analysis to variability in gamma
-
-# OMsToPlot<-c("IM.Base","IM.medGammaSig","IM.medGammaSig")
-
-# p<-1.0
-# plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
-# g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
-#   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
-#   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
-#   scale_x_discrete(limits=c("IM.Base","IM.60RecCor","IM.40RecCor","IM.10RecCor", "IM-.20RecCor","IM-.40RecCor"),
-#                    labels=c("Base(MPD)", "60%Corr", "40%Corr","20%Corr","-20%Corr","-40%Corr"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
-#        width = 4, height = 3, units = "in")  
-# 
-# p<-0.8
-# plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
-# g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
-#   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
-#   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
-#   scale_x_discrete(limits=c("IM.Base","IM.80RecCor","IM.60RecCor","IM.40RecCor","IM.10RecCor"),
-#                    labels=c("Base(MPD)", "80%Corr", "60%Corr","40%Corr","10%Corr"))
-# ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
-#        width = 4, height = 3, units = "in")  
-# 
-# 
-# 
-# # ---- Temporary code to test effect of correlation scalar on projected correlations
-
-#MPD_recCormat<-read.csv(paste(cohoDir,"/SamSimInputs/IM.base/corrMat.csv", sep=""), header=F)
-
-OMsToTest<-c("IM.base","IM.base_noERCV","IM.medGammaSig","IM.highGammaSig")
+OMsToTest<-c("IM_1.0cvER", "IM_0.5cvER", "IM_0.1cvER","IM_0cvER", "IM_0.1cvER_hiGammaCV",
+             "IM_0.1cvER_medGammaCV","IM_0.1cvER_loGammaCV","IMCap_0.1cvER")
 
 
 for (j in 1:length(OMsToTest)) {
@@ -529,17 +497,97 @@ SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
 # Save LRPs for all OM scenarios
 write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
 
+dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM_0.1cvER", "IM_0.1cvER_hiGammaCV",
+                                                      "IM_0.1cvER_medGammaCV","IM_0.1cvER_loGammaCV"))
 
-factor(SpwnCorr.df$OM_Name,levels = c("Observed","IM.base_noERCV", 'IM.base' ,"IM.medGammaSig", "IM.highGammaSig"),ordered = TRUE)
 
-g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
-        scale_x_discrete(limits=c("Observed","IM.base", "IM.medGammaSig", "IM.highGammaSig","IM.base_noERCV"),
-          labels=c("Observed", "IM.Base", "IM.MedCorr", "IM.LowCorr","IM.noERCV")) +
+g <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
+        scale_x_discrete(limits=c("Observed", "IM_1.0cvER", "IM_0.5cvER", "IM_0.1cvER","IM_0cvER"),
+          labels=c("Obs", "1.0cvER", "0.5cvER", "0.1cvER","0cvER")) +
           xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
-  
- ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareEscpCorrelation.png",sep=""), plot = g,
-        width = 4, height = 3, units = "in") 
 
+
+  
+ ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_GammaSig.png",sep=""), plot = g,
+        width = 4, height = 3, units = "in") 
+ 
+ # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
+ 
+ 
+ # # Plot to compare LRP among different SRR structures =====================
+ # 
+ # OMsToPlot<-c("IM.Base", "HM.Base", "IMCap.base", "HMCap.base")
+ # 
+ # p<-1.0
+ # plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
+ # g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
+ #              geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
+ #              xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
+ #               scale_x_discrete(limits=c("IM.Base","IMCap.base","HM.Base","HMCap.base"),
+ #                                labels=c("IM", "IM.Cap", "HM", "HM.Cap"))
+ # ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
+ #        width = 4, height = 3, units = "in")    
+ # 
+ # 
+ # p<-0.8
+ # plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
+ # g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
+ #   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
+ #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
+ #   scale_x_discrete(limits=c("IM.Base","IMCap.base","HM.Base","HMCap.base"),
+ #                    labels=c("IM", "IM.Cap", "HM", "HM.Cap"))
+ # ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_byOM_p=",p,".pdf",sep=""), plot = g,
+ #        width = 4, height = 3, units = "in")
+ # 
+ # 
+ # # Plot to show combined OM scenarios =====================================
+ # 
+ # OMsToPlot<-c("IM.Base","IMCap.base", "CombinedIM")
+ # 
+ # p<-1.0
+ # 
+ # plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
+ # 
+ # g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
+ #   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
+ #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
+ #   scale_x_discrete(limits=c("IM.Base","IMCap.base", "CombinedIM"),
+ #                    labels=c("IM", "IM.Cap", "IM.Composite"))
+ # 
+ # ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_compositeIM_p=",p,".pdf",sep=""), plot = g,
+ #        width = 4, height = 3, units = "in")    
+ # 
+ # 
+ # Plot to show sensitivity analysis to variability in gamma
+ 
+ # OMsToPlot<-c("IM.Base","IM.medGammaSig","IM.medGammaSig")
+ 
+ # p<-1.0
+ # plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
+ # g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
+ #   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
+ #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
+ #   scale_x_discrete(limits=c("IM.Base","IM.60RecCor","IM.40RecCor","IM.10RecCor", "IM-.20RecCor","IM-.40RecCor"),
+ #                    labels=c("Base(MPD)", "60%Corr", "40%Corr","20%Corr","-20%Corr","-40%Corr"))
+ # ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
+ #        width = 4, height = 3, units = "in")  
+ # 
+ # p<-0.8
+ # plotDat<- LRPs %>% filter(ppnCUsLowerBM ==p & OM.Name %in% OMsToPlot)
+ # g <-ggplot(data=plotDat, mapping=aes(x=OM.Name, y=LRP.50)) +
+ #   geom_point() + geom_errorbar(aes(ymin=LRP.05, ymax=LRP.95), width=0) +
+ #   xlab("Operating Model") + ylab(paste("LRP (p=", p,")", sep="")) +
+ #   scale_x_discrete(limits=c("IM.Base","IM.80RecCor","IM.60RecCor","IM.40RecCor","IM.10RecCor"),
+ #                    labels=c("Base(MPD)", "80%Corr", "60%Corr","40%Corr","10%Corr"))
+ # ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareLRP_SAnalRecCorr_p=",p,".pdf",sep=""), plot = g,
+ #        width = 4, height = 3, units = "in")  
+ # 
+ # 
+ # 
+ 
+ 
+ 
+ 
   
 # # Plot to show sensitivity analysis to ER variability
 # 
