@@ -16,7 +16,10 @@
 #     (4) Run sensitivity analysis projections
 #     (5) Estimate and save LRPs, and associated plots
 #     (6) Plot CU-level spawner abundance projections (Optional)
-#     (7) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+#     (7) Code to create mcmcOut for Ricker pars from an assumed distn of a and
+#         SREP
+#     (8) Code to calculate tau for variabilty in age proportions
+#     (9) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
 
 # ===============================================================================
 
@@ -168,12 +171,12 @@ corMat <- cor(dum)
 #-------------------------------------------------------------------------------
 
 # Create samSim input files for current scenario
-scenarioName <- "Base.n100"
+scenarioName <- "Base.n100.mcmc"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
-                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.42,
                                 recCorScalar=1, corMat=corMat)
 
@@ -204,6 +207,16 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
+                                nMCMC=NULL, nProj=2000, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
+
+# Create samSim input files for current scenario
+scenarioName <- "Base.n2000.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=2000, cvER = 0.42,
                                 recCorScalar=1, corMat=corMat)
 
@@ -240,7 +253,7 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("Base", "Base.n100", "Base.n500", "Base.n1000", "Base.n2000")
+OMsToInclude<-c("Base.n100.mcmc")#, "Base.n500", "Base.n1000", "Base.n2000")
 
 
 # Loop over OM Scenarios
@@ -321,119 +334,6 @@ write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"),
 
 
 
-# ===================================================================
-# Code to create mcmcOut for wCVI CK (move up)
-# ===================================================================
-
-remove.EnhStocks <- TRUE
-# SREP files are from github repository, Watershed-Area-Model and are from
-# "Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"
-
-# # Hard coding from Watershed-Area-Model directory
-# if (remove.EnhStocks) SREP <- data.frame(read.csv(
-#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"))
-# if (!remove.EnhStocks) SREP <- data.frame(read.csv(
-#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_wEnh.csv"))
-
-# For now, I have copied the SREP files to the SalmonLRP_RetroEval repository
-# If the watershed-area-model is updated, these files will need to be updated
-setwd(wcviCKDir)
-if (remove.EnhStocks) SREP <- data.frame(read.csv(
-  "DataIn/WCVI_SMSY_noEnh.csv"))
-if (!remove.EnhStocks) SREP <- data.frame(read.csv(
-  "DataIn/WCVI_SMSY_wEnh.csv"))
-
-
-
-#Inlet_Names <- c("Kyuquot", "Clayoquot", "Quatsino", "Barkley", "Nootka/Esperanza")
-
-SREP <- SREP %>% filter(Stock %in% Inlet_Names) %>% filter(Param=="SREP") %>%
-  select(!c(X, Param)) %>% rename(SREP=Estimate, inlets=Stock)
-
-
-read.csv(paste("samSimInputs/CUPars.csv")) %>% select(alpha,stk) %>% pull(alpha)
-
-lnalpha_inlet <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
-  select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)#pull(alpha)
-
-Inlet_Names <- lnalpha_inlet$inlets
-
-
-out <- SREP %>% left_join(lnalpha_inlet, by="inlets")
-
-out
-nTrials <- 100
-#Draw alpha, then draw logSREP parameters,then calc beta for that draw (lnalpha/SREP) Look at KFrun.R.
-for (i in 1:length(Inlet_Names)){
-  meanSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(SREP)
-  logmeanSREP <- log(meanSREP)
-  ULSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(UL)
-  logULSREP <- log(ULSREP)
-  LLSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(LL)
-  logLLSREP <- log(LLSREP)
-  sigSREP <- (logmeanSREP-logLLSREP)/1.96
-  #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
-  rSREP <- exp(rnorm(nTrials, logmeanSREP,sigSREP))
-
-  meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)
-  # ULlnalpha <- 2
-  # LLlnalpha <- 0
-  siglnalpha <- 0.5 # Assuming 95% CIs at 0 and 2, sig ~0.5.
-
-  rlnalpha <- data.frame(a=rnorm(nTrials*1.5, meanlnalpha, siglnalpha))
-  #fix this!
-  rlnalpha <- rlnalpha %>% filter(a>0&a<2) %>% slice(1:nTrials)
-  rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
-    filter(stkName==Inlet_Names[i]) %>% select(sigma,stk)
-  if (i==1) mcmcOut <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
-                                   beta=rlnalpha$a/rSREP, sigma= rsig$sigma )
-  if (i>1) mcmcOut <- mcmcOut %>% add_row(stk=rsig$stk, alpha=rlnalpha$a,
-                                          beta=rlnalpha$a/rSREP, sigma= rsig$sigma)
-
-}
-
-scenInputDir <- paste(wcviCKDir, "SamSimInputs", scenarioName, sep="/")
-write.csv(mcmcOut, paste(scenInputDir,"Ricker_mcmc.csv", sep="/"), row.names=F)
-
-
-
-
-# ===================================================================
-# Code to estimate uncertainy in age ppns in recruitmeny by BY (move up)
-# ===================================================================
-
-calcTau <- FALSE
-if(calcTau){
-  setwd(wcviCKDir)
-
-  Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
-  CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
-  CU_inlet[Inlet_Names=="Barkley",2] <- "Southwest_Vancouver_Island"
-  CU_inlet[Inlet_Names=="Clayoquot",2] <- "Southwest_Vancouver_Island"
-  CU_inlet[Inlet_Names=="Kyuquot",2] <- "Nootka_Kyuquot"
-  CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "Nootka_Kyuquot"
-  CU_inlet[Inlet_Names=="Quatsino",2] <- "Northwest_Vancouver_Island"
-
-  CUages <- data.frame(read.csv("DataIn/CUages.csv"))
-  CU.tau <- NA
-  for (i in 1: length(unique(esCUag$CU_Names))){
-    CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% select(-c(Year, CU, CU_Names))
-    CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
-  }
-  df <- data.frame(CU_Names=unique(CUages$CU_Names), CU.tau=CU.tau)
-  inletTau <- left_join(CU_inlet, df)
-
-  # Use these tau values for `tauCycAge` in samSim- logistic variation in age
-  #  structure
-  # Inlet_Names                   CU_Names CU.tau
-  #           Kyuquot             Nootka_Kyuquot    0.6
-  #         Clayoquot Southwest_Vancouver_Island    0.7
-  #          Quatsino Northwest_Vancouver_Island    0.7
-  #           Barkley Southwest_Vancouver_Island    0.7
-  #  Nootka/Esperanza             Nootka_Kyuquot    0.6
-
-}
-
 
 # ===================================================================
 # (6) Plot CU-level Spawner Abundance Projections (Optional)
@@ -477,7 +377,130 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # ===================================================================
-# (7) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
+# (7) Code to create mcmcOut for SR parameters for WCVI CK
+# ===================================================================
+
+# The mcmc is written to a file that is read-in by ProjRLRP_Functions.r
+
+# SREP files are from github repository, Watershed-Area-Model and are from
+# "Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"
+
+# # Hard coding from Watershed-Area-Model directory
+# if (remove.EnhStocks) SREP <- data.frame(read.csv(
+#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"))
+# if (!remove.EnhStocks) SREP <- data.frame(read.csv(
+#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_wEnh.csv"))
+
+# For now, I have copied the SREP files to the SalmonLRP_RetroEval repository
+# If the watershed-area-model is updated, these files will need to be updated
+
+createMCMCout <- FALSE
+
+# Only need to run once to create mcmcOut.csv file with a given assumed
+# distribution of alpha and SREP
+
+if(createMCMCout){
+  remove.EnhStocks <- TRUE
+  nTrials <- 5000
+
+  setwd(wcviCKDir)
+  if (remove.EnhStocks) SREP <- data.frame(read.csv(
+    "DataIn/WCVI_SMSY_noEnh.csv"))
+  if (!remove.EnhStocks) SREP <- data.frame(read.csv(
+    "DataIn/WCVI_SMSY_wEnh.csv"))
+
+
+  #Inlet_Names <- c("Kyuquot", "Clayoquot", "Quatsino", "Barkley", "Nootka/Esperanza")
+  SREP <- SREP %>% filter(Stock %in% Inlet_Names) %>% filter(Param=="SREP") %>%
+    select(!c(X, Param)) %>% rename(SREP=Estimate, inlets=Stock)
+
+
+  read.csv(paste("samSimInputs/CUPars.csv")) %>% select(alpha,stk) %>% pull(alpha)
+
+  lnalpha_inlet <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+    select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)#pull(alpha)
+
+  Inlet_Names <- lnalpha_inlet$inlets
+
+  out <- SREP %>% left_join(lnalpha_inlet, by="inlets")
+
+  #Draw alpha value, then draw logSREP parameters,then calc beta for that draw
+  # (lnalpha/SREP)
+  for (i in 1:length(Inlet_Names)){
+    meanSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(SREP)
+    logmeanSREP <- log(meanSREP)
+    ULSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(UL)
+    logULSREP <- log(ULSREP)
+    LLSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(LL)
+    logLLSREP <- log(LLSREP)
+    sigSREP <- (logmeanSREP-logLLSREP)/1.96
+    #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
+    rSREP <- exp(rnorm(nTrials, logmeanSREP,sigSREP))
+
+    meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)
+    # ULlnalpha <- 2
+    # LLlnalpha <- 0
+    siglnalpha <- 0.5 # Assuming 95% CIs at 0 and 2, sig ~0.5.
+
+    rlnalpha <- data.frame(a=rnorm(nTrials*1.5, meanlnalpha, siglnalpha))
+    rlnalpha <- rlnalpha %>% filter(a>0&a<2) %>% slice(1:nTrials)
+    rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+      filter(stkName==Inlet_Names[i]) %>% select(sigma,stk)
+    if (i==1) mcmcOut <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
+                                     beta=rlnalpha$a/rSREP, sigma= rsig$sigma )
+    if (i>1) mcmcOut <- mcmcOut %>% add_row(stk=rsig$stk, alpha=rlnalpha$a,
+                                            beta=rlnalpha$a/rSREP, sigma= rsig$sigma)
+
+  }
+
+  write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc.csv", sep="/"),
+            row.names=F)
+
+
+}
+
+
+
+# ===================================================================
+# (8) Code to estimate uncertainy in age ppns in recruitmeny by BY
+# ===================================================================
+
+calcTau <- FALSE
+if(calcTau){
+  setwd(wcviCKDir)
+
+  Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+  CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
+  CU_inlet[Inlet_Names=="Barkley",2] <- "Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Clayoquot",2] <- "Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Kyuquot",2] <- "Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Quatsino",2] <- "Northwest_Vancouver_Island"
+
+  CUages <- data.frame(read.csv("DataIn/CUages.csv"))
+  CU.tau <- NA
+  for (i in 1: length(unique(esCUag$CU_Names))){
+    CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% select(-c(Year, CU, CU_Names))
+    CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
+  }
+  df <- data.frame(CU_Names=unique(CUages$CU_Names), CU.tau=CU.tau)
+  inletTau <- left_join(CU_inlet, df)
+
+  # Use these tau values for `tauCycAge` in samSim- logistic variation in age
+  #  structure
+  # Inlet_Names                   CU_Names CU.tau
+  #           Kyuquot             Nootka_Kyuquot    0.6
+  #         Clayoquot Southwest_Vancouver_Island    0.7
+  #          Quatsino Northwest_Vancouver_Island    0.7
+  #           Barkley Southwest_Vancouver_Island    0.7
+  #  Nootka/Esperanza             Nootka_Kyuquot    0.6
+
+}
+
+
+
+# ===================================================================
+# (9) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
 # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
