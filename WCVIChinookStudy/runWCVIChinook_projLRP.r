@@ -226,6 +226,25 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat)
 
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=TRUE,
+                                annualcvERCU=TRUE)
+
 scenarioName <- "cvER0.42.cvERSMU0.42.n100.mcmc"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
@@ -377,8 +396,9 @@ OMsToInclude<-c("cvER0.01.n100.mcmc",
                 "cvER0.42.cvERSMU0.42.n100.mcmc",
                 "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
                 "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
-                "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"
-
+                "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"
                 )
 
 
@@ -610,7 +630,7 @@ if(calcTau){
 
   CUages <- data.frame(read.csv("DataIn/CUages.csv"))
   CU.tau <- NA
-  for (i in 1: length(unique(esCUag$CU_Names))){
+  for (i in 1: length(unique(CUages$CU_Names))){
     CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% select(-c(Year, CU, CU_Names))
     CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
   }
@@ -637,12 +657,13 @@ OMsToTest<-c(   #"Base.n100.mcmc",
                 # "cvER0.n100.mcmc",
                 # "cvER0.6.n100.mcmc",
                 # "cvER0.cvERSMU0.42n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.n100.mcmc",#)
-
-                "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
-                "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc")
+                 "cvER0.21.cvERSMU0.42.n100.mcmc",
+                #"cvER0.42.cvERSMU0.42.n100.mcmc",#)
+                "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc")
+                # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc")
 
   # "cvER0.01.n100.mcmc",
   #            "recCorScalar1.5.n100.mcmc",
@@ -710,12 +731,14 @@ factor(SpwnCorr.df$OM_Name,levels = c(#"Base.n100.mcmc",
                                       # "cvER0.n100.mcmc",
                                       # "cvER0.6.n100.mcmc",
                                       # "cvER0.cvERSMU0.42n100.mcmc",
-                                      # "cvER0.21.cvERSMU0.42.n100.mcmc",
                                       "Observed",
-                                      "cvER0.42.cvERSMU0.42.n100.mcmc",#),
-                                      "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
-                                      "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
-                                      "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"),
+                                      "cvER0.21.cvERSMU0.42.n100.mcmc",
+                                      "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                                      "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"),
+                                      # "cvER0.42.cvERSMU0.42.n100.mcmc",#),
+                                      # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"),
 
        ordered = TRUE)
 
@@ -737,10 +760,13 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxpl
                             # "cvER0.6.n100.mcmc",
                             # "cvER0.cvERSMU0.42n100.mcmc",
                             # "cvER0.21.cvERSMU0.42.n100.mcmc",
-                            "cvER0.42.cvERSMU0.42.n100.mcmc",#),
-                   "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
-                   "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
-                   "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"),
+                            "cvER0.21.cvERSMU0.42.n100.mcmc",
+                            "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                            "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"),
+                            # "cvER0.42.cvERSMU0.42.n100.mcmc",#),
+                           # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
+                           # "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
+                           # "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"),
 
                             # "cvER0.01.n100.mcmc",
                             # "recCorScalar1.5.n100.mcmc",
@@ -758,12 +784,15 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxpl
                             # "cvER0.01\nrecCor1.2\nnoAgeTau",
                             # "cvER0\ncvERSMU0.42",
                             # "Base", "cvER=0", "cvER=0.6",
-                            # "cvER=0\ncvERSMU=0.42", "cvER=0.21\ncvERSMU=0.42",
-                            "cvER=0.42\ncvERSMU=0.42", "noAgeTau", "recCor1.5", "noAgeTau\nrecCor1.5")) +
+                            # "cvER=0\ncvERSMU=0.42",
+                            "cvER=0.21\ncvERSMU=0.42",
+                            "cvER=0.21\ncvERSMU=0.42\nagePpnConst",
+                            "cvER=0.21\ncvERSMU=0.42\nagePpnConst\nannualcvERCU")) +
+                            #"cvER=0.42\ncvERSMU=0.42", "noAgeTau", "recCor1.5", "noAgeTau\nrecCor1.5")) +
   xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation") +
   theme(axis.text=element_text(size=5))
 
-ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscpCorrelationAgeRecCor.png",sep=""), plot = g,
+ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscpCorrelationAgePpnConst.png",sep=""), plot = g,
        width = 4, height = 3, units = "in")
 
 
