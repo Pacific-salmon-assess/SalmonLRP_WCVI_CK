@@ -248,13 +248,13 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=s
 
 
 
-scenarioName <- "IMCap_0.1cvER"
-BMmodel <- "SR_IndivRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_IM_priorCap
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
+# scenarioName <- "IMCap_0.1cvER"
+# BMmodel <- "SR_IndivRicker_SurvCap"
+# TMB_Inputs <- TMB_Inputs_IM_priorCap
+# 
+# projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+#                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+#                                 nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
 
 
 scenarioName <- "HMCap_0.1cvER"
@@ -263,7 +263,7 @@ BMmodel <- "SR_HierRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_HM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
                                 nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
 
 
@@ -461,7 +461,7 @@ for (j in 1:length(OMsToTest)) {
 
   for (i in 1:max(spDat$iteration)) {
 
-    recruits.i<-spDat %>% filter(iteration==i & expRate==0.125) %>%  select(-spawners)
+    recruits.i<-spDat %>% filter(iteration==i & expRate==0.325) %>%  select(-spawners)
     recruits.i<-recruits.i %>% select(-expRate, -iteration)
     cor_mat<-recruits.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=recruits) %>% select(-year) %>% cor()
     RecCorMat[,,i]<-cor_mat
@@ -502,13 +502,23 @@ dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM_0.1cvER", "
 
 
 g <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
-        scale_x_discrete(limits=c("Observed", "IM_1.0cvER", "IM_0.5cvER", "IM_0.1cvER","IM_0cvER"),
-          labels=c("Obs", "1.0cvER", "0.5cvER", "0.1cvER","0cvER")) +
+        scale_x_discrete(limits=c("Observed", "IM_0.1cvER", "IM_0.1cvER_loGammaCV",
+                                  "IM_0.1cvER_medGammaCV","IM_0.1cvER_hiGammaCV"),
+          labels=c("Obs", "IM_0.1cvER", "loGammaCV", "medGammaCV","hiGammaCV")) +
           xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
 
-
   
- ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_GammaSig.png",sep=""), plot = g,
+
+dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM_1.0cvER","IM_0.5cvER","IM_0.1cvER","IM_0cvER"))
+
+
+
+g2 <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
+  scale_x_discrete(limits=c("Observed","IM_1.0cvER","IM_0.5cvER","IM_0.1cvER","IM_0cvER"),
+                   labels=c("Obs", "1.0cvER", "0.5cvER", "0.1cvER","0cvER")) +
+  xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
+
+ ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_cvER.png",sep=""), plot = g2,
         width = 4, height = 3, units = "in") 
  
  # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
