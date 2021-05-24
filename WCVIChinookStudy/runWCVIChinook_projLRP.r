@@ -183,12 +183,13 @@ corMat <- cor(dum)
 #wcviRicResids <- data.frame(read.csv("DataIn/WCVI_RickerResids.csv"))
 #corMat <- cor(na.omit(wcviRicResids))
 
-InletRickerResid <- data.frame(read.csv(paste(wcviCKDir, "DataIn/InletRickerResid.csv",sep="/")))
+InletRickerResid <- data.frame(read.csv(paste(wcviCKDir, "DataIn/CURickerResid.csv",sep="/")))
 acf(InletRickerResid$SWVI[7:30], na.rm=TRUE)
 acf(InletRickerResid$No.KY, na.rm=TRUE)
 acf(InletRickerResid$NWVI, na.rm=TRUE)
-
-acf(InletRickerResid$WCVI, na.rm=TRUE)
+png(paste(wcviCKDir,"/Figures/acfWCVIRickerResid.png", sep=""), width=5, height=4, units="in", res=500)
+acf(InletRickerResid$WCVI)
+dev.off()
 #-------------------------------------------------------------------------------
 #TESTING
 # SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
