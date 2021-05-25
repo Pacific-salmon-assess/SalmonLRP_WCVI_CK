@@ -254,13 +254,32 @@ mean(c(rh$exploit_rate[rh$CU=="Georgia Strait"], rh$exploit_rate[rh$CU=="Georgia
 # no, it is not, still <0.4 average exploitation rate
 
 # plot exploitation rate
-ggplot(rh, aes(y=exploit_rate, x=Year, group=CU)) +
-  geom_point() +
-  geom_path() +
-  facet_wrap(~CU) +
-  scale_x_discrete(breaks=seq(1960,2020,10)) +
-  theme_bw() +
-  theme(axis.text.x=element_text(angle=90, vjust=0.5))
+# ggplot(rh, aes(y=exploit_rate, x=Year, group=CU)) +
+#   geom_point() +
+#   geom_path() +
+#   facet_wrap(~CU) +
+#   scale_x_discrete(breaks=seq(1960,2020,10)) +
+#   theme_bw() +
+#   theme(axis.text.x=element_text(angle=90, vjust=0.5))
+
+# Double check that wild exploitation rates (estimated) are matching total
+# There are some years where estimated wild returns is lower than escapement.
+#   This is for years*CUs with CU-level infilling.  
+check_ER <- Btable[!Btable$Year==1953,] # remove 1953 without harvest data
+check_ER <- check_ER[check_ER$CUinfill==FALSE, ] # keep only years*CUs without CU level infilling
+check_ER$exploit_rate <- (check_ER$Return - check_ER$Escape) / check_ER$Return
+
+ers <- check_ER %>% group_by(CU) %>% summarise(mean_ER = mean(exploit_rate, na.rm=TRUE))
+# confirm yes, exploitation rates are nearly the same for total and wild fish
+# (based on same data, but wanted to check)
+# ggplot(check_ER, aes(y=exploit_rate, x=Year, group=CU)) +
+#   geom_point() +
+#   geom_path() +
+#   facet_wrap(~CU) +
+#   scale_x_discrete(breaks=seq(1960,2020,10)) +
+#   theme_bw() +
+#   theme(axis.text.x=element_text(angle=90, vjust=0.5))
+# 
 
 # ----------------------------------------------------#
 # Explore data with figures - LW ------------
