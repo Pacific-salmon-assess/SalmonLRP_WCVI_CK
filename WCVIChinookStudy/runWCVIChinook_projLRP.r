@@ -1,6 +1,6 @@
 # ============================================================================
 # Calculation of Projected Limit Reference Points for Interior Fraser Coho
-# Carrie Holt, Last update: May 4, 2021
+# Carrie Holt, Last update: May 12, 2021
 # ================================================================================
 
 # Projected LRPs represent the aggregate abundance that is associated with a specified probability
@@ -16,7 +16,10 @@
 #     (4) Run sensitivity analysis projections
 #     (5) Estimate and save LRPs, and associated plots
 #     (6) Plot CU-level spawner abundance projections (Optional)
-#     (7) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+#     (7) Code to create mcmcOut for Ricker pars from an assumed distn of a and
+#         SREP
+#     (8) Code to calculate tau for variabilty in age proportions
+#     (9) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
 
 # ===============================================================================
 
@@ -30,6 +33,8 @@ library(TMB)
 library(tmbstan)
 library(here)
 library(zoo)
+library(corrplot)
+
 
 setwd('..')
 rootDir<-getwd()
@@ -42,24 +47,25 @@ sourceAll <- function(){
   source("ProjLRP_Functions.r")
   source("plotFunctions.r")
   source("helperFunctions.r")
+  source("get.mv.logistic.tau.r")
 }
 sourceAll()
 
-# Load TMB models for fitting Bayesian Ricker stock recruit models;
-#   outputs from these model fits are used to parameterize samSim
-
-compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
-
-compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
-
-compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
-
-compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
-dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
-
+# # Load TMB models for fitting Bayesian Ricker stock recruit models;
+# #   outputs from these model fits are used to parameterize samSim
+#
+# compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
+#
+# compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
+#
+# compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
+#
+# compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
+# dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
+#
 
 # ======================================================================
 #(1)  Read-in WCVI Chinook data:
@@ -70,52 +76,52 @@ CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
 # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
 CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
+
+
 wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")
-SRDat <- wcviCKSRDat
-SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat$CU_ID <- group_by(SRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat
+wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+wcviCKSRDat$CU_ID <- group_by(wcviCKSRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 # ======================================================================
 # (2) Specify initial parameters & datasets for projections
 # =====================================================================
 
-# Subset data up to current year
-year <- 2018 # - last year of data for parameterization
-BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
-
-# Only use SR data for brood years that have recruited by specified year
-# (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
-SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
-
-SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-
-
-# TMB input parameters:
-TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-                      logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
-TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
-                      Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
-
-TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
-
-# Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
-
-TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
+# # Subset data up to current year
+# year <- 2018 # - last year of data for parameterization
+# BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
+#
+# # Only use SR data for brood years that have recruited by specified year
+# # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
+# SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
+#
+# SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+# SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+#
+#
+# # TMB input parameters:
+# TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+#                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+#
+#
+# TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
+#                       Tau_dist = 0.1,
+#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+#
+#
+# # Prior means come from running "compareRickerModelTypes.r"
+# cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+#
+# TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+#                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
+#
+# # Prior means come from running "compareRickerModelTypes.r"
+# cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+#
+# TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
+#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
 
 
 
@@ -148,97 +154,543 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
 
-# Create samSim input files for current scenario
-scenarioName <- "IM.base"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
+
 # Create a correlation matrix from spawner time-series, as a proxy for
 # correlation in recruitment residuals assuming no density dependence and
 # constant harvest. Only used if recruitment time-series are missing
-dum <- SRDat %>% select(CU_ID, BroodYear, Spawners)
+dum <- wcviCKSRDat %>% select(CU_ID, BroodYear, Spawners)
 dum <- dum %>% pivot_wider(id_cols=c(CU_ID, BroodYear), names_from=CU_ID,
                            values_from=Spawners) %>% select (!BroodYear)
+dum <- dum %>% drop_na()
 corMat <- cor(dum)
 
+
+# Plot Bubble plot of correlations
+# rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
+# colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
+#
+# png(filename=paste(wcviCKDir, "/Figures/SpawnerCorrelation.png", sep=""), width=4, height=4.5, units="in", res=500)
+# corrplot(corMat, method="circle", p.mat=corMat, insig="p-value", type="lower")
+# dev.off()
+
+# Alternatively, create correlation from Ricker residuals from run
+# reconstruction. However, reconstruction currently done at CU level. Although I
+# have inlet-level raw escapements, without infilling gaps, the time-series of
+# comparable data ends up being n=5 years, which is too short for a cor matrix
+# (gives very high & variable correlations), and results in not pos. def. errors
+# Ricker residuals estimated in
+# "WCVI_term_model_revisions_updated_withIneltReconstruction.xlsx"
+#wcviRicResids <- data.frame(read.csv("DataIn/WCVI_RickerResids.csv"))
+#corMat <- cor(na.omit(wcviRicResids))
+
+InletRickerResid <- data.frame(read.csv(paste(wcviCKDir, "DataIn/CURickerResid.csv",sep="/")))
+acf(InletRickerResid$SWVI[7:30], na.rm=TRUE)
+acf(InletRickerResid$No.KY, na.rm=TRUE)
+acf(InletRickerResid$NWVI, na.rm=TRUE)
+png(paste(wcviCKDir,"/Figures/acfWCVIRickerResid.png", sep=""), width=5, height=4, units="in", res=500)
+acf(InletRickerResid$WCVI)
+dev.off()
 #-------------------------------------------------------------------------------
 #TESTING
-SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
-                                                     'Age_4_Recruits',
-                                                     'STAS_Age_3', 'STAS_Age_4',
-                                                     'ER_Age_3', 'ER_Age_4',
-                                                     'Hatchery'))
-SRDat <- NULL
+# SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
+#                                                      'Age_4_Recruits',
+#                                                      'STAS_Age_3', 'STAS_Age_4',
+#                                                      'ER_Age_3', 'ER_Age_4',
+#                                                      'Hatchery'))
+
 #-------------------------------------------------------------------------------
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1, corMat=corMat)
+# Create samSim input files for current scenario
+setwd(codeDir)
+scenarioName <- "Base.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
+
+scenarioName <- "noAgeTau.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
 
 
-scenarioName <- "HM.base"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
+scenarioName <- "cvER0.n100.mcmc"
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=5000, nProj=10, cvER = 0.456, recCorScalar=1)
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0,
+                                recCorScalar=1, corMat=corMat)
+
+scenarioName <- "cvER0.6.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.6,
+                                recCorScalar=1, corMat=corMat)
+
+scenarioName <- "cvER0.cvERSMU0.42n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat)
 
 
-scenarioName <- "IMCap.base"
-BMmodel <- "SR_IndivRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_IM_priorCap
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc"
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
-
-
-scenarioName <- "HMCap.base"
-
-BMmodel <- "SR_HierRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_HM_priorCap
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1)
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=TRUE)
 
 
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.1, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.2, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.3, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.4, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.5, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.6, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.7, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.8, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
+                                recCorScalar=0.9, corMat=corMat, agePpnConst=TRUE)
+
+
+
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=TRUE)
+
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.1, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.2, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.3, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.4, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.5, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.6, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.7, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.8, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.9, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=TRUE)
+
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.1, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.2, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.3, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.4, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.5, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.6, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.7, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.8, corMat=corMat, agePpnConst=TRUE)
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.9, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=TRUE,
+                                annualcvERCU=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=1.5, corMat=corMat)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=1.5, corMat=corMat)
+
+scenarioName <- "recCorScalar1.5.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42,
+                                recCorScalar=1.5, corMat=corMat)
+
+scenarioName <- "recCorScalar0.5.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42,
+                                recCorScalar=0.5, corMat=corMat)
+
+scenarioName <- "recCorScalar1.5.NoAgeTau.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42,
+                                recCorScalar=1.5, corMat=corMat)
+
+scenarioName <- "recCorScalar1.2.NoAgeTau.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.42,
+                                recCorScalar=1.2, corMat=corMat)
+
+scenarioName <- "cvER0.01recCorScalar1.2.NoAgeTau.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.01,
+                                recCorScalar=1.2, corMat=corMat)
+
+scenarioName <- "cvER0.cvERSMU0.42.n100.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0,
+                                recCorScalar=1, corMat=corMat)
+
+
+# Create samSim input files for current scenario
+scenarioName <- "Base.n2000.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=2000, cvER = 0.42,
+                                recCorScalar=1, corMat=corMat)
 
 
 # ==================================================================
 # (4) Run Sensitivity Analyses
 # ====================================================================
 
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER1.5"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*1.5, recCorScalar=1)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER2.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*2, recCorScalar=1)
-
-
-scenarioName <- "IM.cvER3.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*3.0, recCorScalar=1)
-
-
+#
+# # Create samSim input files for current scenario
+# scenarioName <- "IM.cvER1.5"
+#
+# projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+#                                 scenarioName=scenarioName, useGenMean = F,
+#                                 genYrs = genYrs,  TMB_Inputs=NULL,
+#                                 outDir=wcviCKDir, runMCMC=F, nMCMC=NA,
+#                                 nProj=10, cvER = 0.456*1.5, recCorScalar=1)
+#
+#
+# # Create samSim input files for current scenario
+# scenarioName <- "IM.cvER2.0"
+# #etc. I should include variability in input Ricker a, b, sig, covar, as well as cvER
 
 
 # ===================================================================
@@ -253,7 +705,61 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("IM.base")#,"HM.base")
+OMsToInclude<-c("cvER0.01.n100.mcmc",
+                "recCorScalar1.5.n100.mcmc",
+                "recCorScalar0.5.n100.mcmc",
+                "noAgeTau.n100.mcmc",
+                "recCorScalar1.5.NoAgeTau.n100.mcmc",
+                "recCorScalar1.2.NoAgeTau.n100.mcmc",
+                "cvER0.01recCorScalar1.2.NoAgeTau.n100.mcmc",
+                "cvER0.cvERSMU0.42.n100.mcmc",
+                "Base.n100.mcmc",
+                "Base.n2000.mcmc",
+                "cvER0.n100.mcmc",
+                "cvER0.6.n100.mcmc",
+                "cvER0.cvERSMU0.42n100.mcmc",
+                "cvER0.21.cvERSMU0.42.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
+                "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc"
+
+                )
+
 
 
 # Loop over OM Scenarios
@@ -262,7 +768,7 @@ for (i in 1:length(OMsToInclude)) {
   # Read in samSim outputs for OM
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
   projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
-  CUpars <- read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
+  CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
   projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*4)#)max(SRDat$yr_num)+4)
 
   # Create bins for projected spawner abundances
@@ -305,13 +811,18 @@ for (i in 1:length(OMsToInclude)) {
   }
 
   # Plot projected LRP abundance relationship ===============================================================
-  pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
-      width=6, height=6)
+  png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i],
+            "_ProjLRPCurve_prob",probThresh,".png", sep=""), width=5, height=4,
+      units="in", res=500)
+  # pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
+  #     width=6, height=6)
 
-  plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), cex=0.2,
+  plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19,
+       xlim=c(0, max( as.numeric(as.character(projLRPDat$bins)), na.rm=T)/2 ),
+       cex=0.5, cex.lab=1.5,
        xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
   abline(h=probThresh, lty=2)
-  abline(v=LRP, col="orange", lwd=2)
+  abline(v=LRP, col="orange", lwd=4)
 
   dev.off()
 
@@ -325,7 +836,6 @@ for (i in 1:length(OMsToInclude)) {
 write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
 write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"), row.names=F)
-
 
 
 
@@ -373,7 +883,532 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # ===================================================================
-# (7) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
+# (7) Code to create mcmcOut for SR parameters for WCVI CK
+# ===================================================================
+
+# The mcmc is written to a file that is read-in by ProjRLRP_Functions.r
+
+# SREP files are from github repository, Watershed-Area-Model and are from
+# "Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"
+
+# # Hard coding from Watershed-Area-Model directory
+# if (remove.EnhStocks) SREP <- data.frame(read.csv(
+#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"))
+# if (!remove.EnhStocks) SREP <- data.frame(read.csv(
+#   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_wEnh.csv"))
+
+# For now, I have copied the SREP files to the SalmonLRP_RetroEval repository
+# If the watershed-area-model is updated, these files will need to be updated
+
+createMCMCout <- FALSE
+
+# Only need to run once to create mcmcOut.csv file with a given assumed
+# distribution of alpha and SREP
+
+if(createMCMCout){
+  remove.EnhStocks <- TRUE
+  nTrials <- 5000
+
+  setwd(wcviCKDir)
+  if (remove.EnhStocks) SREP <- data.frame(read.csv(
+    "DataIn/WCVI_SMSY_noEnh.csv"))
+  if (!remove.EnhStocks) SREP <- data.frame(read.csv(
+    "DataIn/WCVI_SMSY_wEnh.csv"))
+
+
+
+  #Get lnaplha
+  read.csv(paste("samSimInputs/CUPars.csv")) %>% select(alpha,stk) %>% pull(alpha)
+
+  lnalpha_inlet <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+    select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)#pull(alpha)
+
+  Inlet_Names <- lnalpha_inlet$inlets
+
+  #Inlet_Names <- c("Kyuquot", "Clayoquot", "Quatsino", "Barkley", "Nootka/Esperanza")
+  SREP <- SREP %>% filter(Stock %in% Inlet_Names) %>% filter(Param=="SREP") %>%
+    select(!c(X, Param)) %>% rename(SREP=Estimate, inlets=Stock)
+
+  out <- SREP %>% left_join(lnalpha_inlet, by="inlets")
+
+  #Draw alpha value, then draw logSREP parameters,then calc beta for that draw
+  # (lnalpha/SREP)
+  for (i in 1:length(Inlet_Names)){
+    meanSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(SREP)
+    logmeanSREP <- log(meanSREP)
+    ULSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(UL)
+    logULSREP <- log(ULSREP)
+    LLSREP <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(LL)
+    logLLSREP <- log(LLSREP)
+    sigSREP <- (logmeanSREP-logLLSREP)/1.96
+    #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
+    rSREP <- exp(rnorm(nTrials, logmeanSREP,sigSREP))
+
+    meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)
+    # ULlnalpha <- 2
+    # LLlnalpha <- 0
+    siglnalpha <- 0.5 # Assuming 95% CIs at 0 and 2, sig ~0.5.
+
+    rlnalpha <- data.frame(a=rnorm(nTrials*1.5, meanlnalpha, siglnalpha))
+    amin <- 0 #(meanlnalpha - siglnalpha)
+    amax <- 2 #(meanlnalpha + siglnalpha)
+    rlnalpha <- rlnalpha %>% filter(a > amin & a < amax) %>%
+      slice(1:nTrials)
+    rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+      filter(stkName==Inlet_Names[i]) %>% select(sigma,stk)
+    if (i==1) mcmcOut <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
+                                     beta=rlnalpha$a/rSREP, sigma= rsig$sigma )
+    if (i>1) mcmcOut <- mcmcOut %>% add_row(stk=rsig$stk, alpha=rlnalpha$a,
+                                            beta=rlnalpha$a/rSREP, sigma= rsig$sigma)
+
+  }
+
+  write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc.csv", sep="/"),
+            row.names=F)
+
+
+}
+
+
+
+# ===================================================================
+# (8) Code to estimate uncertainty in age ppns in recruitment by BY
+# ===================================================================
+
+calcTau <- FALSE
+if(calcTau){
+  setwd(wcviCKDir)
+
+  Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+  CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
+  CU_inlet[Inlet_Names=="Barkley",2] <- "Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Clayoquot",2] <- "Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Kyuquot",2] <- "Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Quatsino",2] <- "Northwest_Vancouver_Island"
+
+  CUages <- data.frame(read.csv("DataIn/CUages.csv"))
+  CU.tau <- NA
+  for (i in 1: length(unique(CUages$CU_Names))){
+    CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% select(-c(Year, CU, CU_Names))
+    CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
+  }
+  df <- data.frame(CU_Names=unique(CUages$CU_Names), CU.tau=CU.tau)
+  inletTau <- left_join(CU_inlet, df)
+
+  # Use these tau values for `tauCycAge` in samSim- logistic variation in age
+  #  structure
+  # Inlet_Names                   CU_Names CU.tau
+  #           Kyuquot             Nootka_Kyuquot    0.6
+  #         Clayoquot Southwest_Vancouver_Island    0.7
+  #          Quatsino Northwest_Vancouver_Island    0.7
+  #           Barkley Southwest_Vancouver_Island    0.7
+  #  Nootka/Esperanza             Nootka_Kyuquot    0.6
+
+}
+
+
+
+# ===================================================================
+# (9) Code to plot distribution of correlations among CUs/inlets
+# ===================================================================
+OMsToTest<-c(   #"Base.n100.mcmc",
+                # "cvER0.n100.mcmc",
+                # "cvER0.6.n100.mcmc",
+                # "cvER0.cvERSMU0.42n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.n100.mcmc",#)
+                # "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
+                "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
+
+                # "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc")
+                # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc")
+
+  # "cvER0.01.n100.mcmc",
+  #            "recCorScalar1.5.n100.mcmc",
+  #            "recCorScalar0.5.n100.mcmc",
+  #            "noAgeTau.n100.mcmc",
+  #            "recCorScalar1.5.NoAgeTau.n100.mcmc",
+  #            "recCorScalar1.2.NoAgeTau.n100.mcmc",
+  #            "cvER0.01recCorScalar1.2.NoAgeTau.n100.mcmc",
+  #            "cvER0.cvERSMU0.42.n100.mcmc",
+  #            "Base.n100.mcmc")
+
+
+for (j in 1:length(OMsToTest)) {
+
+  filename<-paste( "projSpwnDat_",OMsToTest[j],".csv",sep="")
+  spDat<-read.csv(here(wcviCKDir,"SamSimOutputs", "simData",filename))
+
+  spDat<-as_tibble(spDat)
+  spDat<-spDat%>%select(-X)
+
+  RecCorMat<-array(NA,dim=c(5,5,max(spDat$iteration)))
+  SpwnCorMat<-array(NA,dim=c(5,5,max(spDat$iteration)))
+
+  for (i in 1:max(spDat$iteration)) {
+
+    recruits.i<-spDat %>% filter(iteration==i & expRate==0.325) %>%  select(-spawners)
+    recruits.i<-recruits.i %>% select(-expRate, -iteration)
+    cor_mat<-recruits.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=recruits) %>% select(-year) %>% cor()
+    RecCorMat[,,i]<-cor_mat
+
+    spawners.i<-spDat %>% filter(iteration==i & expRate==0.325) %>%  select(-recruits)
+    spawners.i<-spawners.i %>% select(-expRate, -iteration)
+    cor_mat<-spawners.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
+    SpwnCorMat[,,i]<-cor_mat
+
+    if (i ==1) SpwnCorrValues<-SpwnCorMat[,,i][lower.tri(SpwnCorMat[,,i])==TRUE]
+    if (i > 1) SpwnCorrValues<-c(SpwnCorrValues,SpwnCorMat[,,i][lower.tri(SpwnCorMat[,,i])==TRUE])
+  }
+
+  OM_Name<-rep(OMsToTest[j],max(spDat$iteration))
+
+  if (j ==1) SpwnCorr.df<-data.frame(OM_Name,SpwnCorrValues)
+  if (j > 1) {
+    tmp<-data.frame(OM_Name,SpwnCorrValues)
+    SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
+  }
+
+}
+
+
+# Add observed escapement correlations to correlation data frame
+# spawners.obs<-data.frame(SRDat$BroodYear, SRDat$CU_ID, SRDat$Spawners)
+# names(spawners.obs)<-c("year", "CU", "spawners")
+# cor_mat<-spawners.obs %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
+cor_mat <- corMat
+SpwnCorrValues.Obs<-cor_mat[lower.tri(cor_mat)==TRUE]
+tmp<-data.frame(OM_Name = "Observed",SpwnCorrValues = SpwnCorrValues.Obs)
+SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
+
+# Save LRPs for all OM scenarios
+write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
+
+
+factor(SpwnCorr.df$OM_Name,levels = c(#"Base.n100.mcmc",
+                                      # "cvER0.n100.mcmc",
+                                      # "cvER0.6.n100.mcmc",
+                                      # "cvER0.cvERSMU0.42n100.mcmc",
+                                      "Observed",
+                                      # "cvER0.21.cvERSMU0.42.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+                                      "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"),
+                                      # "cvER0.42.cvERSMU0.42.n100.mcmc",#),
+                                      # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
+                                      # "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"),
+
+       ordered = TRUE)
+
+  # "Observed","cvER0.01.n100.mcmc",
+  #                                     "recCorScalar1.5.n100.mcmc",
+  #                                     "recCorScalar0.5.n100.mcmc",
+  #                                     "noAgeTau.n100.mcmc",
+  #                                     "recCorScalar1.5.NoAgeTau.n100.mcmc",
+  #                                     "recCorScalar1.2.NoAgeTau.n100.mcmc",
+  #                                     "cvER0.01recCorScalar1.2.NoAgeTau.n100.mcmc",
+  #                                     "cvER0.cvERSMU0.42.n100.mcmc",
+  #                                     "Base.n100.mcmc"
+
+
+g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
+  scale_x_discrete(limits=c("Observed",
+                            # "Base.n100.mcmc",
+                            # "cvER0.n100.mcmc",
+                            # "cvER0.6.n100.mcmc",
+                            # "cvER0.cvERSMU0.42n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+                            "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"),
+                            # "cvER0.42.cvERSMU0.42.n100.mcmc",#),
+                           # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
+                           # "cvER0.42.cvERSMU0.42.recCorScalar1.5n100.mcmc",
+                           # "cvER0.42.cvERSMU0.42.noAgeTau.recCorScalar1.5n100.mcmc"),
+
+                            # "cvER0.01.n100.mcmc",
+                            # "recCorScalar1.5.n100.mcmc",
+                            # "recCorScalar0.5.n100.mcmc",
+                            # "noAgeTau.n100.mcmc",
+                            # "recCorScalar1.5.NoAgeTau.n100.mcmc",
+                            # "recCorScalar1.2.NoAgeTau.n100.mcmc",
+                            # "cvER0.01recCorScalar1.2.NoAgeTau.n100.mcmc",
+                            # "cvER0.cvERSMU0.42.n100.mcmc",
+
+                   labels=c("Observed",
+                            # "cvER0.01",  "recCorr1.5",  "recCorr0.5",
+                            # "NoAgeTau", "recCor1.5\nnoAgeTau",
+                            # "recCor1.2\nnoAgeTau",
+                            # "cvER0.01\nrecCor1.2\nnoAgeTau",
+                            # "cvER0\ncvERSMU0.42",
+                            # "Base", "cvER=0", "cvER=0.6",
+                            # "cvER=0\ncvERSMU=0.42",
+                            #"cvER=0.21\ncvERSMU=0.42",
+                            "1",
+                            "0",
+                            "0.1",
+                            "0.2",
+                            "0.3",
+                            "0.4",
+                            "0.5",
+                            "0.6",
+                            "0.7",
+                            "0.8",
+                            "0.9" )) +
+
+                            #"cvER=0.21\ncvERSMU=0.42\nagePpnConst\nannualcvERCU"
+
+                            #"cvER=0.42\ncvERSMU=0.42", "noAgeTau", "recCor1.5", "noAgeTau\nrecCor1.5")) +
+  xlab("Scalar for Ricker Resid Correlation Matrix") + ylab("")+#Between-Inlet Correlations in Spawners") +
+  theme(axis.text=element_text(size=12))
+
+ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_RecCorScalarcvER0.png",sep=""), plot = g,
+       width = 6, height = 4, units = "in")
+
+
+
+# ===================================================================
+# (10) Make histograms of cvER
+# ==================================================================
+nTrials <- 100000
+canERlabel <- 0.3
+# Density of ERs with cvER=0.21 (either interannual or among CUs)
+canER <- canERlabel
+cvER <- 0.21
+sigCanER <- cvER*canER
+shape1 <- canER^2 * (((1-canER)/sigCanER^2)-(1/canER))
+shape2 <-shape1 * (1/canER-1)
+out1 <- rbeta(nTrials,shape1,shape2)
+
+# Density of ERs with cvER=0.42
+cvER <- 0.42
+sigCanER <- cvER*canER
+shape1 <- canER^2 * (((1-canER)/sigCanER^2)-(1/canER))
+shape2 <-shape1 * (1/canER-1)
+out2 <- rbeta(nTrials,shape1,shape2)
+
+#Density of ERs with cvER=0.42 interannually and 0.21 among CUs
+canER <- out2
+cvER <- 0.21
+sigCanER <- cvER*canER
+shape1 <- canER^2 * (((1-canER)/sigCanER^2)-(1/canER))
+shape2 <- shape1 * (1/canER-1)
+
+
+sampBeta<-function(nTrial) {
+  x<-rbeta(1,shape1[nTrial],shape2[nTrial])
+}
+
+out3 <- sapply(1:nTrials,sampBeta)
+out3b <- sapply(1:nTrials,sampBeta)
+out3c <- sapply(1:nTrials,sampBeta)
+out3d <- sapply(1:nTrials,sampBeta)
+out3e <- sapply(1:nTrials,sampBeta)
+
+#Density of ERs with cvER=0.42 interannually and 0.42 among CUs
+canER <- out2
+cvER <- 0.42
+sigCanER <- cvER*canER
+shape1 <- canER^2 * (((1-canER)/sigCanER^2)-(1/canER))
+shape2 <- shape1 * (1/canER-1)
+
+
+out4<-sapply(1:nTrials,sampBeta)
+
+out <- data.frame( cvER = c(rep("0.21",nTrials), rep("0.42",nTrials),
+                            rep("0.21 x 0.42",nTrials), rep("0.42 x 0.42",nTrials)),
+                   ExploitationRate = c(out1, out2, out3, out4) )
+
+g1 <- out %>% dplyr::filter(cvER=="0.21") %>%
+  ggplot(aes(ExploitationRate, colour = cvER, fill = cvER)) +
+  geom_density (alpha = 0.1) +
+  geom_vline (xintercept = canERlabel) +
+  xlim (0,1) +
+  theme(axis.title.x = element_text(size=18),
+    axis.title.y = element_text(size=18))
+
+g1b <- out %>% dplyr::filter(cvER=="0.21") %>%
+  ggplot(aes(ExploitationRate, colour = cvER, fill = cvER)) +
+  geom_density (alpha = 0.1, size=3) +
+  geom_vline (xintercept = canERlabel) +
+  xlim (0,1) + theme(legend.position="none", panel.grid = element_blank(),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_blank(),
+                     axis.text.x = element_blank(),
+                     axis.text.y = element_blank())
+
+
+
+ggsave(paste(wcviCKDir,"/Figures/histcvER0.21.png",sep=""), plot = g1,
+         width = 8, height = 6, units = "in")
+ggsave(paste(wcviCKDir,"/Figures/histcvER0.21ppt.png",sep=""), plot = g1b,
+       width = 3, height = 2, units = "in")
+
+g2 <- out %>% dplyr::filter(cvER=="0.21"|cvER=="0.42") %>%
+  ggplot(aes(ExploitationRate, colour = cvER, fill = cvER)) +
+  geom_density (alpha = 0.1) +
+  xlim (0,1) +
+  geom_vline (xintercept = canERlabel) +
+  theme(axis.title.x = element_text(size=18),
+        axis.title.y = element_text(size=18))
+
+g2b <- out %>% dplyr::filter(cvER=="0.42") %>%
+  ggplot(aes(ExploitationRate)) +
+  geom_density (alpha = 0.1, size=3, colour="aquamarine3", fill="aquamarine3") +
+  geom_vline (xintercept = canERlabel) +
+  xlim (0,1) + ylim(0,6.5) +
+  theme(legend.position="none", panel.grid = element_blank(),
+                     axis.title.x = element_blank(),
+                     axis.title.y = element_blank(),
+                     axis.text.x = element_blank(),
+                     axis.text.y = element_blank())
+
+ggsave(paste(wcviCKDir,"/Figures/histcvER0.42.png",sep=""), plot = g2,
+       width = 8, height = 6, units = "in")
+ggsave(paste(wcviCKDir,"/Figures/histcvER0.42pptx.png",sep=""), plot = g2b,
+       width = 4, height = 3, units = "in")
+
+g3 <- out %>% dplyr::filter(cvER=="0.21"|cvER=="0.42"|cvER=="0.21 x 0.42") %>%
+  ggplot(aes(ExploitationRate, colour = cvER, fill = cvER)) +
+  geom_density (alpha = 0.1) +
+  xlim (0,1) +
+  geom_vline (xintercept = canERlabel) +
+  theme(axis.title.x = element_text(size=18),
+        axis.title.y = element_text(size=18))
+
+ggsave(paste(wcviCKDir,"/Figures/histcvER0.21x0.42.png",sep=""), plot = g3,
+       width = 8, height = 6, units = "in")
+
+g4 <- out %>%
+  ggplot(aes(ExploitationRate, colour = cvER, fill = cvER)) +
+  geom_density (alpha = 0.1) +
+  xlim (0,1) +
+  geom_vline (xintercept = canERlabel) +
+  theme(axis.title.x = element_text(size=18),
+        axis.title.y = element_text(size=18))
+
+ggsave(paste(wcviCKDir,"/Figures/histcvER0.42x0.42.png",sep=""), plot = g4,
+       width = 8, height = 6, units = "in")
+
+lineAggData <- out %>% dplyr::filter(cvER=="0.42") %>% slice(1:20)  %>% add_column(Year=1:20) %>% add_column(Label="SMU")
+
+
+inletLineData <- out %>% dplyr::filter(cvER=="0.21 x 0.42") %>% slice(1:20) %>% add_column(Year=1:20) %>% add_column(Label="Inlet")
+inletLineDatab <- data.frame(Label="Inletb", Year=1:20, ExploitationRate=out3b[1:20], cvER="0.21 x 0.42")
+inletLineDatac <- data.frame(Label="Inletc", Year=1:20, ExploitationRate=out3c[1:20], cvER="0.21 x 0.42")
+inletLineDatad <- data.frame(Label="Inletd", Year=1:20, ExploitationRate=out3d[1:20], cvER="0.21 x 0.42")
+inletLineDatae <- data.frame(Label="Inlete", Year=1:20, ExploitationRate=out3e[1:20], cvER="0.21 x 0.42")
+inletLineData <- inletLineData %>% add_row(inletLineDatab) %>% add_row(inletLineDatac) %>% add_row(inletLineDatad) %>% add_row(inletLineDatae)
+lineAggData <- lineAggData %>% add_row(inletLineData) %>% select(-cvER)
+
+
+g5 <- lineAggData %>% filter(Label == "SMU") %>%
+  ggplot(aes(Year, ExploitationRate, colour=Label)) +
+  scale_colour_manual(values=viridis(3)[1]) +
+  ylim(0,0.75)+
+  geom_line(size=2) +
+  theme(axis.title.x=element_text(18),
+        axis.title.y=element_text(18))
+g5
+
+ggsave(paste(wcviCKDir,"/Figures/ERtimeseries1.png",sep=""), plot = g5,
+       width = 8, height = 6, units = "in")
+
+g6 <- lineAggData %>% filter(Label=="SMU"|Label=="Inlet") %>% ggplot(aes(Year, ExploitationRate, colour=Label)) +
+  scale_colour_manual(values=c(viridis(3)[2],viridis(3)[1])) +
+  geom_line(size=2) +
+  ylim(0,0.75)+
+  theme(axis.title.x=element_text(18),
+        axis.title.y=element_text(18))
+
+g6
+
+ggsave(paste(wcviCKDir,"/Figures/ERtimeseries2.png",sep=""), plot = g6,
+       width = 8, height = 6, units = "in")
+
+g7 <- lineAggData  %>% ggplot(aes(Year, ExploitationRate, colour=Label)) +
+  scale_colour_manual(values=c(rep(viridis(3)[2],5),viridis(3)[1])) +
+  geom_line(size=2) +
+  ylim(0,0.75)+
+  theme(axis.title.x=element_text(18),
+        axis.title.y=element_text(18))
+
+g7
+
+ggsave(paste(wcviCKDir,"/Figures/ERtimeseries3.png",sep=""), plot = g7,
+       width = 8, height = 6, units = "in")
+
+
+
+# ===================================================================
+# (11) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
 # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
