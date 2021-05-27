@@ -374,12 +374,12 @@ pdat2 <- merge(pdat, cudf, by.x="CU_Name", by.y="b") # fix names so consistent w
 
 png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=4, res=300, units="in")
 ggplot(pdat2, aes(y=benchmark_perc_25, x=retro_year)) +
-  geom_line(colour="violetred1", linetype=2) +
+  geom_line(colour="gray", linetype=2) +
   geom_line(aes(y=Escp, x=yr)) +
   geom_line(aes(y=benchmark_perc_50, x=retro_year), linetype=2) +
   geom_point(aes(y=Escp, x=yr, fill=as.factor(AboveBenchmark)), shape=21) +
   scale_fill_manual( values=c("red", "darkgreen"), guide=NULL) +
-  facet_wrap(~paste0(CU_Name_num," (", use_perc,")"), scales="free_y") +
+  facet_wrap(~paste0(CU_Name_num," (", use_perc*100,"%)"), scales="free_y") +
   ylab("Escapement and 25% benchmark") + xlab("Year") +
   coord_cartesian(expand=FALSE, clip="off") +
   geom_hline(aes(yintercept=0)) +
