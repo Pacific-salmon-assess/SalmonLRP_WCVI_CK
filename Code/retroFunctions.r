@@ -195,7 +195,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     # Make output csv file that has 25% benchmarks and escapement for each year, for each retro year
     if (BMmodel %in% c( "Percentile" )) {
-      new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "AboveBenchmark") ]
+      new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "benchmark_perc_50", "use_perc", "AboveBenchmark") ]
       new.perc.df$retro_year <- yearList[yy] # add column with retrospective year
     
       if(yy==1){
