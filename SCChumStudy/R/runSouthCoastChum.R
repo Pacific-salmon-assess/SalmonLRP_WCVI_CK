@@ -132,7 +132,7 @@ ChumSRDat_no_knight <- ChumSRDat[  !(ChumSRDat$CU_Name=="Upper Knight" | ChumSRD
 ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
 # ========================================================================
-# Run annual restrospective analysis using stock recruit parameter based Sgen
+# Run annual restrospective analysis using stock recruit parameter based Sgen----------
 # ========================================================================
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
@@ -158,11 +158,11 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 # Run retrospective analysis
 for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
-  # runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1970, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T)
+
   # Run with CUs with CU-level infilling removed
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
@@ -213,7 +213,6 @@ low_lim <- min(ests1$est_Sgen)
 # sum upper CI of Sgen estimates to get upper limit for penalty mu
 hi_lim <- sum(na.omit(ests1$up_Sgen)) 
 
-
 # make mu of penalty value mean of these two values, divide by scale
 B_penalty_mu <- mean(c(low_lim, hi_lim))
 # get SD that gives 95% density between lower and upper limits (using getSD helper function)
@@ -262,21 +261,54 @@ for(pp in 1:length(ps)){
 }
 
 # ---------------------------#
-# Percentile benchmarks
+# Percentile benchmarks-----------
 # ---------------------------#
 
 # Currently there is a discrepancy between CU_ID variable in percentile/subpop and Sgen 
 # based retrospective. Need to sort this out. 
 
+# First, make data frame of CUs and which percentile to use for their lower benchmark,
+# based on their productivity (Ricker alpha) and mean exploitation rate (ER), 
+# according to Table 6 in Holt et al. 2018
+# Here, I do this manually, taking alpha values from data outputs from retro year 2010 and from mean of exploitation rates
+#
+# Southern Coastal Streams: alpha = 1.3, ER = 0.04, benchmark = NA (further evaluation required) 
+#
+# Northeast Vancouver Island: alpha = 1.7, ER = 0.05, benchmark = 50%
+#
+# Upper Knight: alpha = 2.6 (note this is higher than Holt et al. 2018, likely due to recent CU-level infilling escapement;
+#       choosing alpha = 2.22 value from Holt et al. 2018 table 2 to be conservative. It doesn't really matter for the logistic 
+#       regression because this CU is not used in the logistic regression because of CU-level infilling), ER = 0.07, benchmark = 50%
+#
+# Loughborough: alpha = 2.4, ER = 0.18, benchmark = 50%
+#
+# Bute Inlet: alpha = 2.7 (note this is higher than Holt et al. 2018, likely due to recent CU-level infilling escapement;
+#       choosing alpha = 2.46 value from Holt et al. 2018 table 2 to be conservative. It doesn't really matter for the logistic 
+#       regression because this CU is not used in the logistic regression because of CU-level infilling), ER = 0.22, 
+#       benchmark = NA (further evaluation required) 
+#
+# Georgia Strait: alpha = 3.3, ER = 0.38, benchmark = 25%
+#
+# Howe Sound-Burrard Inlet: alpha = 2.6, ER = 0.32, benchmark = 25%
+
+# Make data frame with CU names and which perecntile to use for 
+which_perc_benchmark <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
+  "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
+  "percentile" = c(NA, 0.5, 0.5, 0.5, NA, 0.25, 0.25))
+
+# Remove any CUs that have NA percentile benchmark (percentile benchmarks not recommended in Holt et al. 2018 Table 6)
+ChumEscpDat_perc <- ChumEscpDat_no_CU_infill[ !(ChumEscpDat_no_CU_infill$CU_Name %in% which_perc_benchmark$CU[is.na(which_perc_benchmark$percentile)] ), ]
+ChumSRDat_perc <- ChumSRDat_no_CU_infill[ !(ChumSRDat_no_CU_infill$CU_Name %in% which_perc_benchmark$CU[is.na(which_perc_benchmark$percentile)] ), ]
+
 TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
                               Tau_dist = 0.1,
                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                              B_penalty_mu = NA, B_penalty_sigma = NA)
+                              B_penalty_mu = NA, B_penalty_sigma = NA, perc_benchmark= which_perc_benchmark)
 
 # Run retrospective analysis using percentile benchmarks
 for(pp in 1:length(ps)){
   # Run with Binomial LRP with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T,  runLogisticDiag=T)

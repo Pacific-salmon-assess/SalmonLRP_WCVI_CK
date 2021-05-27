@@ -328,7 +328,7 @@ Run_LRP <- function(Dat, Mod, useBern_Logistic,
 
    # need year as index
   Logistic_Dat$yr_num <- group_by(as.data.frame(Logistic_Dat), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
- 
+
   data$LM_CU_Status <- Logistic_Dat$AboveBenchmark
   #if (Mod %in% c("LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior" )) data$LM_CU_Status <- Logistic_Dat$AboveBenchmark
   
