@@ -122,9 +122,27 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         
         if (BMmodel %in% c("Percentile")) {
           LBM_status_byCU <- EscpDat.yy %>% group_by(CU_Name) %>%  # make new column with 25% benchmark
-            mutate(benchmark_perc_25= quantile(Escp, probs=0.25, na.rm=TRUE)) 
+            mutate(benchmark_perc_25= quantile(Escp, probs=0.25, na.rm=TRUE), benchmark_perc_50 = quantile(Escp, probs=0.5, na.rm=TRUE)) 
           # Need to end up with a data frame that has CU, year, and whether CU is above benchmark (1 means yes, 0 mean no)
-          LBM_status_byCU$AboveBenchmark <- ifelse(LBM_status_byCU$Escp >= LBM_status_byCU$benchmark_perc_25, 1,0)
+          # new data frame that is the key to which percentiles to use for which CUs
+          which_perc <- TMB_Inputs_Percentile$perc_benchmark 
+          # New variable with which percentile to use
+          LBM_status_byCU$use_perc <- which_perc$percentile[match(x=LBM_status_byCU$CU_Name, table=which_perc$CU)]
+
+          # make function to get status, will use correct benchmark (25 or 50)
+          get_status <- function(escp, bm25, bm50, use_bm) {
+            if(use_bm == 0.25)
+              bm <- bm25
+            if(use_bm == 0.5)
+              bm <- bm50
+            status <- as.integer(ifelse(escp >= bm, 1,0))
+            status
+          }
+          # get status by mapping over four variables of the data frame
+          LBM_status_byCU$AboveBenchmark <- pmap_int(list(LBM_status_byCU$Escp, LBM_status_byCU$benchmark_perc_25, 
+                                                      LBM_status_byCU$benchmark_perc_50, LBM_status_byCU$use_perc),
+                                                 get_status)
+
           # Call specified LRP function:
           LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                            useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
@@ -177,7 +195,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     
     # Make output csv file that has 25% benchmarks and escapement for each year, for each retro year
     if (BMmodel %in% c( "Percentile" )) {
-      new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "AboveBenchmark") ]
+      new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "benchmark_perc_50", "use_perc", "AboveBenchmark") ]
       new.perc.df$retro_year <- yearList[yy] # add column with retrospective year
     
       if(yy==1){
