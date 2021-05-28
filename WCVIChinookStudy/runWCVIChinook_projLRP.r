@@ -183,13 +183,13 @@ corMat <- cor(dum)
 #wcviRicResids <- data.frame(read.csv("DataIn/WCVI_RickerResids.csv"))
 #corMat <- cor(na.omit(wcviRicResids))
 
-InletRickerResid <- data.frame(read.csv(paste(wcviCKDir, "DataIn/CURickerResid.csv",sep="/")))
-acf(InletRickerResid$SWVI[7:30], na.rm=TRUE)
-acf(InletRickerResid$No.KY, na.rm=TRUE)
-acf(InletRickerResid$NWVI, na.rm=TRUE)
-png(paste(wcviCKDir,"/Figures/acfWCVIRickerResid.png", sep=""), width=5, height=4, units="in", res=500)
-acf(InletRickerResid$WCVI)
-dev.off()
+# InletRickerResid <- data.frame(read.csv(paste(wcviCKDir, "DataIn/CURickerResid.csv",sep="/")))
+# acf(InletRickerResid$SWVI[7:30], na.rm=TRUE)
+# acf(InletRickerResid$No.KY, na.rm=TRUE)
+# acf(InletRickerResid$NWVI, na.rm=TRUE)
+# png(paste(wcviCKDir,"/Figures/acfWCVIRickerResid.png", sep=""), width=5, height=4, units="in", res=500)
+# acf(InletRickerResid$WCVI)
+# dev.off()
 #-------------------------------------------------------------------------------
 #TESTING
 # SRDat <- SRDat %>% mutate(Recruits=NA) %>% select(-c('Age_3_Recruits',
@@ -385,6 +385,24 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.1, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n2000.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.1, corMat=corMat, agePpnConst=TRUE)
+
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n2000.mcmc"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=2000, cvER = 0.42, cvERSMU=0.42,
+                                recCorScalar=0.3, corMat=corMat, agePpnConst=TRUE)
 
 scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc"
 
@@ -769,7 +787,7 @@ for (i in 1:length(OMsToInclude)) {
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
   projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
   CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
-  projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*4)#)max(SRDat$yr_num)+4)
+  projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*10)#)max(SRDat$yr_num)+4)
 
   # Create bins for projected spawner abundances
   minBreak<-0
@@ -833,7 +851,7 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs3.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
 write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"), row.names=F)
 
@@ -1018,28 +1036,28 @@ OMsToTest<-c(   #"Base.n100.mcmc",
                 # "cvER0.cvERSMU0.42n100.mcmc",
                 # "cvER0.21.cvERSMU0.42.n100.mcmc",
                 # "cvER0.42.cvERSMU0.42.n100.mcmc",#)
-                # "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
-                "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
+                "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
+                # "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
 
                 # "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc")
                 # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
@@ -1076,7 +1094,7 @@ for (j in 1:length(OMsToTest)) {
     RecCorMat[,,i]<-cor_mat
 
     spawners.i<-spDat %>% filter(iteration==i & expRate==0.325) %>%  select(-recruits)
-    spawners.i<-spawners.i %>% select(-expRate, -iteration)
+    spawners.i<-spawners.i %>% select(-expRate, -iteration) %>% filter(year>40)
     cor_mat<-spawners.i %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
     SpwnCorMat[,,i]<-cor_mat
 
@@ -1114,28 +1132,28 @@ factor(SpwnCorr.df$OM_Name,levels = c(#"Base.n100.mcmc",
                                       # "cvER0.cvERSMU0.42n100.mcmc",
                                       "Observed",
                                       # "cvER0.21.cvERSMU0.42.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                                      # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
-                                      "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                                      "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                                      "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                                      # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
 
                                       # "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"),
                                       # "cvER0.42.cvERSMU0.42.n100.mcmc",#),
@@ -1164,28 +1182,28 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxpl
                             # "cvER0.cvERSMU0.42n100.mcmc",
                             # "cvER0.21.cvERSMU0.42.n100.mcmc",
                             # "cvER0.21.cvERSMU0.42.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                            # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
-                            "cvER0.cvERSMU0.42.agePpnConst.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                            "cvER0.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+                            "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                            "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                            # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc"),
 
                             # "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc"),
                             # "cvER0.42.cvERSMU0.42.n100.mcmc",#),
@@ -1229,10 +1247,11 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxpl
   xlab("Scalar for Ricker Resid Correlation Matrix") + ylab("")+#Between-Inlet Correlations in Spawners") +
   theme(axis.text=element_text(size=12))
 
-ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_RecCorScalarcvER0.png",sep=""), plot = g,
+ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_RecCorScalarcvER0.42.png",sep=""), plot = g,
        width = 6, height = 4, units = "in")
 
-
+# mean(SpwnCorr.df %>% filter(OM_Name=="cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc") %>% pull(SpwnCorrValues))
+# mean(corMat[lower.tri(corMat)])
 
 # ===================================================================
 # (10) Make histograms of cvER
@@ -1406,9 +1425,93 @@ ggsave(paste(wcviCKDir,"/Figures/ERtimeseries3.png",sep=""), plot = g7,
        width = 8, height = 6, units = "in")
 
 
+# ===================================================================
+# (11) Plots of number of trials
+# ==================================================================
+
+# Specify threshold to use when calculating LRP
+# # Note: may want to loop over probThresholds as well; still needs to be added
+propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
+probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abundance that has this
+# probability that the propCUThreshold is met
+
+OMsToInclude<-c(
+  #"cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n2000.mcmc"
+  "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n2000.mcmc"
+  )
+
+
+
+# Read in samSim outputs for OM
+filename<-paste("projLRPDat_",OMsToInclude,".csv",sep="")
+projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
+CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
+
+nTrials <- 2000
+
+# Loop over nTrials
+for (i in 1:200) {
+  projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
+  projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*10) %>% filter(iteration < (i*10))
+
+  # Create bins for projected spawner abundances
+  minBreak<-0
+  maxBreak<-round(max(projLRPDat$sAg),digits=-2)
+  binSize<-200 # Note: bin size is currently set here
+  breaks<-seq(minBreak, maxBreak,by=binSize)
+
+  # Set bin labels as the mid-point
+  projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+
+  # Summarize nSims in each bin
+  tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+
+  # Filter out bins with < 100 nSims
+  tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
+    add_column(nSims=tmp$nSims) #%>% filter(nSims>=100)
+
+  # For each bin, calculate probability that required proportion of CUs above benchmark
+  projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+  # For each bin, calculate the difference between the threshold probability and the calculated probability
+  projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
+
+  # Save projection summaries used to create plots
+  projLRPDat$OM.Name<-OMsToInclude
+  if (i == 1) projLRPDat.plot<-projLRPDat
+  if (i > 1) projLRPDat.plot<-rbind(projLRPDat.plot,projLRPDat)
+
+  # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
+  LRP<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
+
+  # Create a table of LRP estimates to be saved for each OM model
+  if (i ==1) {
+    LRP_Ests_nTrials<-data.frame(OMsToInclude, i*10, probThresh, propCUThresh, LRP, binSize)
+    names(LRP_Ests_nTrials)<-c("OM", "nTrials","ProbThresh", "PropCURequired", "LRP", "binSize")
+  } else {
+    tmp.df<-data.frame(OMsToInclude, i*10, probThresh, propCUThresh, LRP, binSize)
+    names(tmp.df)<-c("OM", "nTrials", "ProbThresh", "PropCURequired", "LRP", "binSize")
+    LRP_Ests_nTrials<-rbind(LRP_Ests_nTrials,tmp.df)
+  }
+
+}
+
+# Save LRPs for all OM scenarios
+write.csv(LRP_Ests_nTrials, paste(projOutDir2, "ProjectedLRPs_nTrialscvER0.42.csv", sep="/"), row.names=F)
+# Save LRP projection summaries used for calculating and plotting LRP (Optional)
+
+
+
+#
+# # Save LRPs for all OM scenarios
+# write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
+# # Save LRP projection summaries used for calculating and plotting LRP (Optional)
+# write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"), row.names=F)
+
+
+
 
 # ===================================================================
-# (11) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
+# (12) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
 # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
