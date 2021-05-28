@@ -248,8 +248,12 @@ rh$exploit_rate <- rh$harvest/rh$returns # calculate exploitation rate
 rhs <- rh %>% group_by(CU) %>% summarise(mean_exploit_rate = mean(exploit_rate, na.rm=TRUE))
 write.csv(rhs, "DataOut/mean_exploitation_rate_by_CU_missing_1953.csv", row.names = FALSE)
 
-# Check that Georgia Strait mean exploitation rate is not sensitive to missing 1953 exploitation rate
+# Check that Georgia Strait mean exploitation rate is not sensitive to missing 1953 + 1952 exploitation rate
 # (close to 40% cutoff in Holt et al. 2018 Table 6, in Fig 1A it looks like ~0.75)
+# read in exploitation rates for 1952+1953, provided by Pieter Van Will 2021-05-25
+md <- readxl::read_excel("DataIn/1952_1953_harvest.xlsx", range="A1:C16", trim_ws=TRUE, )
+
+
 mean(c(rh$exploit_rate[rh$CU=="Georgia Strait"], rh$exploit_rate[rh$CU=="Georgia Strait"][2]), na.rm=TRUE)
 # no, it is not, still <0.4 average exploitation rate
 

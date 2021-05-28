@@ -358,10 +358,6 @@ for(pp in 1:length(ps)){
                  bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
 }
 
-# Double check percentile approach
-
-
-
 # ----------------#
 # Examine output  
 # ----------------#
