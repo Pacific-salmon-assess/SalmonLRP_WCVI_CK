@@ -18,8 +18,11 @@
 #     (6) Plot CU-level spawner abundance projections (Optional)
 #     (7) Code to create mcmcOut for Ricker pars from an assumed distn of a and
 #         SREP
-#     (8) Code to calculate tau for variabilty in age proportions
-#     (9) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+#     (8) Code to calculate tau for variability in age proportions
+#     (9) Code to plot distribution of correlations among CUs/inlets
+#     (10) Make histograms of cvER
+#     (11) Plots of LRP stabilitization with number of trials
+#     (12) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
 
 # ===============================================================================
 
@@ -395,14 +398,14 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.1, corMat=corMat, agePpnConst=TRUE)
 
-scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n2000.mcmc"
+scenarioName <- "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n2000.mcmc"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=2000, cvER = 0.42, cvERSMU=0.42,
-                                recCorScalar=0.3, corMat=corMat, agePpnConst=TRUE)
+                                recCorScalar=0.1, corMat=corMat, agePpnConst=TRUE)
 
 scenarioName <- "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc"
 
@@ -1036,28 +1039,28 @@ OMsToTest<-c(   #"Base.n100.mcmc",
                 # "cvER0.cvERSMU0.42n100.mcmc",
                 # "cvER0.21.cvERSMU0.42.n100.mcmc",
                 # "cvER0.42.cvERSMU0.42.n100.mcmc",#)
-                "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
-                # "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
-                # "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
+                # "cvER0.42.cvERSMU0.42.agePpnConst.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                # "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
+                "cvER0.21.cvERSMU0.42.agePpnConst.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.2.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.3.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.4.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.5.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.6.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.7.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.8.n100.mcmc",
+                "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.9.n100.mcmc")
 
                 # "cvER0.21.cvERSMU0.42.agePpnConst.annualcvER.n100.mcmc")
                 # "cvER0.42.cvERSMU0.42.noAgeTau.n100.mcmc",
@@ -1250,8 +1253,8 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxpl
 ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_RecCorScalarcvER0.42.png",sep=""), plot = g,
        width = 6, height = 4, units = "in")
 
-# mean(SpwnCorr.df %>% filter(OM_Name=="cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc") %>% pull(SpwnCorrValues))
-# mean(corMat[lower.tri(corMat)])
+# summary(SpwnCorr.df %>% filter(OM_Name=="cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc") %>% pull(SpwnCorrValues))
+# summary(corMat[lower.tri(corMat)])
 
 # ===================================================================
 # (10) Make histograms of cvER
@@ -1426,7 +1429,7 @@ ggsave(paste(wcviCKDir,"/Figures/ERtimeseries3.png",sep=""), plot = g7,
 
 
 # ===================================================================
-# (11) Plots of number of trials
+# (11) Plots of LRP stabilitizatoin with number of trials
 # ==================================================================
 
 # Specify threshold to use when calculating LRP
