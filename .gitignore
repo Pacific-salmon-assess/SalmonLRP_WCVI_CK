@@ -22,7 +22,7 @@
 knitr-cache
 .RData
 .RHistory
-*.Rproj
+#*.Rproj
 *.dll
 *.o
 *.rda
@@ -30,6 +30,9 @@ knitr-cache
 !/WCVIChinookStudy/samSimInputs/CUPars.csv
 !/WCVIChinookStudy/samSimInputs/SimPars.csv
 !/WCVIChinookStudy/samSimInputs/Ricker_mcmc.csv
+/WCVIChinookStudy/samSimOutputs/*
+/WCVIChinookStudy/Figures/*
+/WCVIChinookStudy/DataOut/*
 
 
 
