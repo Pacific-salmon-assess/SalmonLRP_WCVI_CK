@@ -26,6 +26,11 @@ knitr-cache
 *.dll
 *.o
 *.rda
+/WCVIChinookStudy/samSimInputs/*
+!/WCVIChinookStudy/samSimInputs/CUPars.csv
+!/WCVIChinookStudy/samSimInputs/SimPars.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc.csv
+
 
 
 
