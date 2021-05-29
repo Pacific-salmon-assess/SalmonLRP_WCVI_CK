@@ -5,7 +5,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              ERScalar=NULL, cvER, recCorScalar,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
-                             corMat=NULL){
+                             corMat=NULL, halfAlpha=NULL){
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -101,9 +101,21 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     corMatrix <- corMat
     corMatrix <- corMatrix * recCorScalar
     corMatrix[col(corMatrix)==row(corMatrix)] <- 1
-    write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
+    write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),
+                row.names=F, col.names=F, sep=",")
 
-    if (runMCMC) mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv", sep="/"))
+    if (runMCMC) {
+      if(is.null(halfAlpha)){
+        mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                  sep="/"))
+      }
+      if(!is.null(halfAlpha)){
+        if(halfAlpha){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_halfA.csv",
+                                    sep="/"))
+        }
+      }
+    }
     if (!runMCMC) mcmcOut <- NULL
   }
 

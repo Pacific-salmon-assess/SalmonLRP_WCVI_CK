@@ -22,7 +22,8 @@
 #     (9) Code to plot distribution of correlations among CUs/inlets
 #     (10) Make histograms of cvER
 #     (11) Plots of LRP stabilitization with number of trials
-#     (12) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+#     (12) Plot LRPs with various plevels
+#     (13) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
 
 # ===============================================================================
 
@@ -854,7 +855,7 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs3.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
 write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"), row.names=F)
 
@@ -922,11 +923,12 @@ for (i in 1:length(OMsToInclude)) {
 # If the watershed-area-model is updated, these files will need to be updated
 
 createMCMCout <- FALSE
-
+halfAlpha <- FALSE#TRUE
 # Only need to run once to create mcmcOut.csv file with a given assumed
 # distribution of alpha and SREP
 
 if(createMCMCout){
+  set.seed(123)
   remove.EnhStocks <- TRUE
   nTrials <- 5000
 
@@ -943,6 +945,7 @@ if(createMCMCout){
 
   lnalpha_inlet <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
     select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)#pull(alpha)
+  if(halfAlpha) lnalpha_inlet$lnalpha <- lnalpha_inlet$lnalpha/2
 
   Inlet_Names <- lnalpha_inlet$inlets
 
@@ -978,18 +981,27 @@ if(createMCMCout){
     rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
       filter(stkName==Inlet_Names[i]) %>% select(sigma,stk)
     if (i==1) mcmcOut <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
-                                     beta=rlnalpha$a/rSREP, sigma= rsig$sigma )
+                                     beta=rlnalpha$a/rSREP, sigma= rsig$sigma,
+                                     stkName=Inlet_Names[i] )
     if (i>1) mcmcOut <- mcmcOut %>% add_row(stk=rsig$stk, alpha=rlnalpha$a,
-                                            beta=rlnalpha$a/rSREP, sigma= rsig$sigma)
+                                            beta=rlnalpha$a/rSREP, sigma= rsig$sigma,
+                                            stkName=Inlet_Names[i])
 
   }
 
-  write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc.csv", sep="/"),
+  if(!halfAlpha) write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc.csv", sep="/"),
+                          row.names=F)
+  if(halfAlpha) write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc_halfA.csv", sep="/"),
             row.names=F)
+  #plot of alpha density
+  alphaDensity <- mcmcOut %>% ggplot(aes(alpha, colour=factor(stkName))) + geom_density() +theme(legend.title = element_blank())
 
+  if(halfAlpha) ggsave(paste(wcviCKDir,"/Figures/AlphaDensity_halfA.png",sep=""), plot = alphaDensity,
+                       width = 6, height = 4, units = "in")
+  if(!halfAlpha) ggsave(paste(wcviCKDir,"/Figures/AlphaDensity.png",sep=""), plot = alphaDensity,
+                        width = 6, height = 4, units = "in")
 
 }
-
 
 
 # ===================================================================
@@ -1429,7 +1441,7 @@ ggsave(paste(wcviCKDir,"/Figures/ERtimeseries3.png",sep=""), plot = g7,
 
 
 # ===================================================================
-# (11) Plots of LRP stabilitizatoin with number of trials
+# (11) Plots of LRP stabilization with number of trials
 # ==================================================================
 
 # Specify threshold to use when calculating LRP
@@ -1440,7 +1452,7 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 OMsToInclude<-c(
   #"cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n2000.mcmc"
-  "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.3.n2000.mcmc"
+  "cvER0.42.cvERSMU0.42.agePpnConst.recCorSca0.1.n2000.mcmc"
   )
 
 
@@ -1501,9 +1513,15 @@ for (i in 1:200) {
 # Save LRPs for all OM scenarios
 write.csv(LRP_Ests_nTrials, paste(projOutDir2, "ProjectedLRPs_nTrialscvER0.42.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
+LRP_nTrials <- as.data.frame(read.csv(paste(projOutDir2, "ProjectedLRPs_nTrialscvER0.42.csv", sep="/")))
+
+LRP_nTrials_plot <- ggplot(LRP_nTrials, aes(nTrials,LRP))+geom_line() +
+  ylim(6500,7500) +
+  geom_vline(xintercept=200, linetype="dashed")
 
 
-
+ggsave(paste(wcviCKDir,"/Figures/LRP_ntrials.png",sep=""), plot = LRP_nTrials_plot,
+       width = 6, height = 4, units = "in")
 #
 # # Save LRPs for all OM scenarios
 # write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
@@ -1513,8 +1531,104 @@ write.csv(LRP_Ests_nTrials, paste(projOutDir2, "ProjectedLRPs_nTrialscvER0.42.cs
 
 
 
+
 # ===================================================================
-# (12) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
+# (12) Plot LRPs with various plevels
+# ==================================================================
+
+# Specify threshold to use when calculating LRP
+# # Note: may want to loop over probThresholds as well; still needs to be added
+propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
+probThresh<-c(0.50,0.66,0.9, 0.99) # probability theshhold; the LRP is set as the aggregate abundance that has this
+# probability that the propCUThreshold is met
+
+# Specify scenarios to calculate LRPs and make plots for.
+# These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
+OMsToInclude<-c("cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc")
+
+
+
+# Loop over OM Scenarios
+for (i in 1:length(probThresh)) {
+
+  # Read in samSim outputs for OM
+  filename<-paste("projLRPDat_",OMsToInclude,".csv",sep="")
+  projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
+  CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
+  projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*10)#)max(SRDat$yr_num)+4)
+
+  # Create bins for projected spawner abundances
+  minBreak<-0
+  maxBreak<-round(max(projLRPDat$sAg),digits=-2)
+  binSize<-200 # Note: bin size is currently set here
+  breaks<-seq(minBreak, maxBreak,by=binSize)
+
+  # Set bin labels as the mid-point
+  projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+
+  # Summarize nSims in each bin
+  tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+
+  # Filter out bins with < 100 nSims
+  tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
+    add_column(nSims=tmp$nSims) #%>% filter(nSims>=100)
+
+  # For each bin, calculate probability that required proportion of CUs above benchmark
+  projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+  # For each bin, calculate the difference between the threshold probability and the calculated probability
+  projLRPDat$diff<-abs(probThresh[i]-projLRPDat$prob)
+
+  # Save projection summaries used to create plots
+  projLRPDat$OM.Name<-OMsToInclude
+  if (i == 1) projLRPDat.plot<-projLRPDat
+  if (i > 1) projLRPDat.plot<-rbind(projLRPDat.plot,projLRPDat)
+
+  # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
+  LRP[i]<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
+
+  # Create a table of LRP estimates to be saved for each OM model
+  if (i ==1) {
+    LRP_Ests<-data.frame(OMsToInclude, probThresh[i], propCUThresh, LRP[i], binSize)
+    names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+  } else {
+    tmp.df<-data.frame(OMsToInclude, probThresh[i], propCUThresh, LRP[i], binSize)
+    names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+    LRP_Ests<-rbind(LRP_Ests,tmp.df)
+  }
+
+  if(i==1){# Plot projected LRP abundance relationship ===============================================================
+  png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude,
+            "_ProjLRPCurve_prob",probThresh[i],"ALL.png", sep=""), width=5, height=4,
+      units="in", res=500)
+  # pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
+  #     width=6, height=6)
+
+
+    plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19,
+         xlim=c(0, max( as.numeric(as.character(projLRPDat$bins)), na.rm=T)/2 ),
+         cex=0.5, cex.lab=1.5,
+         xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
+  }
+
+  abline(h=probThresh[i], lty=2)
+  abline(v=LRP[i], col="orange", lwd=4)
+
+  if(i==length(probThresh)) dev.off()
+
+  # Option to plot histogram of nSims in each Agg Abundance Bin
+  #barplot(height = projLRPDat$nSims,names.arg = projLRPDat$bins)
+
+}
+
+# Save LRPs for all OM scenarios
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPscvER0.21Allp.csv", sep="/"), row.names=F)
+# Save LRP projection summaries used for calculating and plotting LRP (Optional)
+write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_datacvER0.21Allp.csv", sep="/"), row.names=F)
+
+
+
+# ===================================================================
+# (13) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
 # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)

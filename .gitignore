@@ -30,6 +30,7 @@ knitr-cache
 !/WCVIChinookStudy/samSimInputs/CUPars.csv
 !/WCVIChinookStudy/samSimInputs/SimPars.csv
 !/WCVIChinookStudy/samSimInputs/Ricker_mcmc.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc_halfA.csv
 /WCVIChinookStudy/samSimOutputs/*
 /WCVIChinookStudy/Figures/*
 /WCVIChinookStudy/DataOut/*
