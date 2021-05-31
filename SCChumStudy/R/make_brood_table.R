@@ -210,7 +210,7 @@ for( i in 1:nsites){
   Sdat<- Btable[which(Btable$CU==sites[i]),]
   #cannot estimate returns for last 5 years
   for( j in 3:nyears ){
-    # can only calculate up to nyears-6 -- only have age comps up to 2012
+    # can only calculate up to nyears-6 -- only have age comps up to 2018
     if(j<=nyears-6){
       Rsum <- 0
       for( k in 1:nages ){
@@ -226,8 +226,64 @@ for( i in 1:nsites){
 
 write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 
+# Check exploitation rate (total vs. wild)
+# Read in total harvest (wild + hatchery)
+harvest_total <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A22:BP39", trim_ws = TRUE)
+names(harvest_total)[1] <- "CU" # change name
+# Read in total stock (wild + hatchery)
+returns_total <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A43:BP60", trim_ws = TRUE)
+
+# function to format harvest and totals
+format_totals <- function(x, new_name) {
+  x1 <- x %>% group_by(CU) %>% summarise_at(vars("2018":"1953"), sum, na.rm=T) # summarise by CU
+  xl <- x1 %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(x1)), names_to="Year", values_to=new_name) # wide to long format
+  xl
+}
+
+h1 <- format_totals(harvest_total, new_name="harvest")
+r1 <- format_totals(returns_total, new_name="returns")
+rh <- merge(h1, r1, by=c("CU", "Year"), all=TRUE) # merge harvest and returns
+rh$exploit_rate <- rh$harvest/rh$returns # calculate exploitation rate
+# get mean exploitation rate by CU
+rhs <- rh %>% group_by(CU) %>% summarise(mean_exploit_rate = mean(exploit_rate, na.rm=TRUE))
+write.csv(rhs, "DataOut/mean_exploitation_rate_by_CU_missing_1953.csv", row.names = FALSE)
+
+# Check that Georgia Strait mean exploitation rate is not sensitive to missing 1953 + 1952 exploitation rate
+# (close to 40% cutoff in Holt et al. 2018 Table 6, in Fig 1A it looks like ~0.75)
+# read in exploitation rates for 1952+1953, provided by Pieter Van Will 2021-05-25
+md <- readxl::read_excel("DataIn/1952_1953_harvest.xlsx", range="A1:C16", trim_ws=TRUE, )
 
 
+mean(c(rh$exploit_rate[rh$CU=="Georgia Strait"], rh$exploit_rate[rh$CU=="Georgia Strait"][2]), na.rm=TRUE)
+# no, it is not, still <0.4 average exploitation rate
+
+# plot exploitation rate
+# ggplot(rh, aes(y=exploit_rate, x=Year, group=CU)) +
+#   geom_point() +
+#   geom_path() +
+#   facet_wrap(~CU) +
+#   scale_x_discrete(breaks=seq(1960,2020,10)) +
+#   theme_bw() +
+#   theme(axis.text.x=element_text(angle=90, vjust=0.5))
+
+# Double check that wild exploitation rates (estimated) are matching total
+# There are some years where estimated wild returns is lower than escapement.
+#   This is for years*CUs with CU-level infilling.  
+check_ER <- Btable[!Btable$Year==1953,] # remove 1953 without harvest data
+check_ER <- check_ER[check_ER$CUinfill==FALSE, ] # keep only years*CUs without CU level infilling
+check_ER$exploit_rate <- (check_ER$Return - check_ER$Escape) / check_ER$Return
+
+ers <- check_ER %>% group_by(CU) %>% summarise(mean_ER = mean(exploit_rate, na.rm=TRUE))
+# confirm yes, exploitation rates are nearly the same for total and wild fish
+# (based on same data, but wanted to check)
+# ggplot(check_ER, aes(y=exploit_rate, x=Year, group=CU)) +
+#   geom_point() +
+#   geom_path() +
+#   facet_wrap(~CU) +
+#   scale_x_discrete(breaks=seq(1960,2020,10)) +
+#   theme_bw() +
+#   theme(axis.text.x=element_text(angle=90, vjust=0.5))
+# 
 
 # ----------------------------------------------------#
 # Explore data with figures - LW ------------
@@ -386,7 +442,9 @@ for(i in 1:length(unique(CUs))) {
   grid(ny=0)
   # FLAG: upper Knight has returns greater than spawners in some years, impossible. Must be error.
   # segments(y0=dat$SiteEsc[-1]/1000, y1=dat$Return[-1]/1000, x0=dat$Year[-1],x1=dat$Year[-1], col=adjustcolor("red", alpha=0.6), lwd=4)   # add harvest, remove first year, as there is a problem with returns
-  points(y=dat$SiteEsc/1000, x=dat$Year, xlab="year", pch=16)
+  points(y=dat$SiteEsc/1000, x=dat$Year, xlab="year", pch=ifelse(dat$Year %% 2 == 0, 16,1))
+  points(y=dat$SiteEsc[dat$CUinfill==TRUE]/1000, x=dat$Year[dat$CUinfill==TRUE], col="red", xlab="year", 
+         pch=ifelse(dat$Year[dat$CUinfill==TRUE] %% 2 == 0, 16,1 ))
   par(mar=c(2,4,1,1)+0.1, bty="l", las=1)
   plot(y=dat$RS, x=dat$Year, log="y", type="l", ylab="Recruits/Spawner", xlim =c(yrs[1], yrs[2]), 
       xlab="Year", ylim=c(min(cdat$RS, na.rm=TRUE), max(cdat$RS, na.rm=TRUE)), yaxt="n")
@@ -396,7 +454,7 @@ for(i in 1:length(unique(CUs))) {
     abline(h=1, lty=3)
     abline(h=median(dat$RS, na.rm=TRUE),lty=2, col="orange")
     text(x=2020, y= median(dat$RS, na.rm=TRUE), col="orange", label=round(median(dat$RS, na.rm=TRUE), 1), adj=c(1,-0.5), )
-}
+    }
 dev.off()
 
 # Plot abundance on y axis and productivity on x axis
