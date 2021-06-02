@@ -11,6 +11,7 @@
 # Include figures in github repo for inclusion in csas repo
 !fig_chum_CU_map.png
 !Figures/AnnualRetrospective/Bern.IndivRicker_NoSurv_noCUinfill_90/LogisticMod_2010.pdf
+!Figures/AnnualRetrospective/Bern.Percentile_noCUinfill_90/LogisticMod_2018.pdf
 
 notes.docx
 old_code_reference/
