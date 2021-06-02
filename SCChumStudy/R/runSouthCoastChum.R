@@ -451,7 +451,7 @@ dev.off()
 
 # get residuals
 t$pred_rec <- t$Spawners * t$est_A * exp(-t$est_B * t$Spawners) 
-t$resid_rec <- t$Recruits - pred_rec
+t$resid_rec <- t$Recruits - t$pred_rec
 
 t$pred_RS <- t$est_A * exp(-t$est_B * t$Spawners) 
 t$resid_RS <- t$Recruits/t$Spawners - t$pred_RS
@@ -514,7 +514,6 @@ par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
 for(i in 1:length(unique(ests$CU_ID))) {
   dat <- t[t$CU_Name==CUs[i],]
   plot(dat$resid_rec ~ dat$Recruits, type="p", main=CUs[i], xlab="Recruits", ylab="Recruits, obs-pred")
-  abline(a=0, b=1, lty=2, col="orange")
 }
 
 # Plot residuals  
