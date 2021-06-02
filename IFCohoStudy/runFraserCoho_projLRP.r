@@ -157,114 +157,162 @@ if (file.exists(projOutDir2) == FALSE){
 setwd(codeDir)
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
+
 # Create samSim input files for current scenario
-scenarioName <- "IM_1.0cvER"
+scenarioName <- "IM.Base"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL)
-
-# Create samSim input files for current scenario
-scenarioName <- "IM_0.5cvER"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL)
-
-# Create samSim input files for current scenario
-scenarioName <- "IM_0.1cvER"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
 
 
 
-# Create samSim input files for current scenario
-scenarioName <- "IM_0cvER"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0, recCorScalar=1,gammaSigScalar=NULL)
-
-
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM_0cvER"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0, recCorScalar=1,gammaSigScalar=NULL)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM_0.1cvER"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM_0.1cvER_hiGammaCV"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=1)
-
-# Create samSim input files for current scenario
-scenarioName <- "IM_0.1cvER_medGammaCV"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=0.7)
-
-# Create samSim input files for current scenario
-scenarioName <- "IM_0.1cvER_loGammaCV"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=0.2)
-
-
-
-scenarioName <- "HM_0.1cvER"
+scenarioName <- "HM.Base"
 BMmodel <- "SR_HierRicker_Surv"
 TMB_Inputs <- TMB_Inputs_HM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
 
 
 
-# scenarioName <- "IMCap_0.1cvER"
-# BMmodel <- "SR_IndivRicker_SurvCap"
-# TMB_Inputs <- TMB_Inputs_IM_priorCap
-# 
-# projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-#                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-#                                 nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
+scenarioName <- "IMCap.Base"
+BMmodel <- "SR_IndivRicker_SurvCap"
+TMB_Inputs <- TMB_Inputs_IM_priorCap
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
 
 
-scenarioName <- "HMCap_0.1cvER"
+scenarioName <- "HMCap.Base"
 
 BMmodel <- "SR_HierRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_HM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=2000, cvER = 0.456*0.1, recCorScalar=1,gammaSigScalar=NULL)
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+
+
+
+
+
+
+
+
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.1.0cvER"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.0.75cvER"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.75, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+
+
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.0.25cvER"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.25, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.0.001cvER"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.001, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+
+
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.1.0GammaSig"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=1,agePpnConst=TRUE)
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.0.75GammaSig"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=0.75,agePpnConst=TRUE)
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.0.50GammaSig"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=0.50,agePpnConst=TRUE)
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.0.25GammaSig"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=0.25,agePpnConst=TRUE)
+
+
+
+
+scenarioName <- "HM.Base"
+BMmodel <- "SR_HierRicker_Surv"
+TMB_Inputs <- TMB_Inputs_HM
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+
+
+
+scenarioName <- "IMCap.Base"
+BMmodel <- "SR_IndivRicker_SurvCap"
+TMB_Inputs <- TMB_Inputs_IM_priorCap
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+
+
+scenarioName <- "HMCap.Base"
+
+BMmodel <- "SR_HierRicker_SurvCap"
+TMB_Inputs <- TMB_Inputs_HM_priorCap
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=2000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
 
 
 
@@ -276,53 +324,28 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=s
 # ====================================================================
 
 
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER1.5"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*1.5, recCorScalar=1)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.cvER2.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*2, recCorScalar=1)
-
-
-scenarioName <- "IM.cvER3.0"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=NA, nProj=5000, cvER = 0.456*3.0, recCorScalar=1)
-
-
-
-
 # ===================================================================
 #  (5) Estimate and Save LRPs (and associated plots)
 # ==================================================================
 
 # Specify threshold to use when calculating LRP
-  # # Note: may want to loop over probThresholds as well; still needs to be added
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
-probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abundance that has this 
+probThreshList<-c(0.50, 0.66, 0.90, 0.95) # probability theshhold; the LRP is set as the aggregate abundance that has this 
                     # probability that the propCUThreshold is met
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 
-OMsToInclude<-OMsToTest<-c("IM_1.0cvER", "IM_0.5cvER", "IM_0.1cvER","IM_0cvER", "IM_0.1cvER_hiGammaCV",
-                           "IM_0.1cvER_medGammaCV","IM_0.1cvER_loGammaCV","IMCap_0.1cvER")
 
+OMsToInclude<-c("IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig","IM.1.0GammaSig","HM.Base",
+                "IMCap.Base", "HMCap.Base","IM.0.001cvER","IM.0.25cvER","IM.0.75cvER","IM.1.0cvER")
+
+
+
+for (p in 1:length(probThreshList)) {
+
+  probThresh<-probThreshList[p]
+  
 # Loop over OM Scenarios 
 for (i in 1:length(OMsToInclude)) {
  
@@ -361,7 +384,7 @@ for (i in 1:length(OMsToInclude)) {
   LRP<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
   
   # Create a table of LRP estimates to be saved for each OM model
-  if (i ==1) {
+  if (i ==1 & p == 1) {
     LRP_Ests<-data.frame(OMsToInclude[i], probThresh, propCUThresh, LRP, binSize)
     names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
   } else {
@@ -385,6 +408,8 @@ for (i in 1:length(OMsToInclude)) {
   #barplot(height = projLRPDat$nSims,names.arg = projLRPDat$bins)
   
 }
+  
+}
 
 
 # Save LRPs for all OM scenarios
@@ -393,7 +418,98 @@ write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=
 write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"), row.names=F)
 
 
+# ===================================================================================
+# (5b) Estimate and Save Model-Averaged LRPs, and associated plots (Optional)
+# =============================================================================
 
+# Specify threshold to use when calculating LRP
+propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
+probThreshList<-c(0.50, 0.66, 0.90, 0.95) # probability theshhold; the LRP is set as the aggregate abundance that has this 
+# probability that the propCUThreshold is met
+
+OMsToCombine<-c("IM.Base", "HM.Base", "IMCap.Base", "HMCap.Base")
+
+
+
+for (p in 1:length(probThreshList)) {
+  
+  probThresh<-probThreshList[p]
+  
+  # Loop over OM Scenarios 
+  for (i in 1:length(OMsToCombine)) {
+    # Read in samSim outputs for OM
+    filename<-paste("projLRPDat_",OMsToCombine[i],".csv",sep="")
+    tmp<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
+    tmp<-tmp %>% filter(year > max(SRDat$yr_num)+4)
+    if (i == 1) {
+      projLRPDat <- tmp
+    } else {
+      projLRPDat <- rbind(projLRPDat, tmp)
+    }
+  }
+    # Create bins for projected spawner abundances
+    minBreak<-0
+    maxBreak<-round(max(projLRPDat$sAg),digits=-2)
+    binSize<-200 # Note: bin size is currently set here
+    breaks<-seq(minBreak, maxBreak,by=binSize)  
+    
+    # Set bin labels as the mid-point
+    projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+    
+    # Summarize nSims in each bin
+    tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+    
+    # Filter out bins with < 100 nSims
+    tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
+      add_column(nSims=tmp$nSims) %>% filter(nSims>=100)
+    
+    # For each bin, calculate probability that required proportion of CUs above benchmark
+    projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+    # For each bin, calculate the difference between the threshold probability and the calculated probability 
+    projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
+    
+    # Save projection summaries used to create plots
+    projLRPDat$OM.Name<-"Combined_Base"
+   # if (i == 1) projLRPDat.plot<-projLRPDat
+  #  if (i > 1) projLRPDat.plot<-rbind(projLRPDat.plot,projLRPDat)
+   
+    projLRPDat.plot<-projLRPDat
+     
+    # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
+    LRP<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
+    
+    # Create a table of LRP estimates to be saved for each OM model
+    if (p == 1) {
+      LRP_Ests<-data.frame("Combined_Base", probThresh, propCUThresh, LRP, binSize)
+      names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+    } else {
+      tmp.df<-data.frame("Combined_Base", probThresh, propCUThresh, LRP, binSize)
+      names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+      LRP_Ests<-rbind(LRP_Ests,tmp.df)
+    }
+    
+    # Plot projected LRP abundance relationship =============================================================== 
+    pdf(paste(cohoDir,"/Figures/ProjectedLRPs/", "Combined_Base", "_ProjLRPCurve_prob",probThresh,".pdf", sep=""), 
+        width=6, height=6) 
+    
+    plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), cex=0.2,
+         xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
+    abline(h=probThresh, lty=2)
+    abline(v=LRP, col="orange", lwd=2)
+    
+    dev.off()
+    
+    # Option to plot histogram of nSims in each Agg Abundance Bin
+    #barplot(height = projLRPDat$nSims,names.arg = projLRPDat$bins)
+ 
+}
+
+
+LRP_Ests_SingleModels <- read.csv(paste(projOutDir2, "ProjectedLRPs.csv", sep="/"))
+LRP_Ests<-rbind(LRP_Ests_SingleModels,LRP_Ests)
+
+# Save LRPs for all OM scenarios
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
 
 
 
@@ -442,11 +558,20 @@ for (i in 1:length(OMsToInclude)) {
 # (7) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
+
 # # ---- Code to compare observed and projected among-CU correlations in spawner abundance
 
-OMsToTest<-c("IM_1.0cvER", "IM_0.5cvER", "IM_0.1cvER","IM_0cvER", "IM_0.1cvER_hiGammaCV",
-             "IM_0.1cvER_medGammaCV","IM_0.1cvER_loGammaCV","IMCap_0.1cvER")
+OMsToTest<-c("IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig","IM.1.0GammaSig")
 
+OMsToTest<-c("IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig","IM.1.0GammaSig", "HM.Base",
+             "IMCap.Base", "HMCap.Base")
+
+
+OMsToTest<-c("IM.0.001cvER","IM.0.25cvER","IM.Base","IM.0.75cvER","IM.1.0cvER")
+
+
+propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
+probThresh<-0.5
 
 for (j in 1:length(OMsToTest)) {
 
@@ -497,29 +622,59 @@ SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
 # Save LRPs for all OM scenarios
 write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
 
-dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM_0.1cvER", "IM_0.1cvER_hiGammaCV",
-                                                      "IM_0.1cvER_medGammaCV","IM_0.1cvER_loGammaCV"))
+dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig",
+                                                      "IM.1.0GammaSig"))
 
 
 g <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
-        scale_x_discrete(limits=c("Observed", "IM_0.1cvER", "IM_0.1cvER_loGammaCV",
-                                  "IM_0.1cvER_medGammaCV","IM_0.1cvER_hiGammaCV"),
-          labels=c("Obs", "IM_0.1cvER", "loGammaCV", "medGammaCV","hiGammaCV")) +
-          xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
+  scale_x_discrete(limits=c("Observed","IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig",
+                            "IM.1.0GammaSig"),
+                   labels=c("Obs","gammaSig=0","gammaSig=0.03" ,"gammaSig=0.06","gammaSig=0.09","gammaSig=0.12")) +
+                    xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
 
-  
 
-dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM_1.0cvER","IM_0.5cvER","IM_0.1cvER","IM_0cvER"))
+dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM.0.001cvER","IM.0.25cvER","IM.Base","IM.0.75cvER","IM.1.0cvER"))
 
 
 
 g2 <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
-  scale_x_discrete(limits=c("Observed","IM_1.0cvER","IM_0.5cvER","IM_0.1cvER","IM_0cvER"),
-                   labels=c("Obs", "1.0cvER", "0.5cvER", "0.1cvER","0cvER")) +
+  scale_x_discrete(limits=c("Observed","IM.0.001cvER","IM.0.25cvER","IM.Base","IM.0.75cvER","IM.1.0cvER"),
+                   labels=c("Obs", "~0cvER", "0.11cvER", "0.23cvER", "0.34cvER", "0.46cvER")) +
   xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
 
  ggsave(paste(cohoDir,"/Figures/ProjectedLRPs/compareEscpCorrelation_cvER.png",sep=""), plot = g2,
         width = 4, height = 3, units = "in") 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ # Create plots to compare LRP estimates 
+ 
+ 
+ projLRPDat<-read.csv(file=paste(projOutDir2, "ProjectedLRPs.csv", sep="/"))
+ 
+ 
+ plotDat<-projLRPDat %>% filter(OM %in% c("IM.Base", "HM.Base", "IMCap.Base", "HMCap.Base"))
+ 
+ g<-ggplot(data=plotDat, aes(x=as.factor(ProbThresh), y=LRP, col=OM)) + geom_point(size=2) +
+   xlab("Probability Threshold") + ylab("Estimated LRP") +
+   labs(col = "SR Model")
+ 
+ 
+ g2<-ggplot(data=plotDat, aes(x=OM, y=LRP, col=as.factor(ProbThresh))) + geom_point() +
+   scale_x_discrete(limits=c("IM.Base","HM.Base","IMCap.Base","HMCap.Base"),
+                    labels=c("IM", "HM", "IMcap", "HMcap")) +
+   xlab("Stock Recruit Model") + ylab("Estimated LRP")
+ 
+ 
  
  # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
  
