@@ -230,35 +230,30 @@ write.csv(Btable, "DataOut/SRdatWild.csv", row.names = F)
 # Read in total harvest (wild + hatchery)
 harvest_total <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A22:BP39", trim_ws = TRUE)
 names(harvest_total)[1] <- "CU" # change name
-# Read in total stock (wild + hatchery)
-returns_total <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A43:BP60", trim_ws = TRUE)
+
+# Read in escapement (wild + hatchery)
+escape_total <- readxl::read_excel("DataIn/wild_ISC_chum_recruitment_PieterVanWill.xlsx", range="A2:BP19", trim_ws = TRUE)
 
 # function to format harvest and totals
 format_totals <- function(x, new_name) {
-  x1 <- x %>% group_by(CU) %>% summarise_at(vars("2018":"1953"), sum, na.rm=T) # summarise by CU
+  col <- ncol(x) -1 
+  x1 <- x %>% group_by(CU) %>% summarise(across("2018":"1954", sum, na.rm=T)) # summarise by CU, note variables are indexed by number, sensitive to numner of years
   xl <- x1 %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(x1)), names_to="Year", values_to=new_name) # wide to long format
   xl
 }
 
-h1 <- format_totals(harvest_total, new_name="harvest")
-r1 <- format_totals(returns_total, new_name="returns")
-rh <- merge(h1, r1, by=c("CU", "Year"), all=TRUE) # merge harvest and returns
-rh$exploit_rate <- rh$harvest/rh$returns # calculate exploitation rate
+h1 <- format_totals(harvest_total2, new_name="harvest")
+e1 <- format_totals(escape_total, new_name="escape")
+str(h1)
+str(e1)
+eh <- merge(h1, e1, by=c("CU", "Year"), all=TRUE) # merge harvest and returns
+eh$exploit_rate <- eh$harvest / (eh$escape + eh$harvest) # calculate exploitation rate
 # get mean exploitation rate by CU
-rhs <- rh %>% group_by(CU) %>% summarise(mean_exploit_rate = mean(exploit_rate, na.rm=TRUE))
-write.csv(rhs, "DataOut/mean_exploitation_rate_by_CU_missing_1953.csv", row.names = FALSE)
-
-# Check that Georgia Strait mean exploitation rate is not sensitive to missing 1953 + 1952 exploitation rate
-# (close to 40% cutoff in Holt et al. 2018 Table 6, in Fig 1A it looks like ~0.75)
-# read in exploitation rates for 1952+1953, provided by Pieter Van Will 2021-05-25
-md <- readxl::read_excel("DataIn/1952_1953_harvest.xlsx", range="A1:C16", trim_ws=TRUE, )
-
-
-mean(c(rh$exploit_rate[rh$CU=="Georgia Strait"], rh$exploit_rate[rh$CU=="Georgia Strait"][2]), na.rm=TRUE)
-# no, it is not, still <0.4 average exploitation rate
+ehs <- eh %>% group_by(CU) %>% summarise(mean_exploit_rate = mean(exploit_rate, na.rm=TRUE))
+write.csv(ehs, "DataOut/mean_exploitation_rate_by_CU_missing_1953.csv", row.names = FALSE)
 
 # plot exploitation rate
-# ggplot(rh, aes(y=exploit_rate, x=Year, group=CU)) +
+# ggplot(eh, aes(y=exploit_rate, x=Year, group=CU)) +
 #   geom_point() +
 #   geom_path() +
 #   facet_wrap(~CU) +
@@ -283,7 +278,9 @@ ers <- check_ER %>% group_by(CU) %>% summarise(mean_ER = mean(exploit_rate, na.r
 #   scale_x_discrete(breaks=seq(1960,2020,10)) +
 #   theme_bw() +
 #   theme(axis.text.x=element_text(angle=90, vjust=0.5))
-# 
+
+
+
 
 # ----------------------------------------------------#
 # Explore data with figures - LW ------------
