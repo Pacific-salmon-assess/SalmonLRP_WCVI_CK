@@ -5,7 +5,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              ERScalar=NULL, cvER, recCorScalar,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
-                             corMat=NULL, halfAlpha=NULL){
+                             corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPSCalar=NULL){
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -105,17 +105,45 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                 row.names=F, col.names=F, sep=",")
 
     if (runMCMC) {
-      if(is.null(halfAlpha)){
-        mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
-                                  sep="/"))
-      }
-      if(!is.null(halfAlpha)){
-        if(halfAlpha){
-          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_halfA.csv",
+      if(is.null(alphaScalar) & is.null(SREPScalar)){
+        if(is.null(aNarrow)) {
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                    sep="/"))
+        }# End of  if(is.null(aNarrow) {
+        if(!is.null(aNarrow)) {
+          if(aNarrow){
+            mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_narrow.csv",
+                                      sep="/"))
+
+          }
+        }
+      }#End of if(is.null(alphaScalar) & is.null(SREPScalar)){
+      if(!is.null(alphaScalar)&!is.null(SREPScalar)){
+
+        if(alphaScalar==1 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
                                     sep="/"))
         }
-      }
-    }
+        if(alphaScalar==1.5 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1.5_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==0.5 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.5_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==1 & SREPScalar==1.5){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar1.5.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==1 & SREPScalar==0.5){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar0.5.csv",
+                                    sep="/"))
+        }
+
+      }# End of if(!is.null(alphaScalar)&!is.null(SREPscalar)){
+    }# End of if (runMCMC) {
+
     if (!runMCMC) mcmcOut <- NULL
   }
 
