@@ -408,7 +408,8 @@ png("Figures/fig_a_b_annual_retro.png", width=10, height=4, res=300, units="in")
 mdat1 %>% filter(param %in% c("est_A", "est_B")) %>%
   ggplot(., aes(y=est, x=retroYr)) +
   geom_line() +
-  facet_grid( param~CU_Name, scales="free_y")+
+  geom_hline(aes(yintercept=0)) +
+  facet_wrap(param~CU_Name, scales="free_y", ncol=5)+
   theme_bw()
 dev.off()
 
