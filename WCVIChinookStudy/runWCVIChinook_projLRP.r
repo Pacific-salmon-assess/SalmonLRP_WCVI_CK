@@ -23,7 +23,8 @@
 #     (10) Make histograms of cvER
 #     (11) Plots of LRP stabilitization with number of trials
 #     (12) Plot LRPs with various plevels
-#     (13) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+#     (13) Run reconstruction for WCVI CK CUs
+#     (14) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
 
 # ===============================================================================
 
@@ -34,7 +35,7 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 library(TMB)
-library(tmbstan)
+#library(tmbstan)
 library(here)
 library(zoo)
 library(corrplot)
@@ -208,13 +209,13 @@ corMat <- cor(dum)
 setwd(codeDir)
 
 
-scenarioName <- "testBC"
+scenarioName <- "testBC_newMCMC"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=3, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0, corMat=corMat, agePpnConst=TRUE)
 
 scenarioName <- "testnoBC" # changed simPar biasCor to FALSE
@@ -364,6 +365,14 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.3, corMat=corMat, agePpnConst=TRUE)
 
+scenarioName <- "cvER0.21.recCorSca0.4.n100"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=0.4, corMat=corMat, agePpnConst=TRUE)
 scenarioName <- "cvER0.21.recCorSca0.4"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
@@ -626,7 +635,7 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("testBC", "testnoBC")
+OMsToInclude<-c("testBC_newMCMC", "testBC", "testnoBC")
   # "cvER0.21.recCorSca0.n2000.mcmc"
   #               )
 
@@ -771,17 +780,29 @@ for (i in 1:length(OMsToInclude)) {
 # If the watershed-area-model is updated, these files will need to be updated
 
 createMCMCout <- FALSE
+setwd(wcviCKDir)
 alphaScalar <- 1#0.5#FALSE#TRUE
 SREPScalar <- 1#1#TRUE
 # Only need to run once to create mcmcOut.csv file with a given assumed
 # distribution of alpha and SREP
+Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
+CU_inlet[Inlet_Names=="Barkley",2] <- "WCVI South"#"Southwest_Vancouver_Island"
+CU_inlet[Inlet_Names=="Clayoquot",2] <- "WCVI South"#"Southwest_Vancouver_Island"
+CU_inlet[Inlet_Names=="Kyuquot",2] <- "WCVI Nootka & Kyuquot"#"Nootka_Kyuquot"
+CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "WCVI Nootka & Kyuquot"#"Nootka_Kyuquot"
+CU_inlet[Inlet_Names=="Quatsino",2] <- "WCVI North"#"Northwest_Vancouver_Island"
+
 
 if(createMCMCout){
   set.seed(123)
   remove.EnhStocks <- TRUE
   nTrials <- 5000
+  # Set up matrix of random numbers to use for generating alphas, so that
+  # the same random numbers are used for Ricka estimates with bias correction
+  # and without bias correction when using alpha to estimata beta (lnA/SREP)
+  a_rand <- matrix(runif(nTrials*1.5*length(Inlet_Names)), nrow=nTrials*1.5, ncol=length(Inlet_Names))
 
-  setwd(wcviCKDir)
   if (remove.EnhStocks) SREP <- data.frame(read.csv(
     "DataIn/WCVI_SMSY_noEnh.csv"))
   if (!remove.EnhStocks) SREP <- data.frame(read.csv(
@@ -790,11 +811,12 @@ if(createMCMCout){
 
 
   #Get lnaplha
-  read.csv(paste("samSimInputs/CUPars.csv")) %>% select(alpha,stk) %>% pull(alpha)
 
-  lnalpha_inlet <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
-    select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)#pull(alpha)
+  # lnalpha from Diana Dobson's run reconstruction coded in R/TMB with bias correction
+  lnalpha_inlet <- read.csv("samSimInputs/CUPars.csv") %>% select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)
+  lnalpha_nBC_inlet <- read.csv("samSimInputs/CUPars_nBC.csv") %>% select(alpha,stkName) %>% rename(inlets=stkName, lnalpha_nBC=alpha)
   lnalpha_inlet$lnalpha <- lnalpha_inlet$lnalpha * alphaScalar
+  lnalpha_nBC_inlet$lnalpha_nBC <- lnalpha_nBC_inlet$lnalpha_nBC * alphaScalar
 
   Inlet_Names <- lnalpha_inlet$inlets
 
@@ -805,7 +827,7 @@ if(createMCMCout){
     mutate(LL=LL * SREPScalar) %>%
     mutate(UL=UL * SREPScalar)
 
-  out <- SREP %>% left_join(lnalpha_inlet, by="inlets")
+  out <- SREP %>% left_join(lnalpha_inlet, by="inlets") %>% left_join(lnalpha_nBC_inlet, by="inlets")
 
   #Draw alpha value, then draw logSREP parameters,then calc beta for that draw
   # (lnalpha/SREP)
@@ -818,26 +840,37 @@ if(createMCMCout){
     logLLSREP <- log(LLSREP)
     sigSREP <- (logmeanSREP-logLLSREP)/1.96
     #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
-    rSREP <- exp(rnorm(nTrials, logmeanSREP,sigSREP))
+    rSREP <- exp(rnorm(nTrials*1.5, logmeanSREP,sigSREP))
 
+    meanlnalpha_nBC <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha_nBC)
     meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)
     # ULlnalpha <- 2
     # LLlnalpha <- 0
     siglnalpha <- 0.5 # Assuming 95% CIs at 0 and 2, sig ~0.5.
 
-    rlnalpha <- data.frame(a=rnorm(nTrials*1.5, meanlnalpha, siglnalpha))
+
+    # Generate random lnalpha values using same random numbers with and withtout
+    # bias correction (but diff for each CU or inlet)
+    rlnalpha_nBC <- data.frame(a=qnorm(a_rand[,i], meanlnalpha_nBC, siglnalpha))
+    rlnalpha <- data.frame(a=qnorm(a_rand[,i], meanlnalpha, siglnalpha))
     amin <- 0#(meanlnalpha - siglnalpha)# (narrow)
     amax <- max(2,alphaScalar*2)#(meanlnalpha + siglnalpha)# (narrow)
-    rlnalpha <- rlnalpha %>% filter(a > amin & a < amax) %>%
-      slice(1:nTrials)
+
+
     rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
       filter(stkName==Inlet_Names[i]) %>% select(sigma,stk)
-    if (i==1) mcmcOut <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
-                                     beta=rlnalpha$a/rSREP, sigma= rsig$sigma,
-                                     stkName=Inlet_Names[i] )
-    if (i>1) mcmcOut <- mcmcOut %>% add_row(stk=rsig$stk, alpha=rlnalpha$a,
-                                            beta=rlnalpha$a/rSREP, sigma= rsig$sigma,
-                                            stkName=Inlet_Names[i])
+
+    # Create a dataframe of alpha (with BC), beta (from alpha w/out BC to
+    #stabilize beta with and without BC)
+    df <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
+                      beta=rlnalpha_nBC$a/rSREP, sigma= rsig$sigma,
+                      stkName=Inlet_Names[i], alpha_nBC = rlnalpha_nBC$a )
+    #Remove all rows with Ricker a greater or less than bounds
+    df <- df %>% filter(alpha > amin & alpha < amax & alpha_nBC > amin &
+                          alpha_nBC < amax) %>% slice(1:nTrials)
+
+    if (i==1) mcmcOut <- df
+    if (i>1) mcmcOut <- mcmcOut %>% add_row(df)
 
   }
 
@@ -847,13 +880,13 @@ if(createMCMCout){
   if(alphaScalar!=1 | SREPScalar!=1) write.csv(mcmcOut, paste(wcviCKDir, "/SamSimInputs/Ricker_mcmc_alphaScalar",alphaScalar ,"_SREPScalar",SREPScalar,".csv", sep=""),
             row.names=F)
 
-  #plot of alpha density
+  #plot of alpha and SREP density
   alphaDensity <- mcmcOut %>% ggplot(aes(alpha, colour=factor(stkName))) +
     geom_density() +theme(legend.title = element_blank())
 
   SREPDensity <- mcmcOut %>% mutate(SREP=alpha/beta) %>%
     ggplot(aes(SREP, colour=factor(stkName), fill=factor(stkName))) +
-    geom_density(alpha=0.1) +theme(legend.title = element_blank())
+    geom_density(alpha=0.1) +theme(legend.title = element_blank()) +xlim(0,30000)
 
   if(alphaScalar==1 & SREPScalar==1) {
     ggsave(paste(wcviCKDir,"/Figures/AlphaDensity.png",sep=""),
@@ -1317,7 +1350,8 @@ OMsToInclude<-c(#"cvER0.21cvERSMU0.42.agePpnConst.recCorSca0.Anarrow.n200.mcmc")
 #  "cvER0.21cvERSMU0.42.agePpnConst.recCorSca0.noMCMC.n100.mcmc")
 #  "cvER0.21cvERSMU0.42.agePpnConst.recCorSca0.halfA.n1000.mcmc")
 #  "cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.n100.mcmc")
-"cvER0.21.recCorSca0.n2000.mcmc")
+#"cvER0.21.recCorSca0.n2000.mcmc")
+"cvER0.21.recCorSca0.4")
 
 LRP <- NA
 # Loop over OM Scenarios
@@ -1400,10 +1434,67 @@ write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPscvER0.21Allp.csv", sep="/")
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
 write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_datacvER0.21Allp.csv", sep="/"), row.names=F)
 
-
-
 # ===================================================================
-# (13) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
+# (13) Run reconstruction for WCIV  CK
+# ==================================================================
+# This code runs run reconstrution from Diana Dobson, updated by Diana Mchugh
+# 1 June 2021"WCVI_term_model_revisions_updated-2021.xlsx" in TMBstan
+
+run.RunReconstruction <- FALSE
+setwd(codeDir)
+
+if(run.RunReconstruction){
+  SRDat <- data.frame(read.csv(paste(wcviCKDir, "/DataIn/WCVI_SRbyCU.csv", sep="")))
+  #SRDat <- data.frame(read.csv("DataIn/WCVI_SRbyCU.csv"))
+  SRDat <- SRDat %>% drop_na()
+  # stkName <- unique(SRDat$Stock)
+  # # # for (i in 1:length(stkName)){}
+  # # i <- 1
+  # # srDat %>% filter(Stock == stkName[i])
+  #
+  # for (i in (1:3)){
+  #   r <- SRDat %>% filter(CU_ID==0)%>% pull(Recruits)
+  #   s <- SRDat %>% filter(CU_ID==0)%>% pull(Spawners)
+  #   lm(log(r/s)~s)
+  # }
+  Mod <- "SR_RickerBasic"
+
+  Scale <- 1000
+
+  data <- list()
+  data$biasCor <- as.numeric(TRUE)
+  data$S <- SRDat$Spawners/Scale
+  data$logR <- log(SRDat$Recruits/Scale)
+  data$stk <- as.numeric(SRDat$CU_ID)
+  N_Stocks <- length(unique(SRDat$CU_Name))
+  #data$N_Stks <- N_Stocks
+  #data$yr <- SRDat$BroodYear
+
+  param <- list()
+  param$logA <- rep(1, N_Stocks)
+  param$logB <- as.vector(log(1/( (SRDat %>% group_by(CU_ID) %>%
+                                     summarise(x = quantile(
+                                       Spawners, 0.8, na.rm=T)))$x/Scale) ) )
+  param$logSigma <- rep(-2, N_Stocks)
+
+
+  dyn.unload(dynlib(paste("TMB_Files/",Mod, sep="")))
+  compile(paste(codeDir, "/TMB_Files/", Mod, ".cpp", sep=""))
+
+  dyn.load(dynlib("TMB_Files/SR_RickerBasic"))
+
+  obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE)
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
+  pl <- obj$env$parList(opt$par)
+  pl
+  #summary(sdreport(obj), p.value=TRUE)
+
+  ricA.rr <- data.frame(CU_Name=unique(SRDat$CU_Name), logRicA=pl$logA)
+  write.csv(ricA.rr, paste(wcviCKDir,"/DataIn/ricArr.csv", sep=""))
+
+}
+# ===================================================================
+# (14) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
 # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
