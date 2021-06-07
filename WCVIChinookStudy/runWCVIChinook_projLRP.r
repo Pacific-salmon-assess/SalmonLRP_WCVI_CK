@@ -365,7 +365,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.3, corMat=corMat, agePpnConst=TRUE)
 
-scenarioName <- "cvER0.21.recCorSca0.4.n100"
+scenarioName <- "cvER0.21.recCorSca0.4.n100.test"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -635,7 +635,7 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c("testBC_newMCMC", "testBC", "testnoBC")
+OMsToInclude<-c("cvER0.21.recCorSca0.4.n100.test")
   # "cvER0.21.recCorSca0.n2000.mcmc"
   #               )
 
@@ -803,10 +803,13 @@ if(createMCMCout){
   # and without bias correction when using alpha to estimata beta (lnA/SREP)
   a_rand <- matrix(runif(nTrials*1.5*length(Inlet_Names)), nrow=nTrials*1.5, ncol=length(Inlet_Names))
 
+  # Pull SREP estimates from Watershed-Area model (see repository "Watershed-
+  # Area-Model"). That model included a bias correction for back-transformation
+  # from log-space
   if (remove.EnhStocks) SREP <- data.frame(read.csv(
-    "DataIn/WCVI_SMSY_noEnh.csv"))
+    "DataIn/WCVI_SMSY_noEnh_wBC.csv"))
   if (!remove.EnhStocks) SREP <- data.frame(read.csv(
-    "DataIn/WCVI_SMSY_wEnh.csv"))
+    "DataIn/WCVI_SMSY_wEnh_wBC.csv"))
 
 
 
@@ -826,6 +829,7 @@ if(createMCMCout){
   SREP <- SREP %>% mutate(SREP=SREP * SREPScalar) %>%
     mutate(LL=LL * SREPScalar) %>%
     mutate(UL=UL * SREPScalar)
+
 
   out <- SREP %>% left_join(lnalpha_inlet, by="inlets") %>% left_join(lnalpha_nBC_inlet, by="inlets")
 
@@ -863,7 +867,7 @@ if(createMCMCout){
     # Create a dataframe of alpha (with BC), beta (from alpha w/out BC to
     #stabilize beta with and without BC)
     df <- data.frame( stk=rsig$stk, alpha=rlnalpha$a,
-                      beta=rlnalpha_nBC$a/rSREP, sigma= rsig$sigma,
+                      beta=rlnalpha_nBC$a/rSREP, sigma= rsig$sigma, SREP=rSREP,
                       stkName=Inlet_Names[i], alpha_nBC = rlnalpha_nBC$a )
     #Remove all rows with Ricker a greater or less than bounds
     df <- df %>% filter(alpha > amin & alpha < amax & alpha_nBC > amin &
@@ -884,7 +888,7 @@ if(createMCMCout){
   alphaDensity <- mcmcOut %>% ggplot(aes(alpha, colour=factor(stkName))) +
     geom_density() +theme(legend.title = element_blank())
 
-  SREPDensity <- mcmcOut %>% mutate(SREP=alpha/beta) %>%
+  SREPDensity <- mcmcOut  %>%
     ggplot(aes(SREP, colour=factor(stkName), fill=factor(stkName))) +
     geom_density(alpha=0.1) +theme(legend.title = element_blank()) +xlim(0,30000)
 

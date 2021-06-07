@@ -5,7 +5,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              ERScalar=NULL, cvER, recCorScalar,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
-                             corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPSCalar=NULL){
+                             corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPScalar=NULL){
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
