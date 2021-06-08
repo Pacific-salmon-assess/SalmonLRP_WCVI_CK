@@ -113,14 +113,14 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # ==================================================================================
 # Call functions to plot data availability:
 # ====================================================================================
-plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
-plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
-
-# Note: these next 2 two escpt plots need to have formatting fixed
-plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
-plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc Separate", samePlont = F)
-plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
-plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
+# plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
+# plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
+# 
+# # Note: these next 2 two escpt plots need to have formatting fixed
+# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
+# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc Separate", samePlont = F)
+# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
+# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
 
 
 # ==================================================================================================================
@@ -142,11 +142,23 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                       B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
-                      extra_eval_iter=FALSE)
+                      extra_eval_iter=FALSE,biasCorrect=TRUE)
 
+
+TMB_Inputs_IM_noBiasCor <- list(Scale = 1000, logA_Start = 1,
+                      Tau_dist = 0.1,
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                      B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                      extra_eval_iter=FALSE,biasCorrect=FALSE)
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+# --- old:
+#cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+# --- without bias correction:
+#cap_priorMean_HM<-c(11.018110,  4.420246, 10.890888, 18.513363, 14.887224)
+# --- with bias correction:
+cap_priorMean_HM<-c(11.522086,  4.786252, 11.840564, 19.035260, 16.215605)
+
 
 TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                    logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
@@ -155,12 +167,24 @@ TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
                    extra_eval_iter=FALSE)
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+# --- old:
+#cap_priorMean_IM_noBiasCor<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+# --- without bias correction:
+cap_priorMean_IM_noBiasCor<-c( 11.151905, 5.713514, 11.534271, 21.377327, 14.886351)
+# --- with bias correction:
+cap_priorMean_IM<-c(12.986952,  6.601032, 14.012006, 23.395788, 18.368697)
+
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
-                               extra_eval_iter=FALSE)
+                               extra_eval_iter=FALSE,biasCorrect=TRUE)
+
+
+TMB_Inputs_IM_priorCap_noBiasCor <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                               cap_mean=cap_priorMean_IM_noBiasCor, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                               extra_eval_iter=FALSE,biasCorrect=FALSE)
 
 # Calculate penalty for sub-population approach
 subPop_B_penalty_lwr<-1000 # set at abundance below which no one CU could be above subpop have at least half of subpops above 1000 fish
@@ -207,25 +231,37 @@ TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sig
                     BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+    
+    # # Run with Bernoulli LRP model with individual model Ricker
+    runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+                   BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+                   useGenMean=F, TMB_Inputs=TMB_Inputs_IM_noBiasCor, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_noBiasCor_",ps[pp]*100, sep=""),
+                   bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
      
-     # Run with Bernoulli LRP model with hierarchical Ricker
-     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-                    BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-     
-     # # # Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
+     # # Run with Bernoulli LRP model with hierarchical Ricker
      # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
-     #                BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-     #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
+     #                BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+     #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
      #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
      # 
-     # # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
-     # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+     # # # # Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
+       # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+       #                BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+       #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
+       #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+       # 
+       runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
+                      BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+                      useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap_noBiasCor, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_noBias_",ps[pp]*100, sep=""),
+                      bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+       
+     # # 
+     # # # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
+     # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2018, endYr=2018, BroodYrLag=2, genYrs=3, p = ps[pp],
      #                BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
      #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
      #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-     
+
      
   }
 

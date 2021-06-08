@@ -1,4 +1,6 @@
 
+useBiasCorrect<-FALSE
+
 # Make simplified version of TMB run code for demonstration
 library(TMB)
 library(dplyr)
@@ -11,10 +13,10 @@ rootDir<-getwd()
 codeDir<-paste(rootDir,"/Code",sep="")
 cohoDir<-paste(rootDir,"/IFCohoStudy",sep="")
 
-setwd(codeDir)
-
-compile("TMB_Files/ThreshAbund_Subpop1000.cpp")
-dyn.load(dynlib("TMB_Files/ThreshAbund_Subpop1000"))
+setwd(codeDr)
+# 
+# compile("TMB_Files/ThreshAbund_Subpop1000.cpp")
+# dyn.load(dynlib("TMB_Files/ThreshAbund_Subpop1000"))
 
 compile("TMB_Files/SR_HierRicker_Surv.cpp")
 dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv"))
@@ -74,10 +76,10 @@ CoEscpDat<- CoEscpDat %>% right_join(unique(CoSRDat[,c("CU_ID", "CU_Name")]))
 
 SRDat<-CoSRDat
 EscDat <- CoEscpDat
-Bern_Logistic <- F
+Bern_Logistic <- T
 useGenMean <- F
 genYrs <- 3
-p<-0.80
+p<-0.5
 
 Scale<-1000
 
@@ -95,11 +97,16 @@ Pred_Spwn_CU <- c(rep(0,301), rep(1,301), rep(2,301), rep(3,301), rep(4,301))
 #                    logMuA_sig = 2, Tau_dist = 0.01, Tau_A_dist = 0.01, 
 #                    gamma_mean = 0, gamma_sig = 100, S_dep = 1000, Sgen_sig = 0.5)
 
-# Exact inputs from Arbeider et al:
-TMB_Inputs <- list(Scale = Scale, logA_Start = 1, logMuA_mean = 1, 
-                   logMuA_sig = sqrt(2), Tau_dist = 0.01, Tau_A_dist = 0.1, 
-                   gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+# # Exact inputs from Arbeider et al:
+# TMB_Inputs <- list(Scale = Scale, logA_Start = 1, logMuA_mean = 1, 
+#                    logMuA_sig = sqrt(2), Tau_dist = 0.01, Tau_A_dist = 0.1, 
+#                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,biasCorrect=FALSE)
 
+# What we're using:
+TMB_Inputs <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
+                      logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5, 
+                      extra_eval_iter=FALSE,biasCorrect=useBiasCorrect)
 
 
 Mod <- "SR_HierRicker_Surv"
@@ -115,6 +122,8 @@ N_Stocks <- length(unique(SRDat$CU_Name))
 data$N_Stks <- N_Stocks
 data$yr <- SRDat$yr_num
 data$Bern_Logistic <- as.numeric(Bern_Logistic)
+data$BiasCorrect<-ifelse(TMB_Inputs$biasCorrect==T, 1, 0)
+
 
 # also give model year for which will fit logistic model
 # only give S_Compare values when all obs for all CUs
@@ -284,6 +293,9 @@ All_Ests <- All_Ests %>% filter(!(Param %in% c( "logSgen", "Logit_Preds", "Rec_P
 
 write.csv(All_Ests,paste(cohoDir,"/DataOut/ModelFits/AllEsts_Hier_Ricker_Surv.csv", sep=""))
 
+
+
+
 # ========================================================================================
 
 # *************************************************************************************
@@ -328,17 +340,20 @@ dev.off()
 
 # Compile TMB model
 
-# TMB_Inputs <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-#                    logMuA_sig = 2, Tau_dist = 0.01, Tau_A_dist = 0.01, 
-#                    gamma_mean = 0, gamma_sig = 100, S_dep = 1000, Sgen_sig = 0.5,
-#                    cap_mean=cap_priorMean, cap_sig=0.5)
 
 # Exact inputs from Arbeider et al:
-TMB_Inputs <- list(Scale = Scale, logA_Start = 1, logMuA_mean = 1, 
-                   logMuA_sig = sqrt(2), Tau_dist = 0.01, Tau_A_dist = 0.1, 
-                   gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                  # gamma_mean = 0.375, gamma_sig = 0.02, S_dep = 1000, Sgen_sig = 1, # forcing informative prior on gamma
-                   cap_mean=cap_priorMean, cap_sig=sqrt(2))
+# TMB_Inputs <- list(Scale = Scale, logA_Start = 1, logMuA_mean = 1, 
+#                    logMuA_sig = sqrt(2), Tau_dist = 0.01, Tau_A_dist = 0.1, 
+#                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                   # gamma_mean = 0.375, gamma_sig = 0.02, S_dep = 1000, Sgen_sig = 1, # forcing informative prior on gamma
+#                    cap_mean=cap_priorMean, cap_sig=sqrt(2),biasCorrect=FALSE)
+
+# Inputs we are using:
+TMB_Inputs <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
+                      logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5,
+                      cap_mean=cap_priorMean, cap_sig=sqrt(2),
+                      extra_eval_iter=FALSE, biasCorrect=useBiasCorrect)
 
 
 Mod <- "SR_HierRicker_SurvCap"
@@ -354,6 +369,7 @@ N_Stocks <- length(unique(SRDat$CU_Name))
 data$N_Stks <- N_Stocks
 data$yr <- SRDat$yr_num
 data$Bern_Logistic <- as.numeric(Bern_Logistic)
+data$BiasCorrect<-ifelse(TMB_Inputs$biasCorrect==T, 1, 0)
 
 # also give model year for which will fit logistic model
 # only give S_Compare values when all obs for all CUs
@@ -447,16 +463,16 @@ map2 <- list(B_0=factor(NA), B_1=factor(NA))
 obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map2)
 
 
-# Create upper and lower bounds vectors that are same length and order as start vector that will be given to nlminb
+## Create upper & lower bounds vectors that are same length and order as nlminb start vector
 upper<-unlist(obj$par)
 upper[1:length(upper)]<-Inf
-upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy (To do: confirm with Brooke)
+upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy
 upper<-unname(upper)
 
 lower<-unlist(obj$par)
 lower[1:length(lower)]<--Inf
-lower[names(lower) =="logSgen"] <- log(0.001)
-lower<-unname(lower) 
+lower[names(lower) =="logSgen"] <- log(0.001) # constrain Sgen to be positive
+lower<-unname(lower)
 
 opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
               upper = upper, lower=lower)
@@ -473,16 +489,16 @@ HyperParams <- data.frame(summary(sdreport(obj))) %>%
   filter(Param %in% c("logMuA", "logSigmaA"))
 obj <- MakeADFun(data, pl2, DLL=Mod, silent=TRUE, map=map3)
 
-# Create upper and lower bounds vectors that are same length and order as start vector that will be given to nlminb
+## Create upper & lower bounds vectors that are same length and order as nlminb start vector
 upper<-unlist(obj$par)
 upper[1:length(upper)]<-Inf
-upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy (To do: confirm with Brooke)
+upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy
 upper<-unname(upper)
 
 lower<-unlist(obj$par)
 lower[1:length(lower)]<--Inf
-lower[names(lower) =="logSgen"] <- log(0.001)
-lower<-unname(lower) 
+lower[names(lower) =="logSgen"] <- log(0.001) # constrain Sgen to be positive
+lower<-unname(lower)
 
 opt <- tryCatch(
   {nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
@@ -531,10 +547,11 @@ write.csv(All_Ests_cap,paste(cohoDir,"/DataOut/ModelFits/AllEsts_Hier_Ricker_Sur
 # Fit Individual Ricker_Surv model
 # ********************************************************************************
 
-TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
-                      Tau_dist = 0.01,
-                      gamma_mean = 0, gamma_sig = 100, S_dep = 1000, Sgen_sig = 1)
-
+# What we're using:
+TMB_Inputs <- list(Scale = 1000, logA_Start = 1,
+     Tau_dist = 0.1,
+     gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5,
+     extra_eval_iter=FALSE,biasCorrect=useBiasCorrect)
 
 Mod <- "SR_IndivRicker_Surv"
 
@@ -547,6 +564,8 @@ N_Stocks <- length(unique(SRDat$CU_Name))
 data$N_Stks <- N_Stocks
 data$yr <- SRDat$yr_num
 data$Bern_Logistic <- as.numeric(Bern_Logistic)
+data$BiasCorrect<-ifelse(TMB_Inputs$biasCorrect==TRUE, 1, 0)
+
 
 # also give model year for which will fit logistic model
 # only give S_Compare values when all obs for all CUs
@@ -744,10 +763,16 @@ for (i in 1:5) {
 dev.off()
 
 
-# Exact inputs from Arbeider et al:
-TMB_Inputs <- list(Scale = Scale, logA_Start = 1, Tau_dist = 0.01, 
-                   gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                   cap_mean=cap_priorMean, cap_sig=sqrt(2))
+# # Exact inputs from Arbeider et al:
+# TMB_Inputs <- list(Scale = Scale, logA_Start = 1, Tau_dist = 0.01, 
+#                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                    cap_mean=cap_priorMean, cap_sig=sqrt(2),biasCorrect = useBiasCorrect)
+
+
+# What we're using:
+TMB_Inputs <- list(Scale = Scale, logA_Start = 1, Tau_dist = 0.1, 
+                   gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5,
+                   cap_mean=cap_priorMean, cap_sig=sqrt(2),biasCorrect = useBiasCorrect)
 
 
 Mod <- "SR_IndivRicker_SurvCap"
@@ -761,6 +786,8 @@ N_Stocks <- length(unique(SRDat$CU_Name))
 data$N_Stks <- N_Stocks
 data$yr <- SRDat$yr_num
 data$Bern_Logistic <- as.numeric(Bern_Logistic)
+data$BiasCorrect<-ifelse(TMB_Inputs$biasCorrect==T, 1, 0)
+
 
 # also give model year for which will fit logistic model
 # only give S_Compare values when all obs for all CUs
@@ -1109,6 +1136,7 @@ p.lrp<- ggplot(data=LRP_ests, mapping=aes(x=ModName, y=Estimate)) +
   xlab("") + ylab("Aggregate LRP") +
   ylim(min(LRP_ests$Lower), max(LRP_ests$Upper)) +
   theme_classic()
+p.lrp
 dev.off()
 
 

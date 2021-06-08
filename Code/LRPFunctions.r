@@ -90,13 +90,14 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
     data$logSurv_3 <- log(SRDat$STAS_Age_3)
     data$logSurv_4 <- log(SRDat$STAS_Age_4)
+    
+    data$BiasCorrect<-ifelse(TMB_Inputs$biasCorrect==TRUE,1,0)
     muSurv <- SRDat %>% group_by(CU_ID) %>% # get average smolt to adult survival 
        summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
     data$muLSurv <- log(muSurv$muSurv)
     data$gamma_mean <- TMB_Inputs$gamma_mean 
     data$gamma_sig <- TMB_Inputs$gamma_sig
     param$gamma <- 0
-    
      # add data and parameters specific to hierarchical models:
      if(Mod %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap","SR_HierRicker_Surv_LowAggPrior", "SR_HierRicker_SurvCap_LowAggPrior")){
        data$logMuA_mean <- TMB_Inputs$logMuA_mean 
@@ -209,7 +210,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   lower[1:length(lower)]<--Inf
   lower[names(lower) =="logSgen"] <- log(0.001) # constrain Sgen to be positive
   lower<-unname(lower)
-  
+
   opt <- tryCatch(
     { opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5), 
                     upper = upper, lower=lower )
