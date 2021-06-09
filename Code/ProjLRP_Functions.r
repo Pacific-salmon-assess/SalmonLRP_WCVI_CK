@@ -5,7 +5,9 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              ERScalar=NULL, cvER, recCorScalar,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
-                             corMat=NULL, biasCorrectEst=NULL, biasCorrectProj=NULL){
+                             corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPScalar=NULL,
+                             biasCorrectEst=NULL, biasCorrectProj=NULL){
+
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -109,9 +111,49 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     corMatrix <- corMat
     corMatrix <- corMatrix * recCorScalar
     corMatrix[col(corMatrix)==row(corMatrix)] <- 1
-    write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
+    write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),
+                row.names=F, col.names=F, sep=",")
 
-    if (runMCMC) mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv", sep="/"))
+    if (runMCMC) {
+      if(is.null(alphaScalar) & is.null(SREPScalar)){
+        if(is.null(aNarrow)) {
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                    sep="/"))
+        }# End of  if(is.null(aNarrow) {
+        if(!is.null(aNarrow)) {
+          if(aNarrow){
+            mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_narrow.csv",
+                                      sep="/"))
+
+          }
+        }
+      }#End of if(is.null(alphaScalar) & is.null(SREPScalar)){
+      if(!is.null(alphaScalar)&!is.null(SREPScalar)){
+
+        if(alphaScalar==1 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==1.5 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1.5_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==0.5 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.5_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==1 & SREPScalar==1.5){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar1.5.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==1 & SREPScalar==0.5){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar0.5.csv",
+                                    sep="/"))
+        }
+
+      }# End of if(!is.null(alphaScalar)&!is.null(SREPscalar)){
+    }# End of if (runMCMC) {
+
     if (!runMCMC) mcmcOut <- NULL
   }
 
@@ -194,10 +236,11 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   }
   
   # Add BiasCorr to simPars
-  if (biasCorrectProj == TRUE) {
-    simPars$biasCor <- TRUE
+  if (is.null(biasCorrectProj)) {
+    simPars$biasCor <- rep(FALSE,nrow(simPars))
   } else {
-    simPars$biasCor <- FALSE
+    if (biasCorrectProj == TRUE) simPars$biasCor <- rep(TRUE,nrow(simPars))
+    if (biasCorrectProj == FALSE) simPars$biasCor <- rep(FALSE,nrow(simPars))
   }
   
   write.csv(simPars, paste(scenInputDir,"SimPars.csv", sep="/"), row.names=F)
@@ -289,9 +332,12 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 
   data <- list()
   data$Bayes <- 1 # Indicate that this is an MLE, not Bayesian
-  if (biasCorrectEst == TRUE) data$BiasCorrect <-1  # Indicate whether log-normal bias correction should be applied in estimation
-  if (biasCorrectEst == FALSE) data$BiasCorrect <-0
-  if (is.null(biasCorrectEst) == TRUE) data$BiasCorrect<-0
+  if (is.null(biasCorrectEst)) { 
+     data$BiasCorrect <- 0 } else {
+       # Indicate whether log-normal bias correction should be applied in estimation
+       if (biasCorrectEst == TRUE) data$BiasCorrect <-1
+       if (biasCorrectEst == FALSE) data$BiasCorrect <-0
+     }
   data$S <- SRDat$Spawners/Scale
   data$logR <- log(SRDat$Recruits/Scale)
   data$stk <- as.numeric(SRDat$CU_ID)

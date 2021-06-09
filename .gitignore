@@ -28,8 +28,16 @@ knitr-cache
 *.rda
 /WCVIChinookStudy/samSimInputs/*
 !/WCVIChinookStudy/samSimInputs/CUPars.csv
+!/WCVIChinookStudy/samSimInputs/CUPars_wBC.csv
+!/WCVIChinookStudy/samSimInputs/CUPars_nBC.csv
 !/WCVIChinookStudy/samSimInputs/SimPars.csv
 !/WCVIChinookStudy/samSimInputs/Ricker_mcmc.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc_halfA.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc_narrow.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc_alphaScalar1.5_SREPScalar1.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc_alphaScalar0.5_SREPScalar1.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar1.5.csv
+!/WCVIChinookStudy/samSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar0.5.csv
 /WCVIChinookStudy/samSimOutputs/*
 /WCVIChinookStudy/Figures/*
 /WCVIChinookStudy/DataOut/*

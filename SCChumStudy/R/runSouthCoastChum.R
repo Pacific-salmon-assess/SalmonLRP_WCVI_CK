@@ -121,12 +121,12 @@ length(unique(ChumEscpDat_no_CU_infill_yrs$yr))
 # (and associated spawner/recruit years as above) with CU-level infilling in Bute Inlet
 # removed
 # get years that Bute wasn't monitored
-years_not_use_bute <- ChumEscpDat$yr[intersect(which(is.na(ChumEscpDat$Escape)), which(ChumEscpDat$CU_Name=="Bute Inlet"))]
+# years_not_use_bute <- ChumEscpDat$yr[intersect(which(is.na(ChumEscpDat$Escape)), which(ChumEscpDat$CU_Name=="Bute Inlet"))]
 # expand these years to include recruits/spawners that are linked to these years
-years_not_use_bute2 <- linked_yrs(years_not_use_bute)
+# years_not_use_bute2 <- linked_yrs(years_not_use_bute)
 # remove Upper Knight, and any years linked to uncounted years in Bute Inlet
-ChumEscpDat_no_knight <- ChumEscpDat[ !(ChumEscpDat$CU_Name=="Upper Knight" | ChumEscpDat$yr %in% years_not_use_bute2), ]
-ChumSRDat_no_knight <- ChumSRDat[  !(ChumSRDat$CU_Name=="Upper Knight" | ChumSRDat$BroodYear %in% years_not_use_bute2),  ]
+# ChumEscpDat_no_knight <- ChumEscpDat[ !(ChumEscpDat$CU_Name=="Upper Knight" | ChumEscpDat$yr %in% years_not_use_bute2), ]
+# ChumSRDat_no_knight <- ChumSRDat[  !(ChumSRDat$CU_Name=="Upper Knight" | ChumSRDat$BroodYear %in% years_not_use_bute2),  ]
 
 # Specify p value for logistic regression
 ps <- c(seq(0.6, 0.95,.05), 0.99) 
@@ -158,18 +158,18 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 # Run retrospective analysis
 for(pp in 1:length(ps)){
   # Run with Binomial LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T)
+  # runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T)
 
   # Run with CUs with CU-level infilling removed
   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T, runLogisticDiag = TRUE)
- # for some reason this gives errors if startYr is set to less than 1975. Perhaps there aren't enough stock-recruit 
-  # obseevations for the model to fit? The residuals are large even when there are more points.
+  # for some reason this gives errors if startYr is set to less than 1975. Perhaps there aren't enough stock-recruit 
+  # observations for the model to fit? The residuals are large even when there are more points.
   
   # # Run with years with CU-level infilling removed
   # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill_yrs, SRDat=ChumSRDat_no_CU_infill_yrs, startYr=1967, endYr=1972, BroodYrLag=4, genYrs=4, p = ps[pp],
@@ -183,11 +183,13 @@ for(pp in 1:length(ps)){
   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_no_knight",ps[pp]*100, sep=""),
   #                bootstrapMode = F, plotLRP=T, runLogisticDiag=TRUE)
   # 
-  # # Run with Bernoulli LRP model with individual model Ricker
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BernLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bern.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T, runLogisticDiag=TRUE)
+  # Run with Bernoulli LRP model with individual model Ricker
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BernLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bern.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, runLogisticDiag=TRUE)
+  # for some reason this gives errors if startYr is set to less than 1975. Perhaps there aren't enough stock-recruit 
+  # observations for the model to fit? The residuals are large even when there are more points.
 }
 
 # -----------------------------------------------------#
@@ -325,10 +327,10 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
   # 
   # Run with Bernouli regression with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "Percentile", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bern.Percentile_noCUinfill_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
+  runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "Percentile", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bern.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
   
 }
 
@@ -395,6 +397,7 @@ png("Figures/fig_Sgen_annual_retro.png", width=12, height=3, res=300, units="in"
 ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
   geom_line() +
   geom_ribbon(aes(ymin=low_Sgen, ymax=up_Sgen, x=retroYr),colour=NA, alpha=0.2) +
+  geom_line(aes(y=est_Smsy, x=retroYr), colour='dodgerblue') +
   facet_wrap(~CU_Name, scales="free_y", nrow=1) +
   ylab("Sgen") + xlab("Year") +
   geom_hline(aes(yintercept=0), linetype=2) +
@@ -406,7 +409,8 @@ png("Figures/fig_a_b_annual_retro.png", width=10, height=4, res=300, units="in")
 mdat1 %>% filter(param %in% c("est_A", "est_B")) %>%
   ggplot(., aes(y=est, x=retroYr)) +
   geom_line() +
-  facet_grid( param~CU_Name, scales="free_y")+
+  geom_hline(aes(yintercept=0)) +
+  facet_wrap(param~CU_Name, scales="free_y", ncol=5)+
   theme_bw()
 dev.off()
 
@@ -449,7 +453,7 @@ dev.off()
 
 # get residuals
 t$pred_rec <- t$Spawners * t$est_A * exp(-t$est_B * t$Spawners) 
-t$resid_rec <- t$Recruits - pred_rec
+t$resid_rec <- t$Recruits - t$pred_rec
 
 t$pred_RS <- t$est_A * exp(-t$est_B * t$Spawners) 
 t$resid_RS <- t$Recruits/t$Spawners - t$pred_RS
@@ -512,7 +516,6 @@ par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
 for(i in 1:length(unique(ests$CU_ID))) {
   dat <- t[t$CU_Name==CUs[i],]
   plot(dat$resid_rec ~ dat$Recruits, type="p", main=CUs[i], xlab="Recruits", ylab="Recruits, obs-pred")
-  abline(a=0, b=1, lty=2, col="orange")
 }
 
 # Plot residuals  
