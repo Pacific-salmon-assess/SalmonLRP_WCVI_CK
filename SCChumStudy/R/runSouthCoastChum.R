@@ -392,14 +392,14 @@ dev.off()
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
-# Plot Sgen estimates over time
+# Plot Sgen estimates over time, with SMSY
 png("Figures/fig_Sgen_annual_retro.png", width=12, height=3, res=300, units="in")
 ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
   geom_line() +
   geom_ribbon(aes(ymin=low_Sgen, ymax=up_Sgen, x=retroYr),colour=NA, alpha=0.2) +
   geom_line(aes(y=est_Smsy, x=retroYr), colour='dodgerblue') +
   facet_wrap(~CU_Name, scales="free_y", nrow=1) +
-  ylab("Sgen") + xlab("Year") +
+  ylab("Sgen and SMSY") + xlab("Year") +
   geom_hline(aes(yintercept=0), linetype=2) +
   theme_bw()
 dev.off()
