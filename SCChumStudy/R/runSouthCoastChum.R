@@ -385,19 +385,21 @@ pdat2$perc_appr <- ifelse(is.na(pdat2$percentile)==FALSE, 1,0) # add variable th
 ChumEscDat_full$CU_infill <- ifelse(is.na(ChumEscDat_full$Escape), TRUE, FALSE)
 pdat3 <- merge(pdat2, ChumEscDat_full[,names(ChumEscDat_full) %in% c("CU_Name","yr", "CU_infill")], by=c("CU_Name","yr"), all.x=TRUE)
 names(pdat3)
-# to get alpha to work need to remove multiples in same yr. Right now overlapping retro years make it hard to see
+# Get dat frame that has one row per yr, and the corresponding retro year benchmarks. 
+# Also has the rows from before retro years (years used up to first retro year)
+pbm <- pdat3[union(grep(min(pdat3$retro_year), pdat3$retro_year), which(pdat3$retro_year==pdat3$yr)), ]
 
-png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=8, res=300, units="in", pointsize=26)
-ggplot(pdat3, aes(y=benchmark_perc_25, x=retro_year, shape=as.factor(perc_appr))) +
+png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=8, res=300, units="in", pointsize=30)
+ggplot(pbm, aes(y=benchmark_perc_25, x=retro_year, shape=as.factor(perc_appr))) +
   geom_line(colour="gray", linetype=2) +
-  geom_line(aes(y=Escp, x=yr)) +
+  geom_line(aes(y=Escp, x=yr), size=0.2) +
   geom_line(aes(y=benchmark_perc_50, x=retro_year), linetype=2) +
-  geom_point(aes(y=Escp, x=yr, fill=as.factor(AboveBenchmark),  alpha=as.factor(CU_infill))) +
+  geom_point(aes(y=Escp, x=yr, fill=as.factor(AboveBenchmark),  alpha=CU_infill)) +
   scale_fill_manual( values=c("red", "darkgreen"), guide=NULL) +
   scale_shape_manual(values=c(1, 21), guide="none") +
-  scale_alpha_manual(values=c(1,0.3)) +
+  scale_alpha_manual(values=c(1,0.3), guide="none") +
   facet_wrap(~paste0(CU_Name, " (", ifelse(is.na(percentile),"NA)", paste0(use_perc*100,"%)"))), scales="free_y", ncol=2) +
-  ylab("Escapement and 25% benchmark") + xlab("Year") +
+  ylab("Escapement with 25% and 50% benchmarks") + xlab("Year") +
   coord_cartesian(expand=FALSE, clip="off") +
   geom_hline(aes(yintercept=0)) +
   theme_classic() +
