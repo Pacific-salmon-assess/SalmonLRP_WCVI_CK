@@ -389,7 +389,7 @@ names(pdat3)
 # Also has the rows from before retro years (years used up to first retro year)
 pbm <- pdat3[union(grep(min(pdat3$retro_year), pdat3$retro_year), which(pdat3$retro_year==pdat3$yr)), ]
 
-png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=8, res=300, units="in", pointsize=30)
+png("Figures/fig_perc_benchmarks_annual_retro.png", width=7, height=7, res=300, units="in", pointsize=30)
 ggplot(pbm, aes(y=benchmark_perc_25, x=retro_year, shape=as.factor(perc_appr))) +
   geom_line(colour="gray", linetype=2) +
   geom_line(aes(y=Escp, x=yr), size=0.2) +
