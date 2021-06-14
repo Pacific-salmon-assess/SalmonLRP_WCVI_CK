@@ -105,30 +105,55 @@ setwd(cohoDir)
 # TMB input parameters:
 TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5)
 
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1.0)
+
+
 
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+#cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
+
+
+
+# --- without bias correction:
+cap_priorMean_HM_noBiasCor<-c(11.018110,  4.420246, 10.890888, 18.513363, 14.887224)
+# --- with bias correction:
+cap_priorMean_HM<-c(11.522086,  4.786252, 11.840564, 19.035260, 16.215605)
+
+
 
 TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5,
+                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
+
+TMB_Inputs_HM_priorCap_noBiasCor <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
+                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5,
                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
 
 # Prior means come from running "compareRickerModelTypes.r"
-cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+#cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
+
+
+# without bias correction
+cap_priorMean_IM_noBiasCor<-c( 11.151905, 5.713514, 11.534271, 21.377327, 14.886351)
+# --- with bias correction:
+cap_priorMean_IM<-c(12.986952,  6.601032, 14.012006, 23.395788, 18.368697)
+
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
-                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5,
                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
 
-
+TMB_Inputs_IM_priorCap_noBiasCor <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5,
+                               cap_mean=cap_priorMean_IM_noBiasCor, cap_sig=sqrt(2))
 
 # Create output directories for Projected LRP outputs
 figDir <- here(cohoDir, "Figures")
@@ -163,8 +188,19 @@ scenarioName <- "IM.Base"
 BMmodel <- "SR_IndivRicker_Surv"
 TMB_Inputs <- TMB_Inputs_IM
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=1000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
+                                biasCorrectEst=T, biasCorrectProj=T)
+
+
+# Create samSim input files for current scenario
+scenarioName <- "IM.Base_noBiasCorr"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=1000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
+                                biasCorrectEst=F, biasCorrectProj=F)
 
 
 
@@ -174,8 +210,20 @@ TMB_Inputs <- TMB_Inputs_HM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                biasCorrectEst=T, biasCorrectProj=T)
 
+
+
+
+scenarioName <- "HM.Base_noBiasCorr"
+BMmodel <- "SR_HierRicker_Surv"
+TMB_Inputs <- TMB_Inputs_HM
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                biasCorrectEst=F, biasCorrectProj=F)
 
 
 scenarioName <- "IMCap.Base"
@@ -183,8 +231,19 @@ BMmodel <- "SR_IndivRicker_SurvCap"
 TMB_Inputs <- TMB_Inputs_IM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                biasCorrectEst=T, biasCorrectProj=T)
+
+
+scenarioName <- "IMCap.Base_noBiasCorr"
+BMmodel <- "SR_IndivRicker_SurvCap"
+TMB_Inputs <- TMB_Inputs_IM_priorCap_noBiasCor
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                biasCorrectEst=F, biasCorrectProj=F)
 
 
 scenarioName <- "HMCap.Base"
@@ -194,14 +253,20 @@ TMB_Inputs <- TMB_Inputs_HM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE)
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                biasCorrectEst=T, biasCorrectProj=T)
 
 
 
+scenarioName <- "HMCap.Base_noBiasCorr"
 
+BMmodel <- "SR_HierRicker_SurvCap"
+TMB_Inputs <- TMB_Inputs_HM_priorCap_noBiasCor
 
-
-
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                biasCorrectEst=F, biasCorrectProj=F)
 
 
 
@@ -336,9 +401,11 @@ probThreshList<-c(0.50, 0.66, 0.90, 0.95) # probability theshhold; the LRP is se
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 
-
 OMsToInclude<-c("IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig","IM.1.0GammaSig","HM.Base",
                 "IMCap.Base", "HMCap.Base","IM.0.001cvER","IM.0.25cvER","IM.0.75cvER","IM.1.0cvER")
+
+OMsToInclude<-c("IM.Base","IM.Base_noBiasCorr","HM.Base","HM.Base_noBiasCorr",
+                "IMCap.Base","IMCap.Base_noBiasCorr","HMCap.Base","HMCap.Base_noBiasCorr")
 
 
 

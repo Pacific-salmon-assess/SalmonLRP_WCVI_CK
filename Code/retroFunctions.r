@@ -125,7 +125,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
             mutate(benchmark_perc_25= quantile(Escp, probs=0.25, na.rm=TRUE), benchmark_perc_50 = quantile(Escp, probs=0.5, na.rm=TRUE)) 
           # Need to end up with a data frame that has CU, year, and whether CU is above benchmark (1 means yes, 0 mean no)
           # new data frame that is the key to which percentiles to use for which CUs
-          which_perc <- TMB_Inputs_Percentile$perc_benchmark 
+          which_perc <- TMB_Inputs$perc_benchmark 
           # New variable with which percentile to use
           LBM_status_byCU$use_perc <- which_perc$percentile[match(x=LBM_status_byCU$CU_Name, table=which_perc$CU)]
 

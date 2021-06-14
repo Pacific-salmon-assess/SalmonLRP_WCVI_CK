@@ -5,7 +5,9 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              ERScalar=NULL, cvER, recCorScalar,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
-                             corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPScalar=NULL){
+                             corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPScalar=NULL,
+                             biasCorrectEst=NULL, biasCorrectProj=NULL){
+
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
   scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
@@ -20,7 +22,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   if(!is.null(SRDat)){
     if (all(is.na(SRDat$Recruits)) == FALSE){
       # Run MPD fit to parameterize samSim projections ==========
-      mpdOut<-get_MPD_Fit(SRDat, BMmodel, TMB_Inputs, outDir)
+      mpdOut<-get_MPD_Fit(SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst=biasCorrectEst)
       # save correlation matrix
       corMatrix<-mpdOut$corMatrix
       corMatrix<-corMatrix * recCorScalar
@@ -46,11 +48,19 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
         }
 
         mcmcOut<-as.data.frame(mcmcOut)
-        write.csv(mcmcOut, paste(scenInputDir,BMmodel, sep="/"), row.names=F)
+        
+        # Save to high-level outDir folder so that it can be used for future runs with runMCMC=F
+        write.csv(mcmcOut, paste(outDir,"/SamSimInputs/", BMmodel,"_mcmc.csv",sep=""),row.names=F)
+        # Also save to scenario folder so it can be easily referenced for a run
+        write.csv(mcmcOut, paste(scenInputDir,"/", BMmodel,"_mcmc.csv",sep=""),row.names=F)
+        
       }
 
       if (runMCMC == F) {
+        # Read-in previoulsy saved mcmcOut
         mcmcOut<-read.csv(paste(outDir,"/SamSimInputs/", BMmodel,"_mcmc.csv", sep=""))
+        # Save to scenario folder so it can be easily referenced for a run
+        write.csv(mcmcOut, paste(scenInputDir,"/", BMmodel,"_mcmc.csv",sep=""),row.names=F)
       }
     }# End of if all recruitment=NA
 
@@ -195,7 +205,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
 
     }# End of if (all(is.na(SRDat$Recruits)) == FALSE)
   }#  End of  if(!is.null(SRDat)){
-
+  
   write.csv(CUpars, paste(scenInputDir,"CUPars.csv", sep="/"), row.names=F)
 
   # Read-in sim par file and re-write with updated scenario pars =====================
@@ -224,7 +234,15 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     simPars$sampCU_coef1<-TRUE
     simPars$sigCU_coef1<-gammaSig*gammaSigScalar
   }
-
+  
+  # Add BiasCorr to simPars
+  if (is.null(biasCorrectProj)) {
+    simPars$biasCor <- rep(FALSE,nrow(simPars))
+  } else {
+    if (biasCorrectProj == TRUE) simPars$biasCor <- rep(TRUE,nrow(simPars))
+    if (biasCorrectProj == FALSE) simPars$biasCor <- rep(FALSE,nrow(simPars))
+  }
+  
   write.csv(simPars, paste(scenInputDir,"SimPars.csv", sep="/"), row.names=F)
 
   ## Run projections =================================================================================
@@ -298,11 +316,12 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
 
   write.csv(projSpwnDat,paste(here(outDir,"SamSimOutputs", "simData"), paste("projSpwnDat_",simPars$nameOM[1],".csv",sep=""),sep="/"))
   write.csv(projLRPDat,paste(here(outDir,"SamSimOutputs", "simData"), paste("projLRPDat_",simPars$nameOM[1],".csv",sep=""),sep="/"))
+    
 }
 
 
 
-get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir) {
+get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 
   # Run MCMC SR analysis to parameterize projections using available data
 
@@ -312,7 +331,13 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir) {
   Scale <- TMB_Inputs$Scale
 
   data <- list()
-  data$Bayes <- 1 # What is this for?
+  data$Bayes <- 1 # Indicate that this is an MLE, not Bayesian
+  if (is.null(biasCorrectEst)) { 
+     data$BiasCorrect <- 0 } else {
+       # Indicate whether log-normal bias correction should be applied in estimation
+       if (biasCorrectEst == TRUE) data$BiasCorrect <-1
+       if (biasCorrectEst == FALSE) data$BiasCorrect <-0
+     }
   data$S <- SRDat$Spawners/Scale
   data$logR <- log(SRDat$Recruits/Scale)
   data$stk <- as.numeric(SRDat$CU_ID)
@@ -440,7 +465,6 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir) {
 
 get_MCMC_Fit<-function (scenarioName, obj, init, upper, lower, nMCMC, Scale) {
 
-
 # # Fit mcmc with STAN to get parameter estimates for projections ===============================
 fitmcmc <- tmbstan(obj, chains=3, iter=nMCMC, init=init,
                    control = list(adapt_delta = 0.99),upper=upper, lower=lower)
@@ -458,6 +482,11 @@ post<-post %>% add_column(iteration=as.numeric(row.names(post)))
 # Extract alpha marginal posterior
 post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
 post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
+
+
+# Extract Sgen marginal posterior
+post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
+post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
 
 # Extract beta marginal posterior (or cap parameter if Prior Cap model formulation)
 if ("logB" %in% names(obj$par)) {
@@ -482,11 +511,11 @@ post_long_gamma$stock<-rep(1:5,length=nrow(post_long_gamma))
 
 # Compile marginal posteriors to get joint posterior for export
 if ("cap" %in% names(obj$par)) {
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
+  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
 }
 
 if ("logB" %in% names(obj$par)) {
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
+  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
 }
 
 post_long

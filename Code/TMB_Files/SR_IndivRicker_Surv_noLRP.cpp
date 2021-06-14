@@ -45,23 +45,27 @@ px[0] = DW * py[0];                 // Reverse mode chain rule
 template<class Type>
 Type objective_function<Type>::operator() ()
 {
+  // Indicator variables (set to 1=True or 0=False)
   DATA_INTEGER(Bayes);
+  DATA_INTEGER(BiasCorrect);
+  // Data
   DATA_VECTOR(S);
   DATA_VECTOR(P_3);
   DATA_VECTOR(logR);
   DATA_IVECTOR(stk);
-  DATA_IVECTOR(stk_predS);
   DATA_IVECTOR(yr);
   DATA_VECTOR(logSurv_3);
   DATA_VECTOR(logSurv_4);
   DATA_INTEGER(N_Stks);
   DATA_VECTOR(muLSurv);
+  // Assumed prior distributions
   DATA_SCALAR(Tau_dist);
   DATA_SCALAR(gamma_mean);
   DATA_SCALAR(gamma_sig);
-  DATA_VECTOR(Pred_Spwn);
   DATA_SCALAR(Sgen_sig);
-  
+  // Vectors to predict CU-level spawners from
+  DATA_VECTOR(Pred_Spwn);
+  DATA_IVECTOR(stk_predS);
   
   PARAMETER_VECTOR(logA);
   PARAMETER_VECTOR(logB);
@@ -87,8 +91,18 @@ Type objective_function<Type>::operator() ()
   
   // Ricker likelihood based on Arbeider et al. 2020 Interior Fraser Coho RPA res. doc.
   for(int i=0; i<N_Obs; i++){
-    LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i);
-    LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i);
+    // Add lognormal bias correction if BiasCorrect == 1
+    if (BiasCorrect == 1) {
+      LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/2;
+      LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/2;
+    }
+    
+    if (BiasCorrect == 0) {
+      LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i);
+      LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i);
+    }
+    
+    
     LogR_Pred(i) = log(exp(LogR_Pred_3(i)) + exp(LogR_Pred_4(i)));
     // get same answer whether put likelihood on log(R/S) or R_pred
     ans += -dnorm(LogR_Pred(i) - log(S(i)), logR(i) - log(S(i)),  sigma(stk(i)), true);

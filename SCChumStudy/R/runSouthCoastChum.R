@@ -297,6 +297,10 @@ for(pp in 1:length(ps)){
 which_perc_benchmark <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
   "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
   "percentile" = c(NA, 0.5, 0.5, 0.5, NA, 0.25, 0.25))
+# also make one with 0.75 for the two CUs where percentiles are not recommended, to make figure with all 7 CUs
+which_perc_benchmark_hack <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
+                                            "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
+                                   "percentile" = c(0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0.25))
 
 # Remove any CUs that have NA percentile benchmark (percentile benchmarks not recommended in Holt et al. 2018 Table 6)
 ChumEscpDat_perc <- ChumEscpDat_no_CU_infill[ !(ChumEscpDat_no_CU_infill$CU_Name %in% which_perc_benchmark$CU[is.na(which_perc_benchmark$percentile)] ), ]
@@ -306,20 +310,23 @@ TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
                               Tau_dist = 0.1,
                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                               B_penalty_mu = NA, B_penalty_sigma = NA, perc_benchmark= which_perc_benchmark)
-
+TMB_Inputs_Percentile_hack <- list(Scale = 1000, logA_Start = 1,
+                              Tau_dist = 0.1,
+                              gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                              B_penalty_mu = NA, B_penalty_sigma = NA, perc_benchmark= which_perc_benchmark_hack)
 # Run retrospective analysis using percentile benchmarks
 for(pp in 1:length(ps)){
   # Run with Binomial LRP with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
-  runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T,  runLogisticDiag=T)
-  # Run with CU-level infilling (to make plots with percentile benchmarks over time for all 7 CUs)
-  # note problem with data - NAs in stock-recruit data?
-  # runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1956, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+  # runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
   #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T,  runLogisticDiag=T)
+  # # Run with CU-level infilling (to make plots with percentile benchmarks over time for all 7 CUs)
+  # # This is just for making the plot with status for all 7 CUs
+  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile_hack, outDir=chumDir, RunName = paste("Bin.Percentile_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
   # Run without Upper Knight CU
   # runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
   #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
@@ -327,10 +334,10 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
   # 
   # Run with Bernouli regression with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
-  runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "Percentile", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bern.Percentile_noCUinfill_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
+  # runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "Percentile", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bern.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
   
 }
 
@@ -364,20 +371,32 @@ for(pp in 1:length(ps)){
 # Examine output  
 # ----------------#
 
-# Plot 25% benchmark over time
-#pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
-pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
-cudf <- data.frame("CU_Name_num" = unique(pdat$CU_Name), "b" = unique(pdat$CU_Name))
-pdat2 <- merge(pdat, cudf, by.x="CU_Name", by.y="b") # fix names so consistent with other plots
+# Plot percentile benchmark over time
+pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
+#pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
 
-png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=4, res=300, units="in")
-ggplot(pdat2, aes(y=benchmark_perc_25, x=retro_year)) +
+#cudf <- data.frame("CU_Name_num" = unique(pdat$CU_Name), "b" = unique(pdat$CU_Name))
+#pdat2 <- merge(pdat, cudf, by.x="CU_Name", by.y="b") # fix names so consistent with other plots
+
+# add in actual percentile to use (Southern Coastal streams + Bute are NA, used 0.5 as a filler to run retrospective) )
+pdat2 <- merge(pdat, which_perc_benchmark, by.x="CU_Name", by.y="CU", all.x=TRUE)
+pdat2$perc_appr <- ifelse(is.na(pdat2$percentile)==FALSE, 1,0) # add variable that is 1 if percentile benchmarks are appropriate, 0 if not
+# add column to chum escapement data that is true if CU infilling was done
+ChumEscDat_full$CU_infill <- ifelse(is.na(ChumEscDat_full$Escape), TRUE, FALSE)
+pdat3 <- merge(pdat2, ChumEscDat_full[,names(ChumEscDat_full) %in% c("CU_Name","yr", "CU_infill")], by=c("CU_Name","yr"), all.x=TRUE)
+names(pdat3)
+# to get alpha to work need to remove multiples in same yr. Right now overlapping retro years make it hard to see
+
+png("Figures/fig_perc_benchmarks_annual_retro.png", width=8, height=8, res=300, units="in", pointsize=26)
+ggplot(pdat3, aes(y=benchmark_perc_25, x=retro_year, shape=as.factor(perc_appr))) +
   geom_line(colour="gray", linetype=2) +
   geom_line(aes(y=Escp, x=yr)) +
   geom_line(aes(y=benchmark_perc_50, x=retro_year), linetype=2) +
-  geom_point(aes(y=Escp, x=yr, fill=as.factor(AboveBenchmark)), shape=21) +
+  geom_point(aes(y=Escp, x=yr, fill=as.factor(AboveBenchmark),  alpha=as.factor(CU_infill))) +
   scale_fill_manual( values=c("red", "darkgreen"), guide=NULL) +
-  facet_wrap(~paste0(CU_Name_num," (", use_perc*100,"%)"), scales="free_y") +
+  scale_shape_manual(values=c(1, 21), guide="none") +
+  scale_alpha_manual(values=c(1,0.3)) +
+  facet_wrap(~paste0(CU_Name, " (", ifelse(is.na(percentile),"NA)", paste0(use_perc*100,"%)"))), scales="free_y", ncol=2) +
   ylab("Escapement and 25% benchmark") + xlab("Year") +
   coord_cartesian(expand=FALSE, clip="off") +
   geom_hline(aes(yintercept=0)) +
@@ -392,14 +411,14 @@ dev.off()
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
-# Plot Sgen estimates over time
+# Plot Sgen estimates over time, with SMSY
 png("Figures/fig_Sgen_annual_retro.png", width=12, height=3, res=300, units="in")
 ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
   geom_line() +
   geom_ribbon(aes(ymin=low_Sgen, ymax=up_Sgen, x=retroYr),colour=NA, alpha=0.2) +
   geom_line(aes(y=est_Smsy, x=retroYr), colour='dodgerblue') +
   facet_wrap(~CU_Name, scales="free_y", nrow=1) +
-  ylab("Sgen") + xlab("Year") +
+  ylab("Sgen and SMSY") + xlab("Year") +
   geom_hline(aes(yintercept=0), linetype=2) +
   theme_bw()
 dev.off()
