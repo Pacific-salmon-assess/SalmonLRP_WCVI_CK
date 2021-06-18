@@ -414,15 +414,15 @@ mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
 # Plot alpha, beta, SMSY and Sgen on one plot
-png("Figures/fig_a_b_SMSY_Sgen_retro.png", width=9, height=6, res=300, units="in", pointsize=10)
-layout(mat=matrix(1:15, byrow=FALSE, ncol=5)) # 15 panels
+png("Figures/fig_a_b_SMSY_Sgen_retro.png", width=6, height=8, res=300, units="in", pointsize=12)
+layout(mat=matrix(1:18, byrow=FALSE, ncol=3)) # 15 panels
 CUs <- unique(mdat$CU_Name)
 #brk_a <- seq(0,max(mdat$est_A)*1.05, 1)
 #brk_b <- seq(0,max(mdat$est_B)*1.05, 0.00001)
 par(las=1)
-for(i in 1) {
+for(i in 1:2) {
   d <- mdat[ mdat$CU_Name == CUs[i], ]# get CU data
-  par(mar=c(0,5,3,0)+0.2)
+  par(mar=c(0,5,2,0)+0.2)
   plot(x=d$retroYr, y = d$est_A, main=CUs[i], cex.main=1, yaxs="i", ylab="", type="l", xaxt="n",  bty="n", ylim=c(min(brk_a), max(brk_a)) )
   mtext(text=expression(alpha),side=2, line=4.4 )
   #axis(side=2, at=brk_a, labels=brk_a)
@@ -430,19 +430,19 @@ for(i in 1) {
   plot(x=d$retroYr, y = d$est_B, ylab="", yaxs="i", type="l", xaxt="n",bty="n", ylim=c(0, max(d$est_B)) )
   mtext(text=expression(beta),side=2, line=4.4 )
   #axis(side=2, at=brk_b, labels=brk_b)
-  par(mar=c(4,5,1,0)+0.2)
-  plot(x=d$retroYr, y = d$est_Smsy, col="dodgerblue", xlab="Year", ylab=expression(S[gen]*" and SMSY"), type="l", ylim=c(min(c(d$est_Smsy, d$low_Sgen)), max(c(d$est_Smsy, d$up_Sgen))), bty="l" )
+  par(mar=c(2,5,0,0)+0.2)
+  plot(x=d$retroYr, y = d$est_Smsy, col="dodgerblue", xlab="", ylab=expression(S[gen]*" and SMSY"), type="l", ylim=c(min(c(d$est_Smsy, d$low_Sgen)), max(c(d$est_Smsy, d$up_Sgen))), bty="l" )
   lines(x=d$retroYr, y = d$est_Sgen)
   polygon(x = c(d$retroYr, rev(d$retroYr)), y=c(d$up_Sgen, rev(d$low_Sgen)), col=adjustcolor(col="gray",alpha=0.3), border=NA)
 }
-for(i in 2:length(CUs)) {
+for(i in 3:length(CUs)) {
   d <- mdat[ mdat$CU_Name == CUs[i], ]# get CU data
-  par(mar=c(0,5,3,0)+0.2)
+  par(mar=c(0,4,2,0)+0.2)
   plot(x=d$retroYr, y = d$est_A, main=CUs[i],cex.main=1, ylab="", yaxs="i",type="l", xaxt="n", bty="n" , ylim=c(min(brk_a), max(brk_a)))
-  par(mar=c(1,5,1,0)+0.2)
+  par(mar=c(1,4,1,0)+0.2)
   plot(x=d$retroYr, y = d$est_B, ylab="", type="l", yaxs="i",xaxt="n", bty="n" , ylim=c(0, max(d$est_B)) )
-  par(mar=c(4,5,1,0)+0.2)
-  plot(x=d$retroYr, y = d$est_Smsy, col="dodgerblue", ylab="", type="l", xlab="Year", ylim=c(min(c(d$est_Smsy, d$low_Sgen)), max(c(d$est_Smsy, d$up_Sgen))), bty="l" )
+  par(mar=c(2,4,0,0)+0.2)
+  plot(x=d$retroYr, y = d$est_Smsy, col="dodgerblue", ylab="", type="l", xlab="", ylim=c(min(c(d$est_Smsy, d$low_Sgen)), max(c(d$est_Smsy, d$up_Sgen))), bty="l" )
   lines(x=d$retroYr, y = d$est_Sgen)
   polygon(x = c(d$retroYr, rev(d$retroYr)), y=c(d$up_Sgen, rev(d$low_Sgen)), col=adjustcolor(col="gray",alpha=0.3), border=NA)
 }
