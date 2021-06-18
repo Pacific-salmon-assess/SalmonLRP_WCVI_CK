@@ -384,12 +384,12 @@ pdat2$perc_appr <- ifelse(is.na(pdat2$percentile)==FALSE, 1,0) # add variable th
 # add column to chum escapement data that is true if CU infilling was done
 ChumEscDat_full$CU_infill <- ifelse(is.na(ChumEscDat_full$Escape), TRUE, FALSE)
 pdat3 <- merge(pdat2, ChumEscDat_full[,names(ChumEscDat_full) %in% c("CU_Name","yr", "CU_infill")], by=c("CU_Name","yr"), all.x=TRUE)
-names(pdat3)
-# Get dat frame that has one row per yr, and the corresponding retro year benchmarks. 
+
+# Get data frame that has one row per year, and the corresponding retro year benchmarks. 
 # Also has the rows from before retro years (years used up to first retro year)
 pbm <- pdat3[union(grep(min(pdat3$retro_year), pdat3$retro_year), which(pdat3$retro_year==pdat3$yr)), ]
 
-png("Figures/fig_perc_benchmarks_annual_retro.png", width=7, height=7, res=300, units="in", pointsize=30)
+png("Figures/fig_perc_benchmarks_annual_retro.png", width=6.5, height=7, res=300, units="in", pointsize=30)
 ggplot(pbm, aes(y=benchmark_perc_25, x=retro_year, shape=as.factor(perc_appr))) +
   geom_line(colour="gray", linetype=2) +
   geom_line(aes(y=Escp, x=yr), size=0.2) +
@@ -413,27 +413,62 @@ dev.off()
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
-# Plot Sgen estimates over time, with SMSY
-png("Figures/fig_Sgen_annual_retro.png", width=12, height=3, res=300, units="in")
-ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
-  geom_line() +
-  geom_ribbon(aes(ymin=low_Sgen, ymax=up_Sgen, x=retroYr),colour=NA, alpha=0.2) +
-  geom_line(aes(y=est_Smsy, x=retroYr), colour='dodgerblue') +
-  facet_wrap(~CU_Name, scales="free_y", nrow=1) +
-  ylab("Sgen and SMSY") + xlab("Year") +
-  geom_hline(aes(yintercept=0), linetype=2) +
-  theme_bw()
+# Plot alpha, beta, SMSY and Sgen on one plot
+png("Figures/fig_a_b_SMSY_Sgen_retro.png", width=9, height=6, res=300, units="in", pointsize=10)
+layout(mat=matrix(1:15, byrow=FALSE, ncol=5)) # 15 panels
+CUs <- unique(mdat$CU_Name)
+#brk_a <- seq(0,max(mdat$est_A)*1.05, 1)
+#brk_b <- seq(0,max(mdat$est_B)*1.05, 0.00001)
+par(las=1)
+for(i in 1) {
+  d <- mdat[ mdat$CU_Name == CUs[i], ]# get CU data
+  par(mar=c(0,5,3,0)+0.2)
+  plot(x=d$retroYr, y = d$est_A, main=CUs[i], cex.main=1, yaxs="i", ylab="", type="l", xaxt="n",  bty="n", ylim=c(min(brk_a), max(brk_a)) )
+  mtext(text=expression(alpha),side=2, line=4.4 )
+  #axis(side=2, at=brk_a, labels=brk_a)
+  par(mar=c(1,5,1,0)+0.2)
+  plot(x=d$retroYr, y = d$est_B, ylab="", yaxs="i", type="l", xaxt="n",bty="n", ylim=c(0, max(d$est_B)) )
+  mtext(text=expression(beta),side=2, line=4.4 )
+  #axis(side=2, at=brk_b, labels=brk_b)
+  par(mar=c(4,5,1,0)+0.2)
+  plot(x=d$retroYr, y = d$est_Smsy, col="dodgerblue", xlab="Year", ylab=expression(S[gen]*" and SMSY"), type="l", ylim=c(min(c(d$est_Smsy, d$low_Sgen)), max(c(d$est_Smsy, d$up_Sgen))), bty="l" )
+  lines(x=d$retroYr, y = d$est_Sgen)
+  polygon(x = c(d$retroYr, rev(d$retroYr)), y=c(d$up_Sgen, rev(d$low_Sgen)), col=adjustcolor(col="gray",alpha=0.3), border=NA)
+}
+for(i in 2:length(CUs)) {
+  d <- mdat[ mdat$CU_Name == CUs[i], ]# get CU data
+  par(mar=c(0,5,3,0)+0.2)
+  plot(x=d$retroYr, y = d$est_A, main=CUs[i],cex.main=1, ylab="", yaxs="i",type="l", xaxt="n", bty="n" , ylim=c(min(brk_a), max(brk_a)))
+  par(mar=c(1,5,1,0)+0.2)
+  plot(x=d$retroYr, y = d$est_B, ylab="", type="l", yaxs="i",xaxt="n", bty="n" , ylim=c(0, max(d$est_B)) )
+  par(mar=c(4,5,1,0)+0.2)
+  plot(x=d$retroYr, y = d$est_Smsy, col="dodgerblue", ylab="", type="l", xlab="Year", ylim=c(min(c(d$est_Smsy, d$low_Sgen)), max(c(d$est_Smsy, d$up_Sgen))), bty="l" )
+  lines(x=d$retroYr, y = d$est_Sgen)
+  polygon(x = c(d$retroYr, rev(d$retroYr)), y=c(d$up_Sgen, rev(d$low_Sgen)), col=adjustcolor(col="gray",alpha=0.3), border=NA)
+}
 dev.off()
-
-# Plot Alpha and beta on same plot
-png("Figures/fig_a_b_annual_retro.png", width=10, height=4, res=300, units="in")
-mdat1 %>% filter(param %in% c("est_A", "est_B")) %>%
-  ggplot(., aes(y=est, x=retroYr)) +
-  geom_line() +
-  geom_hline(aes(yintercept=0)) +
-  facet_wrap(param~CU_Name, scales="free_y", ncol=5)+
-  theme_bw()
-dev.off()
+# 
+# # Plot Sgen estimates over time, with SMSY
+# png("Figures/fig_Sgen_annual_retro.png", width=12, height=3, res=300, units="in")
+# ggplot(mdat, aes(y=est_Sgen, x=retroYr)) +
+#   geom_line() +
+#   geom_ribbon(aes(ymin=low_Sgen, ymax=up_Sgen, x=retroYr),colour=NA, alpha=0.2) +
+#   geom_line(aes(y=est_Smsy, x=retroYr), colour='dodgerblue') +
+#   facet_wrap(~CU_Name, scales="free_y", nrow=1) +
+#   ylab("Sgen and SMSY") + xlab("Year") +
+#   geom_hline(aes(yintercept=0), linetype=2) +
+#   theme_bw()
+# dev.off()
+# 
+# # Plot Alpha and beta on same plot
+# png("Figures/fig_a_b_annual_retro.png", width=10, height=4, res=300, units="in")
+# mdat1 %>% filter(param %in% c("est_A", "est_B")) %>%
+#   ggplot(., aes(y=est, x=retroYr)) +
+#   geom_line() +
+#   geom_hline(aes(yintercept=0)) +
+#   facet_wrap(param~CU_Name, scales="free_y", ncol=5)+
+#   theme_bw()
+# dev.off()
 
 # Plot ricker, SMSY, Sgen estimates from integrated model
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
