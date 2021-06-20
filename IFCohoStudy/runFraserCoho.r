@@ -369,25 +369,25 @@ WSP_AboveLRP<-TRUE
 
 LRP_estYr<-2015
 retroYears<-2000:LRP_estYr
-plotStatus_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
+plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
                   modelFitList=modelFitList, ps_Prop=ps_Prop, WSP_estYr, WSP_AboveLRP,
                   outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
 
 LRP_estYr<-2016
 retroYears<-2000:LRP_estYr
-plotStatus_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
+plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
                   modelFitList=modelFitList, ps_Prop=ps_Prop, WSP_estYr, WSP_AboveLRP,
                   outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
 
 LRP_estYr<-2017
 retroYears<-2000:LRP_estYr
-plotStatus_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
+plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
                   modelFitList=modelFitList, ps_Prop=ps_Prop, WSP_estYr, WSP_AboveLRP,
                   outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
 
 LRP_estYr<-2018
 retroYears<-2000:LRP_estYr
-plotStatus_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
+plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
                   modelFitList=modelFitList, ps_Prop=ps_Prop,
                   outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
 

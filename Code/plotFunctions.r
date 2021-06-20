@@ -353,7 +353,7 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
 #===================================================================================
 
 
-plotStatusBars_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, ps_Prop,
+plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, ps_Prop,
                             WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName) {
   
   Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
@@ -451,6 +451,10 @@ plotStatusBars_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpD
   
   }
   
+  
+  # Add 
+  
+  
   # Step 3: Add row to Status_DF for 2014 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
     New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
@@ -463,7 +467,8 @@ plotStatusBars_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpD
   methods <- unique(Status_DF$Name)
   
   # --- set-up pdf to save to
-  pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
+  #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
+  png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=700, height=580)
   par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
   
   # ---- specify colouts 
