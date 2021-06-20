@@ -368,10 +368,10 @@ for ( i in seq_along(CUs)) {
 dev.off()
 
 # ----------#
-# Plot infilling by CU, to compare actual, infilled by stream, and infilling by CU - LW
+# Plot infilling by CU, to compare actual, infilled by stream, and infilling by CU - LW ------
 # ----------#
 infill_by_stream_no_fraser <- wild_infill_by_stream_list[[2]] %>% filter(!(CU_Name %in% c("8 - Lower Fraser", "9 - Fraser Canyon"))) 
-png("Figures/fig_compare_actual_infill_by_stream_and_CU.png", height=5, width=10, res=300, units="in")
+png("Figures/fig_compare_actual_infill_by_stream_and_CU.png", height=7, width=7, res=300, units="in")
 ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   geom_point( colour="red") + # infill by CU is in red
   geom_point(data = infill_by_stream_no_fraser, aes(y=GroupEsc, x=Year), colour="dodgerblue") + # infill by stream is blue
@@ -379,7 +379,7 @@ ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   geom_path(data = infill_by_stream_no_fraser, aes(y=SumRawEsc, x=Year, group=CU_Name)) +
   geom_hline(aes(yintercept=0))+
   ylab("Escapement") +
-  facet_wrap(~CU_Name, scales="free_y") +
+  facet_wrap(~CU_Name, scales="free_y", ncol=2) +
   coord_cartesian(expand=FALSE, clip="off") +
   #scale_y_log10() +
   theme_classic() +
@@ -391,7 +391,7 @@ dev.off()
 
 # Plot all infilled escapement with 25% benchmark
 benchmarks <- cdat%>% group_by(CU_Name) %>% summarise(benchmark_25 = quantile(SiteEsc, 0.25, na.rm=TRUE))
-png("Figures/fig_escapement_infilled_w_25_benchmark.png", height=5, width=10, res=300, units="in")
+#png("Figures/fig_escapement_infilled_w_25_benchmark.png", height=5, width=10, res=300, units="in")
 ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   geom_point() + # infill by CU is in red
   geom_path(aes(group=CU_Name)) +
@@ -406,7 +406,7 @@ ggplot(data=wild_infill_by_CU[[1]], aes(y= SiteEsc, x=Year )) + # infilled by CU
   theme(axis.text.x = element_text(angle=90, vjust=0.5),
         axis.line.x = element_line(colour=NULL, size=0),
         strip.background = element_blank())
-dev.off()
+#dev.off()
 
 # Plot escapement and R/S time series on same x axis for each CU --------
 # Merge escapement and recruitment data by CU and year
