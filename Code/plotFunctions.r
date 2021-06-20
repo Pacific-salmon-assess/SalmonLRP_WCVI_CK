@@ -527,7 +527,7 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   }
   
 
-  sapply(seq(1997.5,2018.5,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
+  sapply(seq(1999.5,2018.5,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
   sapply(seq(1999.5,2015.5,by=5), addVertLines_major,low=low,high=high,n=length(methods))
   
   #sapply(seq(1998,2018,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
