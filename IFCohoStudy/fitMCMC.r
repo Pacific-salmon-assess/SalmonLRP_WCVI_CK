@@ -77,7 +77,8 @@ EscDat <- CoEscpDat
       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5)
  
 
-
+ 
+ 
 
 
 # Option 4) Fit hierarchical model with survival covariate and capacity cap; no LRP estimation
@@ -144,9 +145,12 @@ data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
 if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_IndivRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP","SR_IndivRicker_SurvCap_noLRP")) {
   data$logSurv_3 <- log(SRDat$STAS_Age_3)
   data$logSurv_4 <- log(SRDat$STAS_Age_4)
-  muSurv <- SRDat %>% group_by(CU_ID) %>%
-  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
-  data$muLSurv <- log(muSurv$muSurv)
+  #muSurv <- SRDat %>% group_by(CU_ID) %>%
+  #summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+  #data$muLSurv <- log(muSurv$muSurv)
+  # Base mu survival on mean of age 3 survival (not weighted by historic age at return)
+  muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+  data$muLSurv <- muLSurv$muLSurv
 }
 
 data$Tau_dist <- TMB_Inputs$Tau_dist
@@ -229,11 +233,11 @@ upper<-unname(upper)
 
 lower<-unlist(obj$par)
 lower[1:length(lower)]<--Inf
-lower[names(lower) =="logSgen"] <- log(0.001)
+lower[names(lower) =="logSgen"] <- log(0.01)
 lower[names(lower) =="cap"] <- 0
 lower<-unname(lower)
 
-opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
+opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10),
               upper = upper, lower=lower )
 
 pl2 <- obj$env$parList(opt$par) # Parameter estimate after phase 2
@@ -424,18 +428,36 @@ if(Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP")) {
 
 
 
-dum_alpha<-post_long_alpha %>% group_by(stock) %>% summarise(quant = quantile(logA,0.50))
+alpha_50<-post_long_alpha %>% group_by(stock) %>% summarise(alpha = quantile(logA,0.50))
+Sgen_50<-post_long_Sgen %>% group_by(stock) %>% summarise(Sgen = quantile(exp(logSgen)*1000,0.50))
+adjProd_50<-post_long_adjProd %>% group_by(stock) %>% summarise(adjProd = quantile(exp(adjProd),0.50))
+beta_50<-post_long_beta %>% group_by(stock) %>% summarise(beta = quantile(exp(logB),0.50))
+medians<-alpha_50 %>% add_column(adjProd=adjProd_50$adjProd, beta=beta_50$beta, Sgen=Sgen_50$Sgen)
+write.csv(medians,paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcMedians.csv", sep=""),row.names=F)
 
-dum_Sgen<-post_long_Sgen %>% group_by(stock) %>% summarise(quant = quantile(exp(logSgen)*1000,0.50))
 
-dum_adjProd<-post_long_adjProd %>% group_by(stock) %>% summarise(quant = quantile(exp(adjProd),0.50))
+alpha_05<-post_long_alpha %>% group_by(stock) %>% summarise(alpha = quantile(logA,0.05))
+Sgen_05<-post_long_Sgen %>% group_by(stock) %>% summarise(Sgen = quantile(exp(logSgen)*1000,0.05))
+adjProd_05<-post_long_adjProd %>% group_by(stock) %>% summarise(adjProd = quantile(exp(adjProd),0.05))
+beta_05<-post_long_beta %>% group_by(stock) %>% summarise(beta = quantile(exp(logB),0.05))
+fifthPerc<-alpha_05 %>% add_column(adjProd=adjProd_05$adjProd, beta=beta_05$beta, Sgen=Sgen_05$Sgen)
+write.csv(medians,paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcFifthPerc.csv", sep=""),row.names=F)
+
+
+
+alpha_95<-post_long_alpha %>% group_by(stock) %>% summarise(alpha = quantile(logA,0.95))
+Sgen_95<-post_long_Sgen %>% group_by(stock) %>% summarise(Sgen = quantile(exp(logSgen)*1000,0.95))
+adjProd_95<-post_long_adjProd %>% group_by(stock) %>% summarise(adjProd = quantile(exp(adjProd),0.95))
+beta_95<-post_long_beta %>% group_by(stock) %>% summarise(beta = quantile(exp(logB),0.95))
+ninetyFifthPerc<-alpha_95 %>% add_column(adjProd=adjProd_95$adjProd, beta=beta_95$beta, Sgen=Sgen_95$Sgen)
+write.csv(medians,paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcNinetyFifthPerc.csv", sep=""),row.names=F)
 
 
 
 # ========================================================================================================
 # View mcmc fits
 # ================================================================================================
-
+# 
 
 
 library(shinystan)
@@ -448,26 +470,26 @@ pairs(fitmcmc, pars=names(obj$par))
 ## Trace plot
 traceplot(fitmcmc, pars=names(obj$par), inc_warmup=TRUE)
 
-post<-as.matrix(fitmcmc)
-
-sd0 <- rep(NA, len=nrow(post))
-
-for(i in 1:nrow(post)){
-  r <- obj$report(post[i,-ncol(post)])
-  sd0[i] <- r$sd0
-}
-hist(sd0)
+# post<-as.matrix(fitmcmc)
+# 
+# sd0 <- rep(NA, len=nrow(post))
+# 
+# for(i in 1:nrow(post)){
+#   r <- obj$report(post[i,-ncol(post)])
+#   sd0[i] <- r$sd0
+# }
+# hist(sd0)
 
 
 # =============================================================================================
 # Compare par ests for bias and no bias correction
 # =============================================================================================
 
-post_wCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/SR_IndivRicker_Surv_mcmc_biasCorr.csv")
+post_wCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/Test/SR_IndivRicker_Surv_mcmc.csv")
 adjProd_wCorr<-exp(post_wCorr$alpha + post_wCorr$gamma * rep(data$muLSurv, length=nrow(post_wCorr)))
 post_wCorr<- post_wCorr %>% add_column(adjProd = adjProd_wCorr)
 
-post_noCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/SR_IndivRicker_Surv_mcmc.csv")
+post_noCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/Test_BiasCorr/SR_IndivRicker_Surv_mcmc.csv")
 adjProd_noCorr<-exp(post_noCorr$alpha + post_noCorr$gamma * rep(data$muLSurv, length=nrow(post_noCorr)))
 post_noCorr<- post_noCorr %>% add_column(adjProd = adjProd_noCorr)
 

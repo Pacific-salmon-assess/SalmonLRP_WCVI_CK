@@ -348,47 +348,19 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
 
 
 
-#==================================================================
+#===================================================================================
 # Plot status by year 
-#==============================================================
+#===================================================================================
 
 
-plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, ps_Prop,
-                            WSP_estYr, WSP_AboveLRP, outDir, fName) {
+plotStatusBars_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, ps_Prop,
+                            WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName) {
   
   Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
   
   # Extract / calculate data for plot ==========================================================
-  
-  # Step 1: Get output summaries for modelled LRPs (i.e., integrated Bern and Bin regressions):
-  
-  # # --- read in LRPs for each model option
-  # Bin_Names <- paste("Bin.", runPrefix, ps_Bin*100, sep="")
-  # Bern_Names <- paste("Bern.",runPrefix, ps_Bern*100, sep="")
-  # 
-  # # --- loop over proportion / probability values to read in LRPs 
-  # for(pp in 1:length(ps_Bern)){
-  #   # read in data
-  #   Bern_Dat <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", Bern_Names[pp], "/annualRetro_LRPs.csv", sep=""))
-  #   Bern_Dat$Name <- Bern_Names[pp]
-  #   if(pp == 1){
-  #     LRP_DF <- Bern_Dat
-  #   } else {
-  #     New_Rows <- Bern_Dat
-  #     LRP_DF <- rbind(LRP_DF, New_Rows)
-  #   }
-  # }
-  # 
-  # for(pp in 1:length(ps_Bin)){
-  #   # read in data
-  #   Bin_Dat <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", Bin_Names[pp], "/annualRetro_LRPs.csv", sep=""))
-  #   Bin_Dat$Name <- Bin_Names[pp]
-  #   New_Rows <- rbind(Bin_Dat, Bern_Dat)
-  #   LRP_DF <- rbind(LRP_DF, New_Rows)
-  # }
-  
-  # Step 1: Get output summaries for modelled LRPs (i.e., integrated Bern and Bin regressions):
-    
+
+  # Step 1: Get output summaries for logistic-regression model LRPs"
     # # --- read in LRPs for each model option
     
   for (mm in 1:length(modelFitList)) {
@@ -396,14 +368,11 @@ plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat, 
     retroResults <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "/annualRetro_LRPs.csv", sep=""))
     
     # Set-up name for labelling plot ====================
-    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv_LowAggPrior") name1<-"Sgen: HM_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv_LowAggPrior") name1<-"Sgen: IM_"
-    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap_LowAggPrior") name1<-"Sgen: HM.HiSrep_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap_LowAggPrior") name1<-"Sgen: IM.HiSrep_"
-    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Dist_"
-    
-    if (retroResults$LRPmodel[1] == "BernLogistic") name2<-"Bern"
-    if (retroResults$LRPmodel[1] == "BinLogistic") name2<-"Bin"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggAb: Sgen_IM_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"AggAb: Sgen_HM_"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggAb: Sgen_IM.HiSrep_"
+    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"AggAb: Sgen_HM.HiSrep_"
+    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Agg Ad: Dist_"
     
     name3<-strsplit(modelFitList[mm], "_")[[1]][2]
     
@@ -418,7 +387,7 @@ plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat, 
       }
     
     # Loop over years and summarize status as above (True) or below (False) the LRP for each year
-    for (yy in 1:length(retroYears)) {  
+    for (yy in 1:length(retroYears)) { 
       # Check if LRP is valid (Error bounds don't cross 0)
       LRPs <- retroResults %>% filter(retroYear == LRP_estYr) %>% select(LRP, LRP_lwr, LRP_upr)
       # Now compare to that year's Agg Escapement
@@ -433,48 +402,61 @@ plotStatus_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat, 
     } # end of year (yy) loop
     
   } # end of model (mm) loop
-  
 
   # Step 2: Assess status for data-based LRP options based on the observed proportion of CUs above LRP
   
   # # --- for each year, extract Sgens and calc proportion above Sgen
-  # # --- note: for current coho case study, we can get saved CU parameters for the last model in model list since Sgen ests are the same for all model types
-  # #        -- may need to change later to be specific to CU-level benchmark method if multiple options considered
-  # CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",modelFitList[1],"/annualRetro__SRparsByCU.csv",sep=""))
-  # CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
-  # 
-  # # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
-  # EscpDat <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
-  #   filter(is.na(Gen_Mean) == F)
-  # 
-  # # -- join together Escp data with Sgens
-  # CU_Status <- left_join(EscpDat[ , c("CU_Name", "yr", "Escp", "Gen_Mean")], 
-  #                        CU_Params[, c( "CU_Name", "est_Sgen", "low_Sgen", "up_Sgen", "retroYr")], 
-  #                        by = c("CU_Name" = "CU_Name"))
-  # colnames(CU_Status)[colnames(CU_Status)=="retroYr"] <- "LRP_estYr"
-  # 
-  # # --- for each year, get proportion of stocks above Sgen
-  # NCUs <- length(unique(CU_Status$CU_Name))
-  # CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
-  #   summarise(Prop = sum(Escp > est_Sgen)/NCUs)
-  # 
-  # # --- for each year, add to Status_DF using 60,80,100
-  # #    --- note: should make these an input variable in the future
-  # Ps <- ps_Prop
-  # for(pp in 1:length(Ps)){
-  #   Name <- rep(paste("Prop.Sgen_", Ps[pp]*100, sep=""), length(retroYears))
-  #   Status <- CU_Status_Summ$Prop >= Ps[pp]
-  #   New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
-  #   Status_DF <- rbind(Status_DF, New_Rows)
-  # }
+ 
+  # Make a list of only modelFits that are based on SR model fits to get Sgen:
+  # -- For coho, I can do this by excluding the distributional models based on absolute abundance thresholds
+  SRmodelList<-modelFitList[-grep("SPopAbundThresh",modelFitList)]
   
-  # Step 3:  Add row to Status_DF for 2014 status assessment
+  for (mm in 1:length(SRmodelList)) {
   
-#  New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
-#  Status_DF <- rbind(Status_DF, New_Row)
+    SRmodName<-strsplit(SRmodelList[mm],"_")[[1]][1]
+    if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen_IM"
+    if(SRmodName =="Bern.HierRickerSurv") propName<-"Prop: Sgen_HM"
+    if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen_IM.HiSrep"
+    if(SRmodName =="Bern.HierRickerSurvCap") propName<-"Prop: Sgen_HM.HiSrep"
+    
+    CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",SRmodelList[mm],"/annualRetro_SRparsByCU.csv",sep=""))
+    CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
+
+    # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
+    EscpDat.mm <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
+      filter(is.na(Gen_Mean) == F)
+
+    # -- join together Escp data with Sgens
+    CU_Status <- left_join(EscpDat.mm[ , c("CU_Name", "yr", "Escp", "Gen_Mean")],
+                         CU_Params[, c( "CU_Name", "est_Sgen", "low_Sgen", "up_Sgen", "retroYr")],
+                         by = c("CU_Name" = "CU_Name"))
+    colnames(CU_Status)[colnames(CU_Status)=="retroYr"] <- "LRP_estYr"
+
+    # --- for each year, get proportion of stocks above Sgen
+    NCUs <- length(unique(CU_Status$CU_Name))
+    CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
+    summarise(Prop = sum(Escp > est_Sgen)/NCUs)
+
+    # --- for each year, add to Status_DF using p thresholds, Ps
+    #    --- note: should make these an input variable in the future
+    Ps <- ps_Prop
+    for(pp in 1:length(Ps)){
+      # Would use this is wanted to show the proportion of CUs above Sgen
+      #Name <- paste(propName,Ps[pp]*100)
+      Name <- propName
+      Status <- CU_Status_Summ$Prop >= Ps[pp]
+      New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
+      Status_DF <- rbind(Status_DF, New_Rows)
+    }
   
-#  Status_DF <- arrange(Status_DF, Name)
+  }
   
+  # Step 3: Add row to Status_DF for 2014 status assessment (Optional)
+  if (!is.null(WSP_estYr)) {
+    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
+    Status_DF <- rbind(Status_DF, New_Row)
+    Status_DF <- arrange(Status_DF, Name)
+  }
   
   # Make Plot =============================================================
   
@@ -635,7 +617,7 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
    
    plotName <- paste("StatusByNCUs_",inputPrefix, sep="")
   
-   pdf(paste(outputDir,"/", plotName, ".pdf", sep=""), width=6.5, height=6.5)
+   png(paste(outputDir,"/", plotName, ".png", sep=""))
    
    do.call(grid.arrange,  ps)
   
@@ -652,11 +634,11 @@ plotAggStatus_byNCUs_Compare<-function(estYear, nCUList, Names, labelNames, p, D
   
   makeMethodPlot<-function (methodName, aveLine, year) {
     
-    if (methodName == "Bin.IndivRickerSurv") labName<-"Sgen: HM"
-    if (methodName == "Bin.HierRickerSurv") labName<-"Sgen: IM"
-    if (methodName == "Bin.IndivRickerSurvCap") labName<-"Sgen: HM.HiSrep"
-    if (methodName == "Bin.HierRickerSurvCap") labName<-"Sgen: IM.HiSrep"
-    if (methodName == "Bin.SPopAbundThreshST") labName<-"Dist"
+    if (methodName == "Bern.IndivRickerSurv") labName<-"Sgen: HM"
+    if (methodName == "Bern.HierRickerSurv") labName<-"Sgen: IM"
+    if (methodName == "Bern.IndivRickerSurvCap") labName<-"Sgen: HM.HiSrep"
+    if (methodName == "Bern.HierRickerSurvCap") labName<-"Sgen: IM.HiSrep"
+    if (methodName == "Bern.SPopAbundThreshST") labName<-"Dist"
     
     # Read in data for all NCU levels and combine
     for (cc in 1:length(nCUList)) {
@@ -671,7 +653,6 @@ plotAggStatus_byNCUs_Compare<-function(estYear, nCUList, Names, labelNames, p, D
     }
     
     Dat<-nCUDat %>% filter(retroYear==year)
-    
     maxNCU<-max(Dat$nCUs)
     AllCU<-Dat %>% filter(nCUs == maxNCU)
     AllCU_status_lwr<-AllCU$Gen_Mean / AllCU$LRP_lwr
@@ -695,7 +676,7 @@ plotAggStatus_byNCUs_Compare<-function(estYear, nCUList, Names, labelNames, p, D
     SE<- Dat2 %>% group_by(nCUs) %>% summarize(meanStatus=stdErr(status))
     
     g<-ggplot(Dat, aes(x=nCUs.jit, y=status)) +
-      scale_x_reverse(breaks=unique(nCUs)) +
+      scale_x_reverse(breaks=unique(Dat$nCUs)) +
       geom_errorbar(aes(x=nCUs.jit, ymax = Gen_Mean/LRP_lwr, ymin = Gen_Mean/LRP_upr), width = 0, colour="grey") +
       geom_point() +   
       labs(title=labName, x = "Number of CUs", y = "Aggregate Status") +
@@ -779,7 +760,7 @@ plotLRP.CV_by_nCUs<-function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, input
   
   if (LRPmodel == "BernLogistic") plotName <- paste("LRP_CVs_ByNCUs_Bern.",BM.mod,p*100, sep="")
   if (LRPmodel == "BinLogistic") plotName <- paste("LRP_CVs_ByNCUs_Bin.",BM.mod,p*100, sep="")
-  pdf(paste(Dir,"/Figures/", plotName, ".pdf", sep=""), width=6.5, height=6.5)
+  png(paste(Dir,"/Figures/nCUCombinations/", plotName, ".png", sep=""))
   
   do.call(grid.arrange,  ps)
   
@@ -803,10 +784,10 @@ plotLRPCompare<-function(LRP_estYr, modelFitList,  pList, outDir, fName) {
       retroResults <- read.csv(paste(outDir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "_",pList[pp],"/annualRetro_LRPs.csv", sep=""))
   
       # Set-up name for labelling plot ====================
-      if (retroResults$BMmodel[1] == "SR_HierRicker_Surv_LowAggPrior") name1<-"HM"
-      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv_LowAggPrior") name1<-"IM"
-      if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap_LowAggPrior") name1<-"HM.HiSrep"
-      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap_LowAggPrior") name1<-"IM.HiSrep"
+      if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"HM"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"IM"
+      if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"HM.HiSrep"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"IM.HiSrep"
       if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Dist"
       
       
@@ -826,7 +807,7 @@ plotLRPCompare<-function(LRP_estYr, modelFitList,  pList, outDir, fName) {
 
   # assign plot order:
   LRP_DF$Name<-factor(LRP_DF$Name, levels = c("IM", "HM", "IM.HiSrep", "HM.HiSrep", "Dist"))
-  LRP_DF$p<-factor(LRP_DF$p, levels=c(99,80,60))
+  LRP_DF$p<-factor(LRP_DF$p, levels=pList)
   
  pdf(paste(outDir,"/Figures/", fName,".pdf", sep=""),width=5, height=4)
   dodge <- position_dodge(.4)
@@ -871,5 +852,62 @@ plotProjected<-function(Data, LRP, plotName, outDir, p) {
   # Save plot
   ggsave(paste(outDir, "/",plotName,".pdf",sep=""), plot = g,
          width = 4, height = 3, units = "in")      
+  
+}
+
+
+
+plotPostHist<-function(x, post, parName, CUNames) {
+  
+ margPost<-post %>% filter(stk==x) %>% select(parName)
+  
+ round.int<-2
+ 
+  if (parName == "adjProd") {
+    margPost <- margPost$adjProd
+    xlab<-"Adjusted Productivity"
+  }
+ 
+  if (parName == "Sgen") {
+    margPost <- margPost$Sgen
+    xlab<-"Sgen"
+    round.int<-0
+  }
+  if (parName == "alpha") {
+    margPost <- margPost$alpha
+    xlab<-"Alpha"
+  }
+  if (parName == "sigma") {
+    margPost <- margPost$sigma
+    xlab<-"Sigma"
+  }
+  if (parName == "beta") {
+    margPost <- margPost$beta
+    round.int<-5
+    xlab<-"Beta"
+  }
+  if (parName == "cap") {
+    margPost <- margPost$cap
+    xlab<-"SRep"
+  }
+
+  margPost<-as.data.frame(margPost)
+
+  x.text<-quantile(margPost$margPost, probs=0.85)[[1]]
+  y.text<-max(hist(margPost$margPost,plot=F)$counts)*0.80
+  
+  p<-ggplot(margPost, aes(x=margPost)) + geom_histogram() +
+    labs(title=CUNames[x], x=xlab, y = "Count") +
+    geom_vline(aes(xintercept = mean(margPost)),col='red',size=1) +
+    geom_text(aes(label=round(mean(margPost),round.int),y=0,x=mean(margPost)*1.25),
+              vjust=-1,col='red',size=5) +
+    geom_vline(aes(xintercept = quantile(margPost,0.95)[[1]]),col='blue',size=1) +
+    geom_text(aes(label=round(quantile(margPost,0.95)[[1]],round.int),y=200,x=quantile(margPost,0.95)[[1]]*1.25),
+              vjust=-1,col='blue',size=5) +
+    geom_vline(aes(xintercept = quantile(margPost,0.05)[[1]]),col='blue',size=1) +
+    geom_text(aes(label=round(quantile(margPost,0.05)[[1]],round.int),y=200,
+                  x=quantile(margPost,0.05)[[1]]*1.25), vjust=-1,col='blue',size=5)
+  
+    #annotate("text", x=x.text, y=13000, label= "boat")
   
 }
