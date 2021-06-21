@@ -142,6 +142,15 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
           mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.5_SREPScalar1.csv",
                                     sep="/"))
         }
+        if(alphaScalar==0.75 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.75_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar=="lifeStageModel" & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_lifeStageModel.csv",
+                                    sep="/"))
+        }
+        
         if(alphaScalar==1 & SREPScalar==1.5){
           mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar1.5.csv",
                                     sep="/"))
