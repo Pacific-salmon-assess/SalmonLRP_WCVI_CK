@@ -1,5 +1,5 @@
 
-useBiasCorrect<-FALSE
+useBiasCorrect<-TRUE
 
 # Make simplified version of TMB run code for demonstration
 library(TMB)
@@ -13,7 +13,7 @@ rootDir<-getwd()
 codeDir<-paste(rootDir,"/Code",sep="")
 cohoDir<-paste(rootDir,"/IFCohoStudy",sep="")
 
-setwd(codeDr)
+setwd(codeDir)
 # 
 # compile("TMB_Files/ThreshAbund_Subpop1000.cpp")
 # dyn.load(dynlib("TMB_Files/ThreshAbund_Subpop1000"))
@@ -313,13 +313,13 @@ for (i in 1:N_Stocks) {
  cap[i] <- log(logA)/B
 }
 
-cap_priorMean<- cap*1.5
+cap_priorMean<- cap*1.35
 
 print("Prior means for capacity in Hier model, by CU:")
 print(cap_priorMean)
 
 
-pdf(paste(cohoDir,"/Figures/", "SrepPriorDist_HM_priorCap.pdf", sep=""), width=6, height=4)
+png(paste(cohoDir,"/Figures/", "SrepPriorDist_HM_priorCap.png", sep=""))
 # Plot prior distributions, by CU
 xx<-seq(1,30,length=1000)
 # manually set x-axes for now by specifying min and max for each CU
@@ -542,7 +542,6 @@ All_Ests_cap <- All_Ests_cap %>% filter(!(Param %in% c( "logSgen", "Logit_Preds"
 
 write.csv(All_Ests_cap,paste(cohoDir,"/DataOut/ModelFits/AllEsts_Hier_Ricker_Surv_priorCap.csv", sep=""))
 
-
 # *************************************************************************************
 # Fit Individual Ricker_Surv model
 # ********************************************************************************
@@ -738,12 +737,12 @@ for (i in 1:N_Stocks) {
   cap[i] <- log(A)/B
 }
 
-cap_priorMean<- cap*1.5
+cap_priorMean<- cap*1.35
 
 print("Prior means for capacity in individual models, by CU:")
 print(cap_priorMean)
 
-pdf(paste(cohoDir,"/Figures/", "SrepPriorDist_IM_priorCap.pdf", sep=""),width=6, height=4)
+png(paste(cohoDir,"/Figures/", "SrepPriorDist_IM_priorCap.png", sep=""))
 # Plot prior distributions, by CU
 xx<-seq(1,30,length=1000)
 # manually set x-axes for now by specifying min and max for each CU
@@ -1049,12 +1048,12 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
 # Create multi-panel plots of SR fits =====================
 
 ps<-lapply(CUID_list, makeSRplots, plotDat=plotDat, plotDat_cap=plotDat_cap, SRDat=SRDat)
-pdf(paste(cohoDir,"/Figures/", "compareSR_fits_hierw.cap.pdf", sep=""))
+png(paste(cohoDir,"/Figures/", "compareSR_fits_hierw.cap.png", sep=""))
 do.call(grid.arrange,  ps)
 dev.off()
 
 ps<-lapply(CUID_list, makeSRplots, plotDat=plotDat_IM, plotDat_cap=plotDat_IM_cap, SRDat=SRDat)
-pdf(paste(cohoDir,"/Figures/", "compareSR_fits_IMw.cap.pdf", sep=""))
+png(paste(cohoDir,"/Figures/", "compareSR_fits_IMw.cap.png", sep=""))
 do.call(grid.arrange,  ps)
 dev.off()
  
@@ -1109,7 +1108,6 @@ est_hierCap<-read.csv(paste(cohoDir,"/DataOut/ModelFits/AllEsts_Hier_Ricker_Surv
 est_IM<-read.csv(paste(cohoDir,"/DataOut/ModelFits/AllEsts_IM_Ricker_Surv.csv", sep=""))
 est_IMCap<-read.csv(paste(cohoDir,"/DataOut/ModelFits/AllEsts_IM_Ricker_Surv_priorCap.csv", sep=""))
 
-
 # Set-up plot to compare LRP estimates among models
 LRP_ests<-data.frame(rbind(est_hier[est_hier$Param=="Agg_LRP",],
                            est_hierCap[est_hierCap$Param=="Agg_LRP",],
@@ -1129,7 +1127,7 @@ LRP_ests$Lower<-LRP_ests$Estimate - (1.96*LRP_ests$Std..Error)
 LRP_ests$ModName<-factor(LRP_ests$ModName, levels = c("IM", "HM", "IM.HiSRep", "HM.HiSRep"))
 
 
-pdf(paste(cohoDir,"/Figures/", "compareSRpar_LRP_Ests.pdf", sep=""))
+png(paste(cohoDir,"/Figures/", "compareSRpar_LRP_Ests.png", sep=""))
 p.lrp<- ggplot(data=LRP_ests, mapping=aes(x=ModName, y=Estimate)) +
   geom_errorbar(aes(x=ModName,ymax=Upper,ymin=Lower), width=0,colour="black") +
   geom_point(mapping=aes(x=ModName, y=Estimate), col="black", size=2) +
@@ -1145,16 +1143,18 @@ ps<-lapply(CUID_list, makeParEstPlots, est_hier=est_hier, est_hierCap=est_hierCa
 # Add LRP to Sgen plot
 #ps[[6]]<- p.lrp
 
-pdf(paste(cohoDir,"/Figures/", "compareSRpar_Sgen_Ests.pdf", sep=""))
+png(paste(cohoDir,"/Figures/", "compareSRpar_Sgen_Ests.png", sep=""))
 do.call(grid.arrange,  ps)
 dev.off()
 
 ps<-lapply(CUID_list, makeParEstPlots, est_hier=est_hier, est_hierCap=est_hierCap, est_IM=est_IM, est_IMCap=est_IMCap, parName = "A")
-pdf(paste(cohoDir,"/Figures/", "compareSRpar_A_Ests.pdf", sep=""))
+png(paste(cohoDir,"/Figures/", "compareSRpar_A_Ests.png", sep=""))
 do.call(grid.arrange,  ps)
 dev.off()
 
 ps<-lapply(CUID_list, makeParEstPlots, est_hier=est_hier, est_hierCap=est_hierCap, est_IM=est_IM, est_IMCap=est_IMCap, parName = "logA")
-pdf(paste(cohoDir,"/Figures/", "compareSRpar_logA_Ests.pdf", sep=""))
+png(paste(cohoDir,"/Figures/", "compareSRpar_logA_Ests.png", sep=""))
 do.call(grid.arrange,  ps)
 dev.off()
+
+

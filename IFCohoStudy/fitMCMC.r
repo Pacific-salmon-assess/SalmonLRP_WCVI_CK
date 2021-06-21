@@ -3,6 +3,8 @@
 # For stantmb example, see: https://github.com/kaskr/tmbstan#examples
 
 nIter<-5000
+estSgen<-TRUE
+
 
 
 library(dplyr)
@@ -77,7 +79,8 @@ EscDat <- CoEscpDat
       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 0.5)
  
 
-
+ 
+ 
 
 
 # Option 4) Fit hierarchical model with survival covariate and capacity cap; no LRP estimation
@@ -144,9 +147,12 @@ data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
 if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_IndivRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP","SR_IndivRicker_SurvCap_noLRP")) {
   data$logSurv_3 <- log(SRDat$STAS_Age_3)
   data$logSurv_4 <- log(SRDat$STAS_Age_4)
-  muSurv <- SRDat %>% group_by(CU_ID) %>%
-  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
-  data$muLSurv <- log(muSurv$muSurv)
+  #muSurv <- SRDat %>% group_by(CU_ID) %>%
+  #summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+  #data$muLSurv <- log(muSurv$muSurv)
+  # Base mu survival on mean of age 3 survival (not weighted by historic age at return)
+  muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+  data$muLSurv <- muLSurv$muLSurv
 }
 
 data$Tau_dist <- TMB_Inputs$Tau_dist
@@ -214,26 +220,28 @@ pl$logSgen <- log(0.3*SMSYs)
 
 # Phase 2 get Sgen, SMSY etc. =================
 if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP")) {
-  obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
+  if (estSgen == TRUE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
+  if (estSgen == FALSE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map)
 } else {
-  obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE)
+  if (estSgen == TRUE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE)
+  if (estSgen == FALSE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, map=map)
 }
 
 
 # Create upper bounds vector that is same length and order as start vector that will be given to nlminb
 upper<-unlist(obj$par)
 upper[1:length(upper)]<-Inf
-upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy
+if (estSgen == TRUE) upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy
 #upper[names(upper) =="cap"] <- SMSYs * 10 # constrain Sgen to be less than 10x Smsy
 upper<-unname(upper)
 
 lower<-unlist(obj$par)
 lower[1:length(lower)]<--Inf
-lower[names(lower) =="logSgen"] <- log(0.001)
+if (estSgen == TRUE) lower[names(lower) =="logSgen"] <- log(0.01)
 lower[names(lower) =="cap"] <- 0
 lower<-unname(lower)
 
-opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
+opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10),
               upper = upper, lower=lower )
 
 pl2 <- obj$env$parList(opt$par) # Parameter estimate after phase 2
@@ -269,10 +277,11 @@ post<-post %>% add_column(iteration=as.numeric(row.names(post)))
 post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
 post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
 
-
+if (estSgen == TRUE) {
 # Extract Sgen marginal posterior
-post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
-post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
+  post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
+  post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
+}
 
 # Extract beta marginal posterior (or cap parameter if Prior Cap model formulation)
 if ("logB" %in% names(obj$par)) {
@@ -311,7 +320,8 @@ if ("logB" %in% names(obj$par)) {
 }
 
 
-write.csv(post_long, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcPosterior.csv", sep=""),row.names=F)
+if (estSgen == TRUE) write.csv(post_long, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcPosterior.csv", sep=""),row.names=F)
+if (estSgen == FALSE) write.csv(post_long, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_nSgen_mcmcPosterior.csv", sep=""),row.names=F)
 
 
 # ========================================================================================================
@@ -328,7 +338,7 @@ plotPostHist<-function(x, post, parName, Scale, applyExp=T, CUNames, muLSurv) {
 
   if (parName == "adjProd") {
     adj<-post[,"gamma"] * rep(muLSurv[x], length=nrow(post))
-    marPost<- post[,paste("logA","[",x,"]", sep="")] + adj
+    margPost<- post[,paste("logA","[",x,"]", sep="")] + adj
   } else {
     margPost<-post[,paste(parName,"[",x,"]", sep="")]
   }
@@ -369,11 +379,15 @@ plotPostHist<-function(x, post, parName, Scale, applyExp=T, CUNames, muLSurv) {
 
 library(gridExtra)
 
-ps<-list()
-ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logSgen", Scale=1000, applyExp=T, CUNames=CU_list)
-pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"SgenPost.pdf", sep=""))
-do.call(grid.arrange, ps)
-dev.off()
+if (estSgen==TRUE) {
+
+  ps<-list()
+  ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logSgen", Scale=1000, applyExp=T, CUNames=CU_list)
+  pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"SgenPost.pdf", sep=""))
+  do.call(grid.arrange, ps)
+  dev.off()
+
+}
 
 ps<-list()
 ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logA", Scale=1000, applyExp=F, CUNames=CU_list)
@@ -388,7 +402,7 @@ do.call(grid.arrange, ps)
 dev.off()
 
 ps<-list()
-ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="adjProd", Scale=1000, applyExp=T, CUNames=CU_list, muLSurv=data$muLSurv)
+ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="adjProd", Scale=1000, applyExp=F, CUNames=CU_list, muLSurv=data$muLSurv)
 pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"AdjProdPost.pdf", sep=""))
 do.call(grid.arrange, ps)
 dev.off()
@@ -423,51 +437,46 @@ if(Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP")) {
 
 
 
-
-dum_alpha<-post_long_alpha %>% group_by(stock) %>% summarise(quant = quantile(logA,0.50))
-
-dum_Sgen<-post_long_Sgen %>% group_by(stock) %>% summarise(quant = quantile(exp(logSgen)*1000,0.50))
-
-dum_adjProd<-post_long_adjProd %>% group_by(stock) %>% summarise(quant = quantile(exp(adjProd),0.50))
-
-
-
 # ========================================================================================================
 # View mcmc fits
 # ================================================================================================
-
+# 
 
 
 library(shinystan)
 launch_shinystan(fitmcmc)
 
-class(fitmcmc)
-methods(class="stanfit")
+#class(fitmcmc)
+#methods(class="stanfit")
 ## Pairs plot of the fixed effects
-pairs(fitmcmc, pars=names(obj$par))
+#pairs(fitmcmc, pars=names(obj$par))
 ## Trace plot
-traceplot(fitmcmc, pars=names(obj$par), inc_warmup=TRUE)
+#traceplot(fitmcmc, pars=names(obj$par), inc_warmup=TRUE)
 
-post<-as.matrix(fitmcmc)
 
-sd0 <- rep(NA, len=nrow(post))
 
-for(i in 1:nrow(post)){
-  r <- obj$report(post[i,-ncol(post)])
-  sd0[i] <- r$sd0
-}
-hist(sd0)
+
+# =============================================================================================
+# Run MCMC fit with no Sgen
+# =============================================================================================
+
+
+
+
+
+
+
 
 
 # =============================================================================================
 # Compare par ests for bias and no bias correction
 # =============================================================================================
 
-post_wCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/SR_IndivRicker_Surv_mcmc_biasCorr.csv")
+post_wCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/Test/SR_IndivRicker_Surv_mcmc.csv")
 adjProd_wCorr<-exp(post_wCorr$alpha + post_wCorr$gamma * rep(data$muLSurv, length=nrow(post_wCorr)))
 post_wCorr<- post_wCorr %>% add_column(adjProd = adjProd_wCorr)
 
-post_noCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/SR_IndivRicker_Surv_mcmc.csv")
+post_noCorr<-read.csv("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/Test_BiasCorr/SR_IndivRicker_Surv_mcmc.csv")
 adjProd_noCorr<-exp(post_noCorr$alpha + post_noCorr$gamma * rep(data$muLSurv, length=nrow(post_noCorr)))
 post_noCorr<- post_noCorr %>% add_column(adjProd = adjProd_noCorr)
 
