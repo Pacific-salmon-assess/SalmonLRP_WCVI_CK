@@ -3,6 +3,8 @@
 # For stantmb example, see: https://github.com/kaskr/tmbstan#examples
 
 nIter<-5000
+estSgen<-TRUE
+
 
 
 library(dplyr)
@@ -218,22 +220,24 @@ pl$logSgen <- log(0.3*SMSYs)
 
 # Phase 2 get Sgen, SMSY etc. =================
 if (Mod %in% c("SR_HierRicker_Surv_noLRP","SR_HierRicker_SurvCap_noLRP")) {
-  obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
+  if (estSgen == TRUE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
+  if (estSgen == FALSE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map)
 } else {
-  obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE)
+  if (estSgen == TRUE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE)
+  if (estSgen == FALSE) obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, map=map)
 }
 
 
 # Create upper bounds vector that is same length and order as start vector that will be given to nlminb
 upper<-unlist(obj$par)
 upper[1:length(upper)]<-Inf
-upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy
+if (estSgen == TRUE) upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy
 #upper[names(upper) =="cap"] <- SMSYs * 10 # constrain Sgen to be less than 10x Smsy
 upper<-unname(upper)
 
 lower<-unlist(obj$par)
 lower[1:length(lower)]<--Inf
-lower[names(lower) =="logSgen"] <- log(0.01)
+if (estSgen == TRUE) lower[names(lower) =="logSgen"] <- log(0.01)
 lower[names(lower) =="cap"] <- 0
 lower<-unname(lower)
 
@@ -273,10 +277,11 @@ post<-post %>% add_column(iteration=as.numeric(row.names(post)))
 post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longer(starts_with("logA"),names_to="stock", values_to="logA")
 post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
 
-
+if (estSgen == TRUE) {
 # Extract Sgen marginal posterior
-post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
-post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
+  post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
+  post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
+}
 
 # Extract beta marginal posterior (or cap parameter if Prior Cap model formulation)
 if ("logB" %in% names(obj$par)) {
@@ -315,7 +320,8 @@ if ("logB" %in% names(obj$par)) {
 }
 
 
-write.csv(post_long, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcPosterior.csv", sep=""),row.names=F)
+if (estSgen == TRUE) write.csv(post_long, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcPosterior.csv", sep=""),row.names=F)
+if (estSgen == FALSE) write.csv(post_long, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_nSgen_mcmcPosterior.csv", sep=""),row.names=F)
 
 
 # ========================================================================================================
@@ -332,7 +338,7 @@ plotPostHist<-function(x, post, parName, Scale, applyExp=T, CUNames, muLSurv) {
 
   if (parName == "adjProd") {
     adj<-post[,"gamma"] * rep(muLSurv[x], length=nrow(post))
-    marPost<- post[,paste("logA","[",x,"]", sep="")] + adj
+    margPost<- post[,paste("logA","[",x,"]", sep="")] + adj
   } else {
     margPost<-post[,paste(parName,"[",x,"]", sep="")]
   }
@@ -373,11 +379,15 @@ plotPostHist<-function(x, post, parName, Scale, applyExp=T, CUNames, muLSurv) {
 
 library(gridExtra)
 
-ps<-list()
-ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logSgen", Scale=1000, applyExp=T, CUNames=CU_list)
-pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"SgenPost.pdf", sep=""))
-do.call(grid.arrange, ps)
-dev.off()
+if (estSgen==TRUE) {
+
+  ps<-list()
+  ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logSgen", Scale=1000, applyExp=T, CUNames=CU_list)
+  pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"SgenPost.pdf", sep=""))
+  do.call(grid.arrange, ps)
+  dev.off()
+
+}
 
 ps<-list()
 ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="logA", Scale=1000, applyExp=F, CUNames=CU_list)
@@ -392,7 +402,7 @@ do.call(grid.arrange, ps)
 dev.off()
 
 ps<-list()
-ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="adjProd", Scale=1000, applyExp=T, CUNames=CU_list, muLSurv=data$muLSurv)
+ps<-lapply(1:nCUs, plotPostHist, post=as.matrix(fitmcmc), parName="adjProd", Scale=1000, applyExp=F, CUNames=CU_list, muLSurv=data$muLSurv)
 pdf(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"AdjProdPost.pdf", sep=""))
 do.call(grid.arrange, ps)
 dev.off()
@@ -427,33 +437,6 @@ if(Mod %in% c("SR_HierRicker_SurvCap_noLRP", "SR_IndivRicker_SurvCap_noLRP")) {
 
 
 
-
-alpha_50<-post_long_alpha %>% group_by(stock) %>% summarise(alpha = quantile(logA,0.50))
-Sgen_50<-post_long_Sgen %>% group_by(stock) %>% summarise(Sgen = quantile(exp(logSgen)*1000,0.50))
-adjProd_50<-post_long_adjProd %>% group_by(stock) %>% summarise(adjProd = quantile(exp(adjProd),0.50))
-beta_50<-post_long_beta %>% group_by(stock) %>% summarise(beta = quantile(exp(logB),0.50))
-medians<-alpha_50 %>% add_column(adjProd=adjProd_50$adjProd, beta=beta_50$beta, Sgen=Sgen_50$Sgen)
-write.csv(medians,paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcMedians.csv", sep=""),row.names=F)
-
-
-alpha_05<-post_long_alpha %>% group_by(stock) %>% summarise(alpha = quantile(logA,0.05))
-Sgen_05<-post_long_Sgen %>% group_by(stock) %>% summarise(Sgen = quantile(exp(logSgen)*1000,0.05))
-adjProd_05<-post_long_adjProd %>% group_by(stock) %>% summarise(adjProd = quantile(exp(adjProd),0.05))
-beta_05<-post_long_beta %>% group_by(stock) %>% summarise(beta = quantile(exp(logB),0.05))
-fifthPerc<-alpha_05 %>% add_column(adjProd=adjProd_05$adjProd, beta=beta_05$beta, Sgen=Sgen_05$Sgen)
-write.csv(medians,paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcFifthPerc.csv", sep=""),row.names=F)
-
-
-
-alpha_95<-post_long_alpha %>% group_by(stock) %>% summarise(alpha = quantile(logA,0.95))
-Sgen_95<-post_long_Sgen %>% group_by(stock) %>% summarise(Sgen = quantile(exp(logSgen)*1000,0.95))
-adjProd_95<-post_long_adjProd %>% group_by(stock) %>% summarise(adjProd = quantile(exp(adjProd),0.95))
-beta_95<-post_long_beta %>% group_by(stock) %>% summarise(beta = quantile(exp(logB),0.95))
-ninetyFifthPerc<-alpha_95 %>% add_column(adjProd=adjProd_95$adjProd, beta=beta_95$beta, Sgen=Sgen_95$Sgen)
-write.csv(medians,paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",Mod,"_mcmcNinetyFifthPerc.csv", sep=""),row.names=F)
-
-
-
 # ========================================================================================================
 # View mcmc fits
 # ================================================================================================
@@ -463,22 +446,26 @@ write.csv(medians,paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/Model
 library(shinystan)
 launch_shinystan(fitmcmc)
 
-class(fitmcmc)
-methods(class="stanfit")
+#class(fitmcmc)
+#methods(class="stanfit")
 ## Pairs plot of the fixed effects
-pairs(fitmcmc, pars=names(obj$par))
+#pairs(fitmcmc, pars=names(obj$par))
 ## Trace plot
-traceplot(fitmcmc, pars=names(obj$par), inc_warmup=TRUE)
+#traceplot(fitmcmc, pars=names(obj$par), inc_warmup=TRUE)
 
-# post<-as.matrix(fitmcmc)
-# 
-# sd0 <- rep(NA, len=nrow(post))
-# 
-# for(i in 1:nrow(post)){
-#   r <- obj$report(post[i,-ncol(post)])
-#   sd0[i] <- r$sd0
-# }
-# hist(sd0)
+
+
+
+# =============================================================================================
+# Run MCMC fit with no Sgen
+# =============================================================================================
+
+
+
+
+
+
+
 
 
 # =============================================================================================

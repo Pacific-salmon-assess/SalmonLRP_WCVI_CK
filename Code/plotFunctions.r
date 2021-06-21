@@ -452,9 +452,6 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   }
   
   
-  # Add 
-  
-  
   # Step 3: Add row to Status_DF for 2014 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
     New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)

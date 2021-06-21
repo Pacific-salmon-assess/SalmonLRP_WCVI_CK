@@ -1,5 +1,10 @@
-# This file contains the code required to explore Interior Fraser Coho escapement datasets and run retrospective analyses of 
-#   data-based LRPs that use logistic regressions
+# This file runs function calls that compare LRP estimates for IF Coho that have been 
+# calculated from a range of different estimation methods.
+# e.g., logistic-regression LRPs vs. projected LRPs vs. proportion-based LRPs
+
+# Prior to running this code, the following files must be sourced to produce output csvs:
+#   - runFraserCoho.r (to estimate logistic LRPs)
+# (will eventually add runFraserCoho_projLRP.r, but have not added this in yet, so not yet plotting projected LRPs)
 
 #library(MASS) # dose.p function to get SE around P95
 library(rsample)
@@ -47,10 +52,6 @@ CoEscpDat_bySubpop<-CoEscpDat_bySubpop %>% select(yr=Return.Year, CU_Name=Conser
 tmp.df<-data.frame(CU_Name=unique(CoEscpDat_bySubpop$CU_Name), CU_ID=seq(1,length(unique(CoEscpDat_bySubpop$CU_Name)),by=1))
 CoEscpDat_bySubpop <- left_join(CoEscpDat_bySubpop,tmp.df)
 
-setwd(codeDir)
-
-
-# Run annual restrospective analyses over various levels of p, restrict escapement dataset to 1998+ ============================================================
 # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
 CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
 CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
@@ -64,7 +65,8 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # Plot annual status with bars to show years in which LRP was breached 
 # ===================================================================================
 
-# Make a list of all modelled combinations to be shown in plots
+# Make a list of all modeled combinations to be shown in plots 
+## (note: the output folders/files for each of options must already exist)
 
 modelFitList<-c("Bern.IndivRickerSurv_50",
                 "Bern.HierRickerSurv_50",
