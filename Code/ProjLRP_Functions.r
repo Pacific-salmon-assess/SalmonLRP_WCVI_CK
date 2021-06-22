@@ -37,11 +37,16 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
         # Need to convert capacity parameters to beta if prior on capacity is used
         if (BMmodel %in% c("SR_IndivRicker_SurvCap","SR_HierRicker_SurvCap")) {
           # -- calculate muLSurv (needed to get beta)
-          muSurv <- SRDat %>% group_by(CU_ID) %>%
-            summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
-          muLSurv <- log(muSurv$muSurv)
+          #muSurv <- SRDat %>% group_by(CU_ID) %>%
+           # summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+          #muLSurv <- log(muSurv$muSurv)
           # -- expand muLSurv for number of MCMC samples
-          muLSurv<-rep(muLSurv,length=nrow(mcmcOut))
+          #muLSurv<-rep(muLSurv,length=nrow(mcmcOut))
+          
+          # Alternative method that does not weight by observed returns at age
+          muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+          muLSurv <- muLSurv$muLSurv
+          
           # -- update mcmcOut
           mcmcOut <- mcmcOut %>% add_column(beta = (mcmcOut$alpha + mcmcOut$gamma * muLSurv) / mcmcOut$cap, .after="alpha") %>% select(-cap)
 
@@ -142,6 +147,15 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
           mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.5_SREPScalar1.csv",
                                     sep="/"))
         }
+        if(alphaScalar==0.75 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.75_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar=="lifeStageModel" & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_lifeStageModel.csv",
+                                    sep="/"))
+        }
+        
         if(alphaScalar==1 & SREPScalar==1.5){
           mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar1.5.csv",
                                     sep="/"))
@@ -181,22 +195,30 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
       CUpars$sigma <- exp(dum[grepl("logSigma",dum$Param),"Estimate"])
 
       CUpars$coef1 <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
-      # -- add initial marine survival covariate based on recent average
-      means<-SRDat %>% group_by(CU_ID) %>% filter(BroodYear > 1999) %>% summarise(coVariate=mean(STAS_Age_3))
-      CUpars$covarInit <- means$coVariate
+      # -- add initial marine survival covariate based on recent average, scaled by stock-specific return at age
+      
+      #muSurv <- SRDat %>% group_by(CU_ID) %>%
+      #  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+      #CUpars$covarInit<-muSurv
       # -- specify distribution for marine survival for annual sampling
-      means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
+      #means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
+      # Do not take out pre-1999 years so that estimation and projection are consistent
+      means_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
       CUpars$mu_logCovar1 <- means_log$coVariate
-      sigs_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
+      #sigs_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
+      sigs_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
       CUpars$sig_logCovar1 <- sigs_log$coVariate
       CUpars$min_logCovar <- rep(-5.914504,length(unique(SRDat$CU_ID)))
       CUpars$max_logCovar <- rep(-2.701571,length(unique(SRDat$CU_ID)))
+      CUpars$covarInit <-exp(means_log$coVariate)
+      
+      
       # -- add mean recruitment, by age
       CUpars$meanRec2 <- rep(0,length(unique(SRDat$CU_ID)))
-      rec3<-SRDat %>% group_by(CU_ID) %>% summarize(rec3=Age_3_Recruits/Recruits)
-      CUpars$meanRec3 <- mean(rec3$rec3)
-      rec4<-SRDat %>% group_by(CU_ID) %>% summarize(rec4=Age_4_Recruits/Recruits)
-      CUpars$meanRec4 <- mean(rec4$rec4)
+      rec3<-SRDat %>% group_by(CU_ID) %>% summarize(rec3=mean(Age_3_Recruits/Recruits))
+      CUpars$meanRec3 <- rec3$rec3
+      rec4<-SRDat %>% group_by(CU_ID) %>% summarize(rec4=mean(Age_4_Recruits/Recruits))
+      CUpars$meanRec4 <- rec4$rec4
       # -- add median annual recruitment and quantiles
       quantRec<- SRDat %>% group_by(CU_ID) %>% summarize(med=median(Recruits), lowQ=quantile(Recruits,0.25),highQ=quantile(Recruits,0.75))
       CUpars$medianRec <- quantRec$med
@@ -358,9 +380,14 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
   data$P_3 <- SRDat$Age_3_Recruits/SRDat$Recruits
   data$logSurv_3 <- log(SRDat$STAS_Age_3)
   data$logSurv_4 <- log(SRDat$STAS_Age_4)
-  muSurv <- SRDat %>% group_by(CU_ID) %>%
-    summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
-  data$muLSurv <- log(muSurv$muSurv)
+  #muSurv <- SRDat %>% group_by(CU_ID) %>%
+  #  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+  #data$muLSurv <- log(muSurv$muSurv)
+  
+  # Base mu survival on mean of age 3 survival (not weighted by historic age at return)
+  muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+  data$muLSurv <- muLSurv$muLSurv
+  
   data$Tau_dist <- TMB_Inputs$Tau_dist
   data$gamma_mean <- TMB_Inputs$gamma_mean
   data$gamma_sig <- TMB_Inputs$gamma_sig
@@ -432,11 +459,11 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 
   lower<-unlist(obj$par)
   lower[1:length(lower)]<--Inf
-  lower[names(lower) =="logSgen"] <- log(0.001)
+  lower[names(lower) =="logSgen"] <- log(0.01)
   lower[names(lower) =="cap"] <- 0
   lower<-unname(lower)
 
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
+  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10),
                 upper = upper, lower=lower )
 
   pl2 <- obj$env$parList(opt$par) # Parameter estimate after phase 2

@@ -92,6 +92,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     data$logSurv_4 <- log(SRDat$STAS_Age_4)
     
     data$BiasCorrect<-ifelse(TMB_Inputs$biasCorrect==TRUE,1,0)
+  
     muSurv <- SRDat %>% group_by(CU_ID) %>% # get average smolt to adult survival 
        summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
     data$muLSurv <- log(muSurv$muSurv)
@@ -137,6 +138,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   #   browser()
   # }
   # 
+  
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior",
                 "SR_IndivRicker_Surv_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, map=map)

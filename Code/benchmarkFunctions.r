@@ -75,6 +75,26 @@ get_percentile_benchmarks <- function( ) {
 }
 
 
+sGenOptimum <- function ( S, theta ) {
+  # Function called from sGenSolver 
+  loga <- theta[1]
+  b <- theta[2]
+  prt <- S * exp( loga - b * S)
+  sMSY <- ( 1 - gsl::lambert_W0 (exp ( 1 - loga) ) ) / b
+  epsilon <- log(sMSY) - log(prt)
+  nLogLike <- - sum( dnorm ( epsilon, 0, 1, log = T))
+  return( nLogLike )
+}
+
+
+sGenSolver <- function (loga, b) {
+  # Function to estimate Sgen from loga and b Ricker parameters
+  theta <- c(loga, b)
+  sMSY <- (1 - gsl::lambert_W0(exp(1 - loga))) / b
+  fit <- optimize(f = sGenOptimum, interval = c(0, sMSY),
+                  theta = theta)
+  return(fit$minimum)
+}
 
 
 
