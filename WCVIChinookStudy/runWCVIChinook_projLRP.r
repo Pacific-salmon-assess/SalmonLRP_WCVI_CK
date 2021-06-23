@@ -235,43 +235,7 @@ setwd(codeDir)
 # "cvER0.21.agePpnConst")
 
 
-scenarioName <- "cvER0.21v2"
 
-projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
-                                scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,
-                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
-                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
-scenarioName <- "cvER0.21r1"
-
-projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
-                                scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,
-                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
-                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
-scenarioName <- "cvER0.21rMCMC"
-
-projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
-                                scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,
-                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
-                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
-
-scenarioName <- "cvER0.21v3"
-
-projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
-                                scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,
-                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
-                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
 
 
 scenarioName <- "cvER0.21n50000"
@@ -282,9 +246,11 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=50000, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
-scenarioName <- "cvER0.21n100"
+
+
+scenarioName <- "cvER0.21"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -292,7 +258,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
+
+
 
 scenarioName <- "cvER0.21.annualcvERCU"
 
@@ -302,7 +270,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=TRUE)
+                                annualcvERCU=TRUE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.agePpnConst"
 
@@ -312,18 +280,18 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=TRUE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
-scenarioName <- "cvER0"
+scenarioName <- "cvER0" # should also be run with 50,000 for LRPs
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=100, cvER = 0, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
-scenarioName <- "cvER0.42"
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
+scenarioName <- "cvER0.42" #should also be run with 50,000 for LRPs
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -331,7 +299,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=2000, cvER = 0.42, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 
 scenarioName <- "cvER0.21.recCorSca0"
@@ -342,7 +310,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.recCorSca0.1"
 
@@ -352,7 +320,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 
 scenarioName <- "cvER0.21.recCorSca0.2"
@@ -363,7 +331,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.2, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.recCorSca0.3"
 
@@ -373,7 +341,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.3, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 
 scenarioName <- "cvER0.21.recCorSca0.4"
@@ -384,7 +352,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.4, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.recCorSca0.5"
 
@@ -394,7 +362,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.5, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.recCorSca0.6"
 
@@ -404,7 +372,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.6, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.recCorSca0.7"
 
@@ -414,7 +382,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.7, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.recCorSca0.8"
 
@@ -424,7 +392,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.8, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
 scenarioName <- "cvER0.21.recCorSca0.9"
 
@@ -434,9 +402,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=0.9, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE)
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
-# Additional Sensitivity analyses
+# Additional Sensitivity analyses (should be run with 50,000)
 
 
 scenarioName <- "cvER0.21.noMCMC"
@@ -445,7 +413,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=F,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE)
 
@@ -455,9 +423,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE,
                                 aNarrow=TRUE)
 
 scenarioName <- "cvER0.21.AlifeStageModel"
@@ -466,9 +434,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE,
                                 alphaScalar="lifeStageModel", SREPScalar=1)
 
 
@@ -478,9 +446,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE,
                                 alphaScalar=0.5, SREPScalar=1)
 
 scenarioName <- "cvER0.21.alphaScalar0.75"
@@ -489,9 +457,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE,
                                 alphaScalar=0.75, SREPScalar=1)
 
 
@@ -501,32 +469,12 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE,
                                 alphaScalar=1.5, SREPScalar=1)
 
-scenarioName <- "cvER0.21.SREPScalar1.5"
 
-projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
-                                scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,
-                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
-                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE,
-                                alphaScalar=1, SREPScalar=1.5)
-
-scenarioName <- "cvER0.21.SREPScalar0.5"
-
-projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
-                                scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,
-                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
-                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
-                                annualcvERCU=FALSE,
-                                alphaScalar=1, SREPScalar=0.5)
 
 # ==================================================================
 # (4) Run Sensitivity Analyses
@@ -563,19 +511,20 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 OMsToInclude<-c(
   # "cvER0",
   # "cvER0.21",
+  "cvER0.21n50000_20yrs")
   # # "cvER0.21.annualcvERCU",
   # "cvER0.42")
-"cvER0.21n100",
-"cvER0.21.recCorSca0",
-"cvER0.21.recCorSca0.1",
-"cvER0.21.recCorSca0.2",
-"cvER0.21.recCorSca0.3",
-"cvER0.21.recCorSca0.4",
-"cvER0.21.recCorSca0.5",
-"cvER0.21.recCorSca0.6",
-"cvER0.21.recCorSca0.7",
-"cvER0.21.recCorSca0.8",
-"cvER0.21.recCorSca0.9")
+# "cvER0.21n100",
+# "cvER0.21.recCorSca0",
+# "cvER0.21.recCorSca0.1",
+# "cvER0.21.recCorSca0.2",
+# "cvER0.21.recCorSca0.3",
+# "cvER0.21.recCorSca0.4",
+# "cvER0.21.recCorSca0.5",
+# "cvER0.21.recCorSca0.6",
+# "cvER0.21.recCorSca0.7",
+# "cvER0.21.recCorSca0.8",
+# "cvER0.21.recCorSca0.9")
 # "cvER0.21",
 # "cvER0.21.agePpnConst")
 
@@ -745,7 +694,7 @@ CU_inlet[Inlet_Names=="Quatsino",2] <- "WCVI North"#"Northwest_Vancouver_Island"
 
 
 if(createMCMCout){
-  #set.seed(123)
+  set.seed(1)
   remove.EnhStocks <- TRUE
   nTrials <- 50000
   # Set up matrix of random numbers to use for generating alphas, so that
@@ -835,8 +784,11 @@ if(createMCMCout){
             row.names=F)
 
   #plot of alpha and SREP density
-  alphaDensity <- mcmcOut %>% ggplot(aes(alpha, colour=factor(stkName))) +
+  alphaDensity <- mcmcOut %>% ggplot(aes(alpha, colour=factor(stkName))) + #geom_histogram()
     geom_density() +theme(legend.title = element_blank())
+
+  # Histogram might be better to see smoothed curves with 50,000 mcmc
+  mcmcOut %>% ggplot(aes(alpha)) + geom_histogram() + facet_wrap(~factor(stkName))
 
   SREPDensity <- mcmcOut  %>%
     ggplot(aes(SREP, colour=factor(stkName), fill=factor(stkName))) +
