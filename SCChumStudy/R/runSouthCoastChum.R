@@ -164,7 +164,7 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
 
   # Run with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2012, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T, runLogisticDiag = TRUE)
@@ -184,7 +184,7 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T, runLogisticDiag=TRUE)
   # 
   # Run with Bernoulli LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2012, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BernLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bern.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T, runLogisticDiag=TRUE)
