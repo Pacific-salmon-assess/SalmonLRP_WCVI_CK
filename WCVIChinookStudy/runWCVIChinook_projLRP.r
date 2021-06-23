@@ -235,13 +235,62 @@ setwd(codeDir)
 # "cvER0.21.agePpnConst")
 
 
-scenarioName <- "cvER0.21"
+scenarioName <- "cvER0.21v2"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
                                 nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE)
+scenarioName <- "cvER0.21r1"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE)
+scenarioName <- "cvER0.21rMCMC"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE)
+
+scenarioName <- "cvER0.21v3"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=2000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE)
+
+
+scenarioName <- "cvER0.21n50000"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=50000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE)
+
+scenarioName <- "cvER0.21n100"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=100, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE)
 
@@ -512,21 +561,21 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
-  "cvER0",
-  "cvER0.21",
-  # "cvER0.21.annualcvERCU",
-  "cvER0.42")
-# "cvER0.21",
-# "cvER0.21.recCorSca0",
-# "cvER0.21.recCorSca0.1",
-# "cvER0.21.recCorSca0.2",
-# "cvER0.21.recCorSca0.3",
-# "cvER0.21.recCorSca0.4",
-# "cvER0.21.recCorSca0.5",
-# "cvER0.21.recCorSca0.6",
-# "cvER0.21.recCorSca0.7",
-# "cvER0.21.recCorSca0.8",
-# "cvER0.21.recCorSca0.9")
+  # "cvER0",
+  # "cvER0.21",
+  # # "cvER0.21.annualcvERCU",
+  # "cvER0.42")
+"cvER0.21n100",
+"cvER0.21.recCorSca0",
+"cvER0.21.recCorSca0.1",
+"cvER0.21.recCorSca0.2",
+"cvER0.21.recCorSca0.3",
+"cvER0.21.recCorSca0.4",
+"cvER0.21.recCorSca0.5",
+"cvER0.21.recCorSca0.6",
+"cvER0.21.recCorSca0.7",
+"cvER0.21.recCorSca0.8",
+"cvER0.21.recCorSca0.9")
 # "cvER0.21",
 # "cvER0.21.agePpnConst")
 
@@ -613,9 +662,9 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_cvER.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_cvER0.21.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_cvER.csv", sep="/"), row.names=F)
+write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_cvER0.21.csv", sep="/"), row.names=F)
 
 
 
@@ -696,9 +745,9 @@ CU_inlet[Inlet_Names=="Quatsino",2] <- "WCVI North"#"Northwest_Vancouver_Island"
 
 
 if(createMCMCout){
-  set.seed(123)
+  #set.seed(123)
   remove.EnhStocks <- TRUE
-  nTrials <- 5000
+  nTrials <- 50000
   # Set up matrix of random numbers to use for generating alphas, so that
   # the same random numbers are used for Ricka estimates with bias correction
   # and without bias correction when using alpha to estimata beta (lnA/SREP)
@@ -829,9 +878,7 @@ if(createMCMCout){
 # ggsave(paste(wcviCKDir,"/Figures/sGenDensity.png", sep=""),
 #        plot=sGenDensity, width=4, height=3, units="in")
 
-Sexp(lna-bS)
-(-1000)*exp(0.15-0.000001*(-1000))
-1.5*0.5*0.2
+
 
 # ===================================================================
 # (8) Code to estimate uncertainty in age ppns in recruitment by BY
@@ -881,21 +928,21 @@ OMsToTest<-c(
   "cvER0.21",
   # "cvER0.21.annualcvERCU",
   "cvER0.42")
+#
+#               "cvER0.21n100",
+#               "cvER0.21.recCorSca0",
+#               "cvER0.21.recCorSca0.1",
+#               "cvER0.21.recCorSca0.2",
+#               "cvER0.21.recCorSca0.3",
+#               "cvER0.21.recCorSca0.4",
+#               "cvER0.21.recCorSca0.5",
+#               "cvER0.21.recCorSca0.6",
+#               "cvER0.21.recCorSca0.7",
+#               "cvER0.21.recCorSca0.8",
+#               "cvER0.21.recCorSca0.9")
+#
 
-              # "cvER0.21",
-              # "cvER0.21.recCorSca0",
-              # "cvER0.21.recCorSca0.1",
-              # "cvER0.21.recCorSca0.2",
-              # "cvER0.21.recCorSca0.3",
-              # "cvER0.21.recCorSca0.4",
-              # "cvER0.21.recCorSca0.5",
-              # "cvER0.21.recCorSca0.6",
-              # "cvER0.21.recCorSca0.7",
-              # "cvER0.21.recCorSca0.8",
-              # "cvER0.21.recCorSca0.9")
-
-
-# "cvER0.21",
+# "cvER0.21n100",
 # "cvER0.21.agePpnConst")
 #
 
@@ -909,7 +956,7 @@ OMsToTest<-c(
   # "cvER0.21.Anarrow",
   # "cvER0.21.noMCMC")
 #
-LRPFileName <- "ProjectedLRPs_cvER.csv"
+LRPFileName <- "ProjectedLRPs_cvER0.21.csv"
 
 for (j in 1:length(OMsToTest)) {
 
@@ -948,6 +995,13 @@ for (j in 1:length(OMsToTest)) {
 
 }
 
+# Identify a subset of correlations to jitter on the boxplot
+len <- dim(SpwnCorr.df)[1]
+SpwnCorr.df <- SpwnCorr.df %>% add_column(
+  highlight = sample(c(1,NA), len, replace=T,prob=c(0.05*len,0.95*len)))
+# SpwnCorr.df <- SpwnCorr.df %>% mutate(
+#   highlight = c(sample(c(1,NA), len, replace=T,prob=c(0.01*len,0.99*len)),rep(1,10)))
+
 
 # Add observed escapement correlations to correlation data frame
 # spawners.obs<-data.frame(SRDat$BroodYear, SRDat$CU_ID, SRDat$Spawners)
@@ -955,8 +1009,10 @@ for (j in 1:length(OMsToTest)) {
 # cor_mat<-spawners.obs %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
 cor_mat <- corMat
 SpwnCorrValues.Obs<-cor_mat[lower.tri(cor_mat)==TRUE]
-tmp<-data.frame(OM_Name = "Observed",SpwnCorrValues = SpwnCorrValues.Obs)
+tmp<-data.frame(OM_Name = "Observed",SpwnCorrValues = SpwnCorrValues.Obs, highlight=1)
 SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
+
+if(len > 12000) {ind <- is.na(SpwnCorr.df$highlight)} else ind <- rep(TRUE,len)
 
 # Save LRPs for all OM scenarios
 write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
@@ -971,7 +1027,7 @@ factor(SpwnCorr.df$OM_Name,levels = c(
   "cvER0.21",
   # "cvER0.21.annualcvERCU",
   "cvER0.42"),
-       # "cvER0.21",
+       # "cvER0.21n100",
        # "cvER0.21.recCorSca0",
        # "cvER0.21.recCorSca0.1",
        # "cvER0.21.recCorSca0.2",
@@ -983,7 +1039,7 @@ factor(SpwnCorr.df$OM_Name,levels = c(
        # "cvER0.21.recCorSca0.8",
        # "cvER0.21.recCorSca0.9"),
 
-  # "cvER0.21",
+  # "cvER0.21n100",
   # "cvER0.21.agePpnConst"),
 
   # "cvER0",
@@ -999,45 +1055,31 @@ factor(SpwnCorr.df$OM_Name,levels = c(
 
  ordered = TRUE)
 
-# Consider adding a new variable in the data frame that specifies if the point should be included in jitter, as too croweded with 2000 samples
-# Example from https://stackoverflow.com/questions/38460090/highlighting-some-points-with-constant-jitter-across-plots-ggplot2
-# dr <- data.frame(
-#   X = sample(c("yes","no"),10, replace=T),
-#   Y = rnorm(1000),
-#   highlight = sample(c(1,NA),1000,replace=T,prob=c(5,995))
-# )
-# ind <- is.na(dr$highlight)
-#
-# ggplot(dr, aes(x=X, y=Y, colour=Y)) +
-#   geom_jitter(data=dr[ind, ], alpha=0.7, width=0.5) +
-#   geom_jitter(data=dr[!ind, ], width=0.5, colour = "red", size=3) +
-#   stat_summary(fun.y = "mean", fun.ymin = "mean", fun.ymax= "mean",
-#                size=0.3,width=0.33, geom = "crossbar") +
-
-
 
 g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
   geom_boxplot(width=0.5, outlier.shape=NA) + ylim(-0.25,0.8)+
-  geom_jitter(position=position_jitter(0.2), col="dark grey", alpha=0.95, size=0.2) +
+  geom_jitter(data=SpwnCorr.df[!ind, ],
+              position=position_jitter(0.2), col="dark grey", alpha=0.95,
+              size=0.2) +
   scale_x_discrete(limits=c("Observed",
                             "cvER0",
                             "cvER0.21",
                             #"cvER0.21.annualcvERCU",
                             "cvER0.42"),
 #
-#                             "cvER0.21",
-#                             "cvER0.21.recCorSca0",
-#                             "cvER0.21.recCorSca0.1",
-#                             "cvER0.21.recCorSca0.2",
-#                             "cvER0.21.recCorSca0.3",
-#                             "cvER0.21.recCorSca0.4",
-#                             "cvER0.21.recCorSca0.5",
-#                             "cvER0.21.recCorSca0.6",
-#                             "cvER0.21.recCorSca0.7",
-#                             "cvER0.21.recCorSca0.8",
-#                             "cvER0.21.recCorSca0.9"),
+                            # "cvER0.21n100",
+                            # "cvER0.21.recCorSca0",
+                            # "cvER0.21.recCorSca0.1",
+                            # "cvER0.21.recCorSca0.2",
+                            # "cvER0.21.recCorSca0.3",
+                            # "cvER0.21.recCorSca0.4",
+                            # "cvER0.21.recCorSca0.5",
+                            # "cvER0.21.recCorSca0.6",
+                            # "cvER0.21.recCorSca0.7",
+                            # "cvER0.21.recCorSca0.8",
+                            # "cvER0.21.recCorSca0.9"),
 
-                   # "cvER0.21",
+                   # "cvER0.21n100",
                    # "cvER0.21.agePpnConst"),
 
                    # "cvER0",
@@ -1077,17 +1119,15 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             # "Alpha\nScalar\n1.5",
                             # "Alpha\nnarrow",
                             # "Alpha\nnoVar") ) +
-#
 
 
-                            #
 
-  # xlab("cv in Exploitation Rates among inlets") +
-  # xlab("Scalar for Ricker Residual Correlation Matrix") +
-  xlab("") +
+  xlab("cv in Exploitation Rates among inlets") +
+  #xlab("Scalar for Ricker Residual Correlation Matrix") +
+  # xlab("") +
   ylab("Pairwise correlations in spawners among inlets") +
-  theme(axis.text=element_text(size=7),  axis.title=element_text(size=8)) +
-  annotate("text", x = c(1.5,2:4), y = -0.2, label =c("LRP:",LRPs), size=3)
+  theme(axis.text=element_text(size=7),  axis.title=element_text(size=8)) #+
+  # annotate("text", x = c(1.5,2:4), y = -0.2, label =c("LRP:",LRPs), size=3)
   # annotate("text", x = c(1.4,2:12), y = -0.2, label =c("LRP:",LRPs), size=2)
   # annotate("text", x = c(1.5,2:3), y = -0.2, label =c("LRP:",LRPs), size=5)
   # annotate("text", x = c(1.5,2:5), y = -0.2, label =c("LRP:",LRPs), size=4)
@@ -1283,7 +1323,7 @@ propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
 probThresh<-c(0.5, 0.66, 0.9, 0.99)# probability threshold; the LRP is set as the
 # aggregate abundance that has this probability that the propCUThreshold is met
 
-OMsToInclude<-c("cvER0.21.recCorSca0.4")
+OMsToInclude<-c("cvER0.21n5000")
 
 
 
@@ -1292,12 +1332,12 @@ filename<-paste("projLRPDat_",OMsToInclude,".csv",sep="")
 projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
 CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
 
-nTrials <- 2000
+nTrials <- 5000#2000
 
 # Loop over probability levels
 for (p in 1:length(probThresh)){
   # Loop over nTrials
-  for (i in 1:200) {
+  for (i in 1:500) {#(i in 1:200) {
 
     projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
     projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*10) %>% filter(iteration < (i*10))
@@ -1345,18 +1385,18 @@ for (p in 1:length(probThresh)){
   }
 
   # Save LRPs
-  write.table(LRP_Ests_nTrials, paste(projOutDir2, "/ProjectedLRPs_nTrials_p", probThresh[p], ".csv", sep=""),
+  write.table(LRP_Ests_nTrials, paste(projOutDir2, "/ProjectedLRPscvER0.21_nTrials_p", probThresh[p], ".csv", sep=""),
                 row.names=F)
 
   # Plot stabilization of LRPs with nTrials
   #LRP_nTrials <- as.data.frame(LRP_Ests_nTrials) %>% filter(ProbThresh==0.5)
-  LRP_nTrials <- as.data.frame(read.table(paste(projOutDir2, "/ProjectedLRPs_nTrials_p",probThresh[p],".csv", sep=""), header=T))
-  LRP_nTrials_plot <- ggplot(LRP_nTrials, aes(nTrials,LRP)) + geom_line() +
+  LRP_nTrials <- as.data.frame(read.table(paste(projOutDir2, "/ProjectedLRPscvER0.21_nTrials_p",probThresh[p],".csv", sep=""), header=T))
+  LRP_nTrials_plot <- ggplot(LRP_nTrials, aes(nTrials,LRP)) + geom_line() #+
   #ylim(14000,19000) #+
   #geom_vline(xintercept=100, linetype="dashed")
 
 
-  ggsave(paste(wcviCKDir,"/Figures/LRP_ntrials_p",probThresh[p],".png",sep=""), plot = LRP_nTrials_plot,
+  ggsave(paste(wcviCKDir,"/Figures/LRPcvER0.21_nTrials_p",probThresh[p],".png",sep=""), plot = LRP_nTrials_plot,
          width = 6, height = 4, units = "in")
 
 
@@ -1378,10 +1418,13 @@ probThresh<-c(0.50,0.66,0.9, 0.99) # probability theshhold; the LRP is set as th
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
-#  "cvER0.21")
+  # "cvER0.21")
+  # "cvER0.21v2")
+ "cvER0.21rMCMC")
+# "cvER0.21n5000")
   # "cvER0")
    # "cvER0.42")
-"cvER0.21.alphaScalar0.75")
+# "cvER0.21.alphaScalar0.75")
 # "cvER0.21.alphaScalar1.5")
 # "cvER0.21.Anarrow")
 
@@ -1455,9 +1498,9 @@ for (i in 1:length(probThresh)) {
 
   abline(h=probThresh[i], lty=2)
   if(i==1) abline(v=LRP[i], lwd=4, col="orange")
-  if(i==2) abline(v=LRP[i], lwd=4, col=viridis(4)[3])
-  if(i==3) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.5)[2] )
-  if(i==4) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[1] )
+  if(i==2) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[3])
+  if(i==3) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[2] )
+  if(i==4) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.2)[1] )
 
   if(i==length(probThresh)) dev.off()
 
@@ -1467,9 +1510,9 @@ for (i in 1:length(probThresh)) {
 }
 
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPscvER0.21Allp.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPscvER0.21Allp.rMCMC.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_datacvER0.21Allp.csv", sep="/"), row.names=F)
+write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_datacvER0.21Allp.rMCMC.csv", sep="/"), row.names=F)
 
 # ===================================================================
 # (13) Run reconstruction for WCIV  CK
@@ -1539,15 +1582,15 @@ cuAges <- read.csv(paste(wcviCKDir, "/DataIn/CUages.csv", sep=""))
 cuAges <- cuAges %>% pivot_longer(cols=c("age2", "age3", "age4", "age5"),
                                   names_to="Age", values_to="Proportion")
 
-cuAges$CU_Names.f <- factor(cuAges$CU_Names,
+cuAges$CU_Names. <- factor(cuAges$CU_Names,
                             levels=c("Southwest_Vancouver_Island",
                                      "Nootka_Kyuquot",
                                      "Northwest_Vancouver_Island",
                                      "Westcoast_Vancouver_Island"))
 
 cuAges %>% filter(CU_Names!="Westcoast_Vancouver_Island") %>%
-  ggplot(aes(Year, Proportion, group=Age, colour=Age)) +
-  geom_line() + facet_wrap(~CU_Names.f, ncol=1)
+  ggplot(aes(Year, Proportion, group=CU_Names., colour=CU_Names.)) +
+  geom_line() + facet_wrap(~Age, ncol=1)
 # ===================================================================
 # (15) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
