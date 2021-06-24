@@ -409,7 +409,7 @@ dev.off()
 # ---------------------------------------------#
 # Look at stock recruit parameters over time
 # ---------------------------------------------#
-# Plot Sgen over time
+# Plot alpha, beta, SMSY and Sgen over time
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
@@ -417,7 +417,7 @@ mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="
 png("Figures/fig_a_b_SMSY_Sgen_retro.png", width=6, height=8, res=300, units="in", pointsize=12)
 layout(mat=matrix(1:18, byrow=FALSE, ncol=3)) # 15 panels
 CUs <- unique(mdat$CU_Name)
-#brk_a <- seq(0,max(mdat$est_A)*1.05, 1)
+brk_a <- seq(0,max(mdat$est_A)*1.05, 1)
 #brk_b <- seq(0,max(mdat$est_B)*1.05, 0.00001)
 par(las=1)
 for(i in 1:2) {
