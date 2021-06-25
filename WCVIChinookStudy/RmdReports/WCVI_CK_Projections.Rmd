@@ -18,7 +18,7 @@ library(corrplot)
 ```
 
 
-This report describes the parameterization of three key components of the forward simulations of WCVI Chinook inlet required for developing projection-based Limit REference Points (LRPs). A table describing additional base-case parameter assumptions is availalble on DropBox:   <https://www.dropbox.com/home/Limit%20Reference%20Point%20-%20TWG%20materials/Case%20Study%20Results/WCVI%20Chinook?preview=ProjectionBasedLRP-Parameters.docx>. Parameters were either estimated from a run reconstruction for WCVI Chinook (D. Dosbon pers. comm.), estimated from the Watershed-Area model (Parken et al. 2006), derived from a life-stage model (W. Luedke pers. comm.) or derived from expert opinion varied within plausible bounds.
+This report describes the parameterization of three key components of the forward simulations of WCVI Chinook inlet required for developing projection-based Limit REference Points (LRPs). A table describing additional base-case parameter assumptions is availalble on DropBox:   <https://www.dropbox.com/home/Limit%20Reference%20Point%20-%20TWG%20materials/Case%20Study%20Results/WCVI%20Chinook?preview=ProjectionBasedLRP-Parameters.pdf>. Parameters were either estimated from a run reconstruction for WCVI Chinook (D. Dosbon pers. comm.), estimated from the Watershed-Area model (Parken et al. 2006), derived from a life-stage model (W. Luedke pers. comm.) or derived from expert opinion varied within plausible bounds.
 
 To evaluate if base-case parameters generate realistic projections in the forward simulation when developing projection-based LRPs, we compared the observed pairwise correlations in spawner abundances between inlets to simulated pairwise correlations in spawner abundances between inlets. For observed data, only indicator stocks that are not heavily enhanced were included when deriving inlet-level spawner abundances (PNI>0.5). We only included years where all indicators were monitored (i.e., we did not infill). In future work,infilled time-series within inlets could be developed to extend the time-series. Figure 1 shows time-series of inlet-specific spawner abundances (indicators with PNI > 0.5) for the time period where abundances from all indicators are available. Only inlets with natural indicator stocks were included in the analyses, resulting in 5 inlets covering all 3 WCVI CUs.
 
@@ -364,12 +364,12 @@ knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/cvER0.21n5000_Pr
 We considered sensitivity analyses on interannual variabilty in exploitation rates among inlets with cv = 0 and 0.42 (Figs. 11 and 12).
 ```{r echo=FALSE, fig.cap="**Figure 11**. Probability of all inlets being above their lower benchmark vs aggregate abundances from projections over 100 years and 2000 MC Trials, assuming variability in ER's among inlets with cv=0. LRPs at 4 probability values are highlighted, p=0.5 (yellow), p=0.66 (green), p=0.9 (light blue), and p=0.99(light purple). LRPs at p = 0.66, 0.9 and 0.99 require more MC trials for stabilization.", out.width = '60%'}
 
-knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/cvER0_ProjLRPCurve_ALLp.png",sep=""))
+knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/cvER0n5000_ProjLRPCurve_ALLp.png",sep=""))
 
 ```
 ```{r echo=FALSE, fig.cap="**Figure 12**. Probability of all inlets being above their lower benchmark vs aggregate abundances from projections over 100 years and 2000 MC Trials, assuming variability in ER's among inlets with cv=0.42. LRPs at 4 probability values are highlighted, p=0.5 (yellow), p=0.66 (green), p=0.9 (light blue), and p=0.99(light purple). LRPs at p = 0.66, 0.9 and 0.99 require more MC trials for stabilization.", out.width = '60%'}
 # Figure of logistic curve all p values for base case
-knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/cvER0.42_ProjLRPCurve_ALLp.png",sep=""))
+knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/cvER0.42n5000_ProjLRPCurve_ALLp.png",sep=""))
 ```
 
 For the base case, the LRPs were compared against time-series of aggregate abundances observed for WCVI Chinook salmon (sum of indicator stocks with PNI > 0.5), showing that abundances are currently below these LRPs and have been near or below them over the available time-series.
