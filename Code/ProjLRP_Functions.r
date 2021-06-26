@@ -234,7 +234,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   simPars<-read.csv(paste(outDir, "SamSimInputs/SimPars.csv",sep="/"))
   simPars$nameOM<-rep(scenarioName,nrow(simPars))
   simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
-  simPars$seed <- 1:nrow(simPars)
+  simPars$seed <- rep(1,nrow(simPars)#1:nrow(simPars)
 
   if(!is.null(cvERSMU)){
     simPars$cvERSMU <- cvERSMU

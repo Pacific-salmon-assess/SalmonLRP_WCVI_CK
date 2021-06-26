@@ -222,13 +222,13 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
-scenarioName <- "cvER0.21"
+scenarioName <- "cvER0.21old"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=3000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=200, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
@@ -470,9 +470,9 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
   # "cvER0",
-  "cvER0.21",
+  "cvER0.21old")
   # #"cvER0.21n50000_20yrs")
-  "cvER0.21.AlifeStageModel")
+  # "cvER0.21.AlifeStageModel")
   # "cvER0.21.annualcvERCU")
   # "cvER0.42")
 # "cvER0.21",
@@ -572,9 +572,9 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_cvER0.21AlifeStageModel.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_cvERold.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_cvER0.21AlifeStageModel.csv", sep="/"), row.names=F)
+write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_cvERold.csv", sep="/"), row.names=F)
 
 
 
@@ -838,10 +838,10 @@ if(calcTau){
 
 
 OMsToTest<-c(
-  # "cvER0",
+  "cvER0",
   "cvER0.21",
-  "cvER0.21.annualcvERCU")
-  # "cvER0.42")
+  # "cvER0.21.annualcvERCU")
+  "cvER0.42")
 #
               # "cvER0.21",
               # "cvER0.21.recCorSca0",
