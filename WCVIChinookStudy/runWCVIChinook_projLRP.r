@@ -234,15 +234,45 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0)
 
-scenarioName <- "cvER0ER0ricResid0.01"
+scenarioName <- "cvER0.21ER0.1075"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=500, cvER = 0, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=10000, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0)
+scenarioName <- "cvER0.21ER0.215"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0)
+
+scenarioName <- "cvER0.21ER0.3225"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.21, cvERSMU=0.42,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0)
+
+
+# scenarioName <- "cvER0ER0ricResid0.01"
+#
+# projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+#                                 scenarioName=scenarioName,
+#                                 useGenMean = F, genYrs = genYrs,
+#                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+#                                 nMCMC=NULL, nProj=500, cvER = 0, cvERSMU=0.42,
+#                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+#                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0)
 
 
 scenarioName <- "cvER0.21ER0.43"
@@ -255,13 +285,13 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.43)
 
-scenarioName <- "cvER0.21multiER"
+scenarioName <- "cvER0.21multiERn10000"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
                                 TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
-                                nMCMC=NULL, nProj=50000, cvER = 0.21, cvERSMU=0.42,
+                                nMCMC=NULL, nProj=10000, cvER = 0.21, cvERSMU=0.42,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE)
 
@@ -1371,7 +1401,8 @@ probThresh<-c(0.50,0.66,0.9, 0.99) # probability theshhold; the LRP is set as th
 OMsToInclude<-c(
   # "cvER0.21")
 # "cvER0.21ER0.43n50000")
-"cvER0ER0ricResid0.01")
+  # "cvER0ER0ricResid0.01")
+"cvER0.21multiERn10000")
 # "cvER0n5000")
 # "cvER0.42n5000")
 # "cvER0")
