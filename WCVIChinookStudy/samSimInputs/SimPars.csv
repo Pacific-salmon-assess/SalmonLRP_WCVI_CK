@@ -1,2 +1,6 @@
 scenario,nameOM,nameMP,keyVar,plotOrder,species,simYears,harvContRule,benchmark,canER,usER,propMixHigh,singleHCR,moveTAC,prodRegime,startYear,endYear,rho,arSigTransform,correlCU,corrMat,mu_logCovar1,sig_logCovar1,tauCatch,obsSig,mixOUSig,singOUSig,obsMixCatchSig,obsSingCatchSig,obsAgeErr,lowCatchThresh,highCatchThresh,extinctThresh,adjustSig,adjustAge,adjustForecast,biasCor,rCap
-Base_lowER,Base,lowER,expRate,1,chinook,30,fixedER,habitat,0.29,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,10,1,1,1,TRUE,10
+Base_lowER,Base,vlowER,expRate,1,chinook,30,fixedER,habitat,0,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,2,1,1,1,TRUE,10
+Base_baseER,Base,lowER,expRate,2,chinook,30,fixedER,habitat,0.1075,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,2,1,1,1,TRUE,10
+Base_highER,Base,baseER,expRate,3,chinook,30,fixedER,habitat,0.215,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,2,1,1,1,TRUE,10
+Base_highER2,Base,highER,expRate,4,chinook,30,fixedER,habitat,0.335,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,2,1,1,1,TRUE,10
+Base_highER2,,highER2,expRate,5,chinook,30,fixedER,habitat,0.43,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,2,1,1,1,TRUE,10

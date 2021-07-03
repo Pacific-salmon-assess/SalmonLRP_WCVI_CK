@@ -6,7 +6,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
                              corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPScalar=NULL,
-                             biasCorrectEst=NULL, biasCorrectProj=NULL){
+                             biasCorrectEst=NULL, biasCorrectProj=NULL, ER=NULL){
 
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
@@ -234,7 +234,8 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   simPars<-read.csv(paste(outDir, "SamSimInputs/SimPars.csv",sep="/"))
   simPars$nameOM<-rep(scenarioName,nrow(simPars))
   simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
-  simPars$seed <- rep(1,nrow(simPars))#1:nrow(simPars)
+  #simPars$seed <- 1:nrow(simPars)#rep(1,nrow(simPars))#
+  if(!is.null(ER)) simPars$canER <- ER
 
   if(!is.null(cvERSMU)){
     simPars$cvERSMU <- cvERSMU
@@ -301,8 +302,8 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                 cuCustomCorrMat = corMatrix,
                 nTrials=nProj, makeSubDirs=FALSE,
                 random=FALSE, outDir=outDir)
-  })
-  stopCluster(cl) #end cluster
+   })
+   stopCluster(cl) #end cluster
   toc()
 
   # for (i in 1:nrow(simPars)) {
@@ -342,8 +343,376 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     
 }
 
+#______________________________________________________________________________
+
+# Run a set of scenarios specified in SimPars in parallel. The set is labeled 
+# "scenarioName", but the specific OM scenarios are in simPars. Each of the 
+# individual scenarios in simPars must use the same cuPars (i.e., same BMmodel 
+# and/or mcmc estimates). If testing different BMmodels, then create different 
+# scencario sets.
+
+# To run this code, first create SimPars with a list of OMs to test. labeling 
+# the names in column B "namesOM"
+
+# !!This won't work unless I can put covariance matrix created with recCorScalar 
+# within simPars, so that it is iterated over parallel processing, and move cvER to simPars
 
 
+run_ScenarioProjParallel <- function(SRDat, BMmodel, scenarioName, useGenMean, 
+                                     genYrs, TMB_Inputs, outDir, runMCMC, nMCMC, 
+                                     nProj, ERScalar=NULL,
+                                     gammaSigScalar=NULL, 
+                                     recCorScalar=NULL, 
+                                     corMat=NULL, alphaScalar=NULL, 
+                                     aNarrow=NULL, SREPScalar=NULL, 
+                                     biasCorrectEst=NULL, biasCorrectProj=NULL){
+  
+  
+  scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
+  scenOutputDir <- paste(outDir, "SamSimOutputs", sep="/")
+  
+  if (file.exists(scenInputDir) == FALSE){
+    dir.create(scenInputDir)
+  }
+  if (file.exists(scenOutputDir) == FALSE){
+    dir.create(scenOutputDir)
+  }
+  
+  if(!is.null(SRDat)){
+    if (all(is.na(SRDat$Recruits)) == FALSE){
+      # Run MPD fit to parameterize samSim projections ==========
+      mpdOut<-get_MPD_Fit(SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst=biasCorrectEst)
+      # save correlation matrix
+      corMatrix<-mpdOut$corMatrix
+      corMatrix<-corMatrix * recCorScalar
+      corMatrix[col(corMatrix)==row(corMatrix)] <- 1
+      write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),row.names=F, col.names=F, sep=",")
+      
+      # Run MCMC fit to parameterize samSim projections =======
+      if (runMCMC == T) {
+        mcmcOut<-get_MCMC_Fit(scenarioName, obj= mpdOut$obj, init=mpdOut$par,
+                              upper=mpdOut$upper, lower=mpdOut$lower, nMCMC=nMCMC, Scale = TMB_Inputs$Scale)
+        
+        # Need to convert capacity parameters to beta if prior on capacity is used
+        if (BMmodel %in% c("SR_IndivRicker_SurvCap","SR_HierRicker_SurvCap")) {
+          # -- calculate muLSurv (needed to get beta)
+          #muSurv <- SRDat %>% group_by(CU_ID) %>%
+          # summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+          #muLSurv <- log(muSurv$muSurv)
+          # -- expand muLSurv for number of MCMC samples
+          #muLSurv<-rep(muLSurv,length=nrow(mcmcOut))
+          
+          # Alternative method that does not weight by observed returns at age
+          muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+          muLSurv <- muLSurv$muLSurv
+          
+          # -- update mcmcOut
+          mcmcOut <- mcmcOut %>% add_column(beta = (mcmcOut$alpha + mcmcOut$gamma * muLSurv) / mcmcOut$cap, .after="alpha") %>% select(-cap)
+          
+        }
+        
+        mcmcOut<-as.data.frame(mcmcOut)
+        
+        # Save to high-level outDir folder so that it can be used for future runs with runMCMC=F
+        write.csv(mcmcOut, paste(outDir,"/SamSimInputs/", BMmodel,"_mcmc.csv",sep=""),row.names=F)
+        # Also save to scenario folder so it can be easily referenced for a run
+        write.csv(mcmcOut, paste(scenInputDir,"/", BMmodel,"_mcmc.csv",sep=""),row.names=F)
+        
+      }
+      
+      if (runMCMC == F) {
+        # Read-in previoulsy saved mcmcOut
+        mcmcOut<-read.csv(paste(outDir,"/SamSimInputs/", BMmodel,"_mcmc.csv", sep=""))
+        # Save to scenario folder so it can be easily referenced for a run
+        write.csv(mcmcOut, paste(scenInputDir,"/", BMmodel,"_mcmc.csv",sep=""),row.names=F)
+      }
+    }# End of if all recruitment=NA
+    
+    # If there are recruitment data for some ages, but not all, fill in the
+    # remaining ages with 0s
+    if (all(is.na(SRDat$Recruits)) == FALSE){
+      if(is.null(SRDat$Age_2_Recruits)){ rec2<-0} else {rec2 <-
+        SRDat$Age_2_Recruits}
+      if(is.null(SRDat$Age_3_Recruits)){ rec3<-0} else {rec3 <-
+        SRDat$Age_3_Recruits}
+      if(is.null(SRDat$Age_4_Recruits)){ rec4<-0} else {rec4 <-
+        SRDat$Age_4_Recruits}
+      if(is.null(SRDat$Age_5_Recruits)){ rec5<-0} else {rec5 <-
+        SRDat$Age_5_Recruits}
+      if(is.null(SRDat$Age_6_Recruits)){ rec6<-0} else {rec6 <-
+        SRDat$Age_6_Recruits}
+    } #End of if (all(is.na(SRDat$Recruits)) == FALSE){
+    
+    
+  }# End of if(!is.null(SRDat)){
+  
+  
+  
+  #If there are NO recruitment data for any ages but SRDat dataset exists,
+  # fill in  with NAs
+  if(!is.null(SRDat)){
+    if (all(is.na(SRDat$Recruits)) == TRUE) {
+      rec2 <- rec3 <- rec4 <- rec5 <- rec6 <- NA
+    }
+  }
+  
+  # If SRDat exists, create recDatTrim for input into projections (for priming)
+  if(!is.null(SRDat)){
+    recDatTrim<-data.frame(stk=(SRDat$CU_ID + 1),
+                           yr=SRDat$BroodYear,
+                           ets=SRDat$Spawners,
+                           totalSpwn=SRDat$Spawners,
+                           rec2=rec2,#rep(0,length(SRDat$BroodYear)),
+                           rec3=rec3,#SRDat$Age_3_Recruits,
+                           rec4=rec4,#SRDat$Age_4_Recruits,
+                           rec5=rec5,#rep(0,length(SRDat$BroodYear)),
+                           rec6=rec6)#rep(0,length(SRDat$BroodYear)))
+    write.csv(recDatTrim, paste(scenInputDir,"recDatTrim.csv", sep="/"), row.names=F)
+  } else {recDatTrim <- NULL}
+  
+  # If there are no recruitment data, then pull correlation matrix from inputs
+  if(is.null(SRDat) || all(is.na(SRDat$Recruits)) ){
+    corMatrix <- corMat
+    corMatrix <- corMatrix * recCorScalar
+    corMatrix[col(corMatrix)==row(corMatrix)] <- 1
+    write.table(corMatrix, paste(scenInputDir,"corrMat.csv",sep="/"),
+                row.names=F, col.names=F, sep=",")
+    
+    if (runMCMC) {
+      if(is.null(alphaScalar) & is.null(SREPScalar)){
+        if(is.null(aNarrow)) {
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                    sep="/"))
+        }# End of  if(is.null(aNarrow) {
+        if(!is.null(aNarrow)) {
+          if(aNarrow){
+            mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_narrow.csv",
+                                      sep="/"))
+            
+          }
+        }
+      }#End of if(is.null(alphaScalar) & is.null(SREPScalar)){
+      if(!is.null(alphaScalar)&!is.null(SREPScalar)){
+        
+        if(alphaScalar==1 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==1.5 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1.5_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==0.5 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.5_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==0.75 & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar0.75_SREPScalar1.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar=="lifeStageModel" & SREPScalar==1){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_lifeStageModel.csv",
+                                    sep="/"))
+        }
+        
+        if(alphaScalar==1 & SREPScalar==1.5){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar1.5.csv",
+                                    sep="/"))
+        }
+        if(alphaScalar==1 & SREPScalar==0.5){
+          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar0.5.csv",
+                                    sep="/"))
+        }
+        
+      }# End of if(!is.null(alphaScalar)&!is.null(SREPscalar)){
+    }# End of if (runMCMC) {
+    
+    if (!runMCMC) mcmcOut <- NULL
+  }
+  
+  
+  # Read-in CU pars file and re-write with updated scenario pars =====================
+  CUpars<-read.csv(paste(outDir, "SamSimInputs/CUPars.csv",sep="/"))
+  
+  #_____________________________________________________________________
+  # Can I move this to simPars???
+  # CUpars$cvER <- rep(cvER,length(unique(CUpars$stk)))
+  #_____________________________________________________________________
+  
+  # -- fill-in MPD fits, only for stocks with SR data
+  if(!is.null(SRDat)){
+    if (all(is.na(SRDat$Recruits)) == FALSE){
+      CUpars$alpha <- mpdOut$All_Ests[grepl("logA", mpdOut$All_Ests$Param), "Estimate" ]
+      
+      if (BMmodel %in% c("SR_IndivRicker_SurvCap","SR_HierRicker_SurvCap")) {
+        CUpars$beta0 <- mpdOut$All_Ests[grepl("B", mpdOut$All_Ests$Param), "Estimate" ]/TMB_Inputs$Scale
+      }
+      else {
+        CUpars$beta0 <- exp(mpdOut$All_Ests[grepl("logB", mpdOut$All_Ests$Param), "Estimate" ])/TMB_Inputs$Scale
+      }
+      
+      # eliminate logASigma using dum before getting logSigma:
+      dum<-mpdOut$All_Ests[mpdOut$All_Ests$Param != "logSigmaA",]
+      CUpars$sigma <- exp(dum[grepl("logSigma",dum$Param),"Estimate"])
+      
+      CUpars$coef1 <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
+      # -- add initial marine survival covariate based on recent average, scaled by stock-specific return at age
+      
+      #muSurv <- SRDat %>% group_by(CU_ID) %>%
+      #  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
+      #CUpars$covarInit<-muSurv
+      # -- specify distribution for marine survival for annual sampling
+      #means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
+      # Do not take out pre-1999 years so that estimation and projection are consistent
+      means_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
+      CUpars$mu_logCovar1 <- means_log$coVariate
+      #sigs_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
+      sigs_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
+      CUpars$sig_logCovar1 <- sigs_log$coVariate
+      CUpars$min_logCovar <- rep(-5.914504,length(unique(SRDat$CU_ID)))
+      CUpars$max_logCovar <- rep(-2.701571,length(unique(SRDat$CU_ID)))
+      CUpars$covarInit <-exp(means_log$coVariate)
+      
+      
+      # -- add mean recruitment, by age
+      CUpars$meanRec2 <- rep(0,length(unique(SRDat$CU_ID)))
+      rec3<-SRDat %>% group_by(CU_ID) %>% summarize(rec3=mean(Age_3_Recruits/Recruits))
+      CUpars$meanRec3 <- rec3$rec3
+      rec4<-SRDat %>% group_by(CU_ID) %>% summarize(rec4=mean(Age_4_Recruits/Recruits))
+      CUpars$meanRec4 <- rec4$rec4
+      # -- add median annual recruitment and quantiles
+      quantRec<- SRDat %>% group_by(CU_ID) %>% summarize(med=median(Recruits), lowQ=quantile(Recruits,0.25),highQ=quantile(Recruits,0.75))
+      CUpars$medianRec <- quantRec$med
+      CUpars$lowQRec <- quantRec$lowQ
+      CUpars$highQRec <- quantRec$highQ
+      
+    }# End of if (all(is.na(SRDat$Recruits)) == FALSE)
+  }#  End of  if(!is.null(SRDat)){
+  
+  write.csv(CUpars, paste(scenInputDir,"CUPars.csv", sep="/"), row.names=F)
+  
+  # Read-in sim par file and re-write with updated scenario pars =====================
+  simPars<-read.csv(paste(outDir, "SamSimInputs/SimPars.csv",sep="/"))
+  # Keep the nameOM as in simPars
+  #simPars$nameOM<-rep(scenarioName,nrow(simPars))
+  simPars$scenario<-paste(simPars$nameOM,simPars$nameMP,sep="_")
+  simPars$seed <- rep(1,nrow(simPars))#1:nrow(simPars)
+  
+  # #_____________________________________________________________________
+  # # Specify this in SimPars,not here...
+  # if(!is.null(cvERSMU)){
+  #   simPars$cvERSMU <- cvERSMU
+  # }
+  # if(!is.null(annualcvERCU)){
+  #   simPars$annualcvERCU <- annualcvERCU
+  # }
+  # if(!is.null(agePpnConst)){
+  #   simPars$agePpnConst <- agePpnConst
+  # }
+  # # Can I move this to simPars??? But then I have to change samSim to get it from simPar instead of cuPar (with an option to look in cupar for KH?)
+  # CUpars$cvER <- rep(cvER,length(unique(CUpars$stk)))
+  #_____________________________________________________________________
+  # This won't work unless I can put covariance matrix created with recCorScalar within simPars, so that it is iterated over parallel processing
+  
+  
+  # If gammaSigScalar is specified in function call, add to simPars file
+  if (is.null(gammaSigScalar)==FALSE) {
+    if (is.null(mcmcOut) == TRUE) {
+      # Use mpd fit standard error if no mcmc outputs available
+      gammaSig<-mpdOut$All_Ests[mpdOut$All_Ests$Param=="gamma","Std..Error"]
+    } else {
+      # Use standard deviation of gamma posterior is mcmc output is available
+      gammaSig<-as.numeric(mcmcOut %>% filter(stk==1) %>% summarize(sd(gamma)))
+    }
+    simPars$sampCU_coef1<-TRUE
+    simPars$sigCU_coef1<-gammaSig*gammaSigScalar
+  }
+  
+  # Add BiasCorr to simPars
+  if (is.null(biasCorrectProj)) {
+    simPars$biasCor <- rep(FALSE,nrow(simPars))
+  } else {
+    if (biasCorrectProj == TRUE) simPars$biasCor <- rep(TRUE,nrow(simPars))
+    if (biasCorrectProj == FALSE) simPars$biasCor <- rep(FALSE,nrow(simPars))
+  }
+  
+  write.csv(simPars, paste(scenInputDir,"SimPars.csv", sep="/"), row.names=F)
+  
+  ## Run projections =================================================================================
+  
+  ## Check if necessary packages are available and install if necessary
+  listOfPackages <- c("here", "parallel", "doParallel", "foreach",
+                      "tidyverse", "tictoc", "samSim")
+  newPackages <- listOfPackages[!(listOfPackages %in%
+                                    installed.packages()[ , "Package"])]
+  if (length(newPackages)) {
+    install.packages(newPackages)
+  }
+  lapply(listOfPackages, require, character.only = TRUE)
+  
+  dimnames(corMatrix)=NULL
+  
+  dirNames <- simPars$nameOM
+  
+  simsToRun <- split(simPars, seq(nrow(simPars)))
+  Ncores <- detectCores()
+  cl <- makeCluster(Ncores - 1) #save one core
+  registerDoParallel(cl)
+  clusterEvalQ(cl, c(library(samSim)))
+  
+  clusterExport(cl, c("simsToRun", "CUpars", "nProj",
+                      "recDatTrim", "corMatrix", "mcmcOut"),
+                envir=environment())
+  
+  tic("run in parallel")
+  parLapply(cl, simsToRun, function(x) {
+    genericRecoverySim(x, cuPar=CUpars, srDat=recDatTrim,
+                       variableCU=FALSE, ricPars=mcmcOut,
+                       cuCustomCorrMat = corMatrix,
+                       nTrials=nProj, makeSubDirs=FALSE,
+                       random=FALSE, outDir=outdir)
+  })
+  stopCluster(cl) #end cluster
+  toc()
+  
+  # for (i in 1:nrow(simPars)) {
+  #
+  # genericRecoverySim(simPars[i, ], cuPar=CUpars, srDat=recDatTrim,
+  #         variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
+  #          nTrials=nProj, makeSubDirs=FALSE, random=FALSE, outDir=outDir)
+  #
+  # }
+  
+  
+  # Read-in projection outputs
+  for (i in 1:nrow(simPars)) {
+    
+    filename<-paste(simPars[i, "nameOM"],simPars[i, "nameMP"],"CU_SRDat.csv",sep="_" )
+    filename2<-paste(simPars[i, "nameOM"],simPars[i, "nameMP"],"lrpDat.csv",sep="_" )
+    datCUSp.i<-read.csv(here(outDir,"SamSimOutputs", "simData", dirNames[[i]], filename))
+    datCUSp.i$expRate<-simPars[i, "canER"] + simPars[i, "usER"]
+    datLRP.i<-read.csv(here(outDir,"SamSimOutputs", "simData", dirNames[[i]], filename2))
+    datLRP.i$expRate<-simPars[i, "canER"] + simPars[i, "usER"]
+    
+    if (i == 1) {
+      projSpwnDat<-datCUSp.i
+      projLRPDat<-datLRP.i
+    }
+    
+    if (i > 1) {
+      projSpwnDat<-rbind(projSpwnDat,datCUSp.i)
+      projLRPDat<-rbind(projLRPDat,datLRP.i)
+    }
+    
+  }
+  
+  
+  write.csv(projSpwnDat,paste(here(outDir,"SamSimOutputs", "simData"), paste("projSpwnDat_",simPars$nameOM[1],".csv",sep=""),sep="/"))
+  write.csv(projLRPDat,paste(here(outDir,"SamSimOutputs", "simData"), paste("projLRPDat_",simPars$nameOM[1],".csv",sep=""),sep="/"))
+  
+}
+
+#______________________________________________________________________________
 get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 
   # Run MCMC SR analysis to parameterize projections using available data
