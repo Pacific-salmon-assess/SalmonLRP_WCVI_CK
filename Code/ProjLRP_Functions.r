@@ -670,7 +670,7 @@ run_ScenarioProjParallel <- function(SRDat, BMmodel, scenarioName, useGenMean,
                        variableCU=FALSE, ricPars=mcmcOut,
                        cuCustomCorrMat = corMatrix,
                        nTrials=nProj, makeSubDirs=FALSE,
-                       random=FALSE, outDir=outdir)
+                       random=TRUE, outDir=outdir)
   })
   stopCluster(cl) #end cluster
   toc()

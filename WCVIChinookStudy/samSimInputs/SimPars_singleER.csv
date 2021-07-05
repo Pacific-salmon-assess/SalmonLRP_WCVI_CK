@@ -1,2 +1,0 @@
-scenario,nameOM,nameMP,keyVar,plotOrder,species,simYears,harvContRule,benchmark,canER,usER,propMixHigh,singleHCR,moveTAC,prodRegime,startYear,endYear,rho,arSigTransform,correlCU,corrMat,mu_logCovar1,sig_logCovar1,tauCatch,obsSig,mixOUSig,singOUSig,obsMixCatchSig,obsSingCatchSig,obsAgeErr,lowCatchThresh,highCatchThresh,extinctThresh,adjustSig,adjustAge,adjustForecast,biasCor,rCap
-Base_lowER,Base,lowER,expRate,1,chinook,30,fixedER,habitat,0.29,0,1,FALSE,FALSE,med,NA,NA,0,FALSE,0,TRUE,-4.58,0.447,0,0,0,0,0,0,0,0,NA,2,1,1,1,TRUE,10
