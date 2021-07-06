@@ -353,8 +353,9 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
 #===================================================================================
 
 
-plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, ps_Prop,
-                            WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName) {
+plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, 
+                                    projLRPList = NULL, ps_Prop,
+                                    WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName) {
   
   Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
   
@@ -368,17 +369,25 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     retroResults <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "/annualRetro_LRPs.csv", sep=""))
     
     # Set-up name for labelling plot ====================
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggAb: Sgen_IM_"
-    if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"AggAb: Sgen_HM_"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggAb: Sgen_IM.HiSrep_"
-    if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"AggAb: Sgen_HM.HiSrep_"
-    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Agg Ad: Dist_"
+    # if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggAb_Hist: Sgen_IM_"
+    # if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"AggAb_Hist: Sgen_HM_"
+    # if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggAb_Hist: Sgen_IM.HiSrep_"
+    # if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"AggAb_Hist: Sgen_HM.HiSrep_"
+    # if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"AggAb_Hist: Dist_"
+    # 
     
-    name3<-strsplit(modelFitList[mm], "_")[[1]][2]
+    # Labels if only using IM models:
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggAb_Hist: Sgen"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggAb_Hist: Sgen.HiSrep"
+    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"AggAb_Hist: Dist"
     
- 
-    retroResults$Name <- paste(name1,name3,sep="")
+    # If including probability in label:
+    # name3<-strsplit(modelFitList[mm], "_")[[1]][2]
+    # retroResults$Name <- paste(name1,name3,sep="_")
       
+    # If no probability in label:
+    retroResults$Name<-name1
+    
       if(mm == 1){
          LRP_DF <- retroResults
       } else {
@@ -403,7 +412,60 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     
   } # end of model (mm) loop
 
-  # Step 2: Assess status for data-based LRP options based on the observed proportion of CUs above LRP
+  
+  
+  # Step 2: Add projected LRPs (Optional)
+  if (!is.null(projLRPList)) {
+    
+    projResults <- as_tibble(read.csv(paste(Dir,"/DataOut/ProjectedLRPs/projectedLRPs.csv", sep="")))
+    
+    for (j in 1:length(projLRPList)) {
+      
+      OM.j<-strsplit(projLRPList[j],"_")[[1]][1]
+      probThresh.j<-as.numeric(strsplit(projLRPList[j],"_")[[1]][2])/100
+      
+      dum<-projResults %>% filter(OM==OM.j,ProbThresh==probThresh.j)
+      LRP<-dum$LRP
+      
+      # if (OM.j == "IM.Base") name1<-"AggAb_Proj: Sgen_IM"
+      # if (OM.j == "HM.Base") name1<-"AggAb_Proj: Sgen_HM"
+      # if (OM.j == "IMCap.Base") name1<-"AggAb_Proj: Sgen_IM.HiSrep"
+      # if (OM.j == "HMCap.Base") name1<-"AggAb_Proj: Sgen_HM.HiSrep"
+      
+      
+      # Labels if only using IM models:
+      if (OM.j == "IM.Base") name1<-"AggAb_Proj: Sgen"
+      if (OM.j == "IMCap.Base") name1<-"AggAb_Proj: Sgen.HiSrep"
+      
+      # If includuding probability in label:
+      # name2<-probThresh.j * 100
+      # Name <- paste(name1,name2,sep=" ")
+      
+      # if not including probability:
+      Name <- name1
+      
+      
+     
+      
+      # Loop over years and summarize status as above (True) or below (False) the LRP for each year
+      for (yy in 1:length(retroYears)) { 
+        Curr_Esc <- AggEscp %>% filter(yr == retroYears[yy]) %>% pull(Gen_Mean)
+        Status <-  Curr_Esc > LRP
+        New_Row <- data.frame(LRP_estYr = LRP_estYr, retroYear = retroYears[yy], Name = Name, AboveLRP=Status)
+        Status_DF <- rbind(Status_DF, New_Row)
+        
+      } # end of year (yy) loop
+      
+    } # end of projection model loop
+    
+    
+  } # end of !is.null(projLRPList)
+  
+  
+  
+  
+  
+  # Step 3: Assess status for data-based LRP options based on the observed proportion of CUs above LRP
   
   # # --- for each year, extract Sgens and calc proportion above Sgen
  
@@ -414,10 +476,15 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   for (mm in 1:length(SRmodelList)) {
   
     SRmodName<-strsplit(SRmodelList[mm],"_")[[1]][1]
-    if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen_IM"
-    if(SRmodName =="Bern.HierRickerSurv") propName<-"Prop: Sgen_HM"
-    if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen_IM.HiSrep"
-    if(SRmodName =="Bern.HierRickerSurvCap") propName<-"Prop: Sgen_HM.HiSrep"
+    # if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen_IM"
+    # if(SRmodName =="Bern.HierRickerSurv") propName<-"Prop: Sgen_HM"
+    # if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen_IM.HiSrep"
+    # if(SRmodName =="Bern.HierRickerSurvCap") propName<-"Prop: Sgen_HM.HiSrep"
+    
+    
+    # Labels if only using IM models:
+    if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen"
+    if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen.HiSrep"
     
     CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",SRmodelList[mm],"/annualRetro_SRparsByCU.csv",sep=""))
     CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
@@ -448,20 +515,26 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
       Status_DF <- rbind(Status_DF, New_Rows)
     }
-  
   }
   
-  
-  # Step 3: Add row to Status_DF for 2014 status assessment (Optional)
+  # Step 4: Add row to Status_DF for 2014 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
     New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
     Status_DF <- rbind(Status_DF, New_Row)
     Status_DF <- arrange(Status_DF, Name)
   }
   
+
+  
   # Make Plot =============================================================
   
   methods <- unique(Status_DF$Name)
+  
+  # Hack to re-order methods for plotting ===============
+  methods<-c("AggAb_Hist: Sgen", "AggAb_Proj: Sgen", "Prop: Sgen",
+             "AggAb_Hist: Sgen.HiSrep", "AggAb_Proj: Sgen.HiSrep", "Prop: Sgen.HiSrep",
+             "AggAb_Hist: Dist")
+  
   
   # --- set-up pdf to save to
   #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
@@ -542,6 +615,8 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   #         cex = 0.7) 
   
   dev.off()
+  
+  browser()
   
 }
 

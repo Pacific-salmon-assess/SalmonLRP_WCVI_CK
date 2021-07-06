@@ -69,10 +69,14 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 ## (note: the output folders/files for each of options must already exist)
 
 modelFitList<-c("Bern.IndivRickerSurv_50",
-                "Bern.HierRickerSurv_50",
+              #  "Bern.HierRickerSurv_50",
                 "Bern.IndivRickerSurvCap_50",
-                "Bern.HierRickerSurvCap_50",
+               # "Bern.HierRickerSurvCap_50",
                 "Bern.SPopAbundThreshST_50")
+
+#projLRPList<-c("IM.Base_50", "HM.Base_50", "IMCap.Base_50", "HMCap.Base_50")
+projLRPList<-c("IM.Base_50", "IMCap.Base_50")
+
 
 # Specify which thresholds should be tested in the data-based proportional thresholds
 ps_Prop<-c(1.0)
@@ -84,5 +88,7 @@ WSP_AboveLRP<-TRUE
 LRP_estYr<-2018
 retroYears<-2000:LRP_estYr
 plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
-                  modelFitList=modelFitList, ps_Prop=ps_Prop,
+                  modelFitList=modelFitList, projLRPList=projLRPList, ps_Prop=ps_Prop,
                   outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
+
+

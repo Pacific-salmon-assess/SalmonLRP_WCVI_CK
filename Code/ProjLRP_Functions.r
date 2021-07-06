@@ -1,5 +1,4 @@
 
-
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
                              ERScalar=NULL, cvER, recCorScalar,
@@ -23,6 +22,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     if (all(is.na(SRDat$Recruits)) == FALSE){
       # Run MPD fit to parameterize samSim projections ==========
       mpdOut<-get_MPD_Fit(SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst=biasCorrectEst)
+      
       # save correlation matrix
       corMatrix<-mpdOut$corMatrix
       corMatrix<-corMatrix * recCorScalar
@@ -191,6 +191,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
       #muSurv <- SRDat %>% group_by(CU_ID) %>%
       #  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
       #CUpars$covarInit<-muSurv
+      
       # -- specify distribution for marine survival for annual sampling
       #means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
       # Do not take out pre-1999 years so that estimation and projection are consistent
@@ -290,7 +291,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                 variableCU=FALSE, ricPars=mcmcOut,
                 cuCustomCorrMat = corMatrix,
                 nTrials=nProj, makeSubDirs=FALSE,
-                random=FALSE, outDir=outDir)
+                random=TRUE, outDir=outDir)
   })
   stopCluster(cl) #end cluster
   toc()
@@ -418,46 +419,46 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 
   if (BMmodel %in% c("SR_HierRicker_Surv", "SR_HierRicker_SurvCap")) {
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA", map=map)
+  #  obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, random = "logA")
   } else {
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, map=map)
+    #obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE)
   }
 
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   pl <- obj$env$parList(opt$par) # Parameter estimate after phase 1
-
+# 
 
   # -- pull out SMSY values
-  All_Ests <- data.frame(summary(sdreport(obj)))
-  All_Ests$Param <- row.names(All_Ests)
-  SMSYs <- All_Ests[grepl("SMSY", All_Ests$Param), "Estimate" ]
-
-  pl$logSgen <- log(0.3*SMSYs)
-
+   All_Ests <- data.frame(summary(sdreport(obj)))
+   All_Ests$Param <- row.names(All_Ests)
+   SMSYs <- All_Ests[grepl("SMSY", All_Ests$Param), "Estimate" ]
+   
+    pl$logSgen <- log(0.3*SMSYs)
+ 
 
   # Phase 2 get Sgen, SMSY etc. =================
   if (BMmodel == "SR_HierRicker_Surv" | BMmodel == "SR_HierRicker_SurvCap") {
-    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
+    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map)
   } else {
-    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE)
+    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, map=map)
   }
 
 
   # Create upper bounds vector that is same length and order as start vector that will be given to nlminb
-  upper<-unlist(obj$par)
-  upper[1:length(upper)]<-Inf
-  upper[names(upper) =="logSgen"] <- log(SMSYs) # constrain Sgen to be less than Smsy (To do: confirm with Brooke)
-  upper<-unname(upper)
-
-  lower<-unlist(obj$par)
-  lower[1:length(lower)]<--Inf
-  lower[names(lower) =="logSgen"] <- log(0.01)
-  lower[names(lower) =="cap"] <- 0
-  lower<-unname(lower)
-
-  opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10),
-                upper = upper, lower=lower )
-
-  pl2 <- obj$env$parList(opt$par) # Parameter estimate after phase 2
+   upper<-unlist(obj$par)
+   upper[1:length(upper)]<-Inf
+  # upper[names(upper) =="logSgen"] <- log(SMSYs)
+   upper<-unname(upper)
+ 
+   lower<-unlist(obj$par)
+   lower[1:length(lower)]<--Inf
+   #lower[names(lower) =="logSgen"] <- log(0.01)
+   lower[names(lower) =="cap"] <- 0
+   lower<-unname(lower)
+   
+   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5),
+                 upper = upper, lower=lower)
 
   All_Ests <- data.frame(summary(sdreport(obj)))
   All_Ests$Param <- row.names(All_Ests)
@@ -484,7 +485,7 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 get_MCMC_Fit<-function (scenarioName, obj, init, upper, lower, nMCMC, Scale) {
 
 # # Fit mcmc with STAN to get parameter estimates for projections ===============================
-fitmcmc <- tmbstan(obj, chains=3, iter=nMCMC, init=init,
+fitmcmc <- tmbstan(obj, chains=3, iter=nMCMC, init=init, thin=10,
                    control = list(adapt_delta = 0.99),upper=upper, lower=lower)
 
 ## Can get ESS and Rhat from rstan::monitor
@@ -502,9 +503,9 @@ post_long_alpha<-post %>% select(starts_with("logA"), iteration) %>% pivot_longe
 post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
 
 
-# Extract Sgen marginal posterior
-post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
-post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
+## Extract Sgen marginal posterior
+#post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
+#post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
 
 # Extract beta marginal posterior (or cap parameter if Prior Cap model formulation)
 if ("logB" %in% names(obj$par)) {
@@ -529,11 +530,13 @@ post_long_gamma$stock<-rep(1:5,length=nrow(post_long_gamma))
 
 # Compile marginal posteriors to get joint posterior for export
 if ("cap" %in% names(obj$par)) {
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
+#  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
+  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
 }
 
 if ("logB" %in% names(obj$par)) {
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
+  #post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
+  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
 }
 
 post_long

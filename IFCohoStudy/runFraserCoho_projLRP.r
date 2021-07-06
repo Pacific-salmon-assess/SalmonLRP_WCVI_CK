@@ -183,127 +183,19 @@ setwd(codeDir)
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
-
-# Create samSim input files for current scenario
-scenarioName <- "Test"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=F, biasCorrectProj=F)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "Test2"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=F, biasCorrectProj=F)
+set.seed(100)
+# 
+# # Create samSim input files for current scenario
+# scenarioName <- "Test_randomTrue"
+# BMmodel <- "SR_IndivRicker_Surv"
+# TMB_Inputs <- TMB_Inputs_IM
+# projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+#                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+#                                 nMCMC=10000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
+#                                 biasCorrectEst=T, biasCorrectProj=T)
 
 
-
-
-# Create samSim input files for current scenario
-scenarioName <- "Test_BiasCorr"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=T, biasCorrectProj=T)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "Test3"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=F, biasCorrectProj=F)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "Test3.2"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=F, biasCorrectProj=F)
-
-
-
-# Create samSim input files for current scenario
-scenarioName <- "Test3.3"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=F,
-                                nMCMC=5000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=F, biasCorrectProj=F)
-
-
-
-
-
-
-
-
-
-scenarioName <- "TestHM"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
-                                biasCorrectEst=T, biasCorrectProj=T)
-
-
-scenarioName <- "Test2HM"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
-                                biasCorrectEst=T, biasCorrectProj=T)
-
-scenarioName <- "Test3HM"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
-                                biasCorrectEst=T, biasCorrectProj=T)
-
-
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.Base"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=T, biasCorrectProj=T)
-
-
-# Create samSim input files for current scenario
-scenarioName <- "IM.Base_noBiasCorr"
-BMmodel <- "SR_IndivRicker_Surv"
-TMB_Inputs <- TMB_Inputs_IM
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=1000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE, 
-                                biasCorrectEst=F, biasCorrectProj=F)
-
+set.seed(100)
 
 
 scenarioName <- "HM.Base"
@@ -312,21 +204,13 @@ TMB_Inputs <- TMB_Inputs_HM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                nMCMC=10000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
                                 biasCorrectEst=T, biasCorrectProj=T)
 
 
 
 
-scenarioName <- "HM.Base_noBiasCorr"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
-                                biasCorrectEst=F, biasCorrectProj=F)
-
+set.seed(100)
 
 scenarioName <- "IMCap.Base"
 BMmodel <- "SR_IndivRicker_SurvCap"
@@ -334,19 +218,13 @@ TMB_Inputs <- TMB_Inputs_IM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                nMCMC=10000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
                                 biasCorrectEst=T, biasCorrectProj=T)
 
 
-scenarioName <- "IMCap.Base_noBiasCorr"
-BMmodel <- "SR_IndivRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_IM_priorCap_noBiasCor
 
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=100, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
-                                biasCorrectEst=F, biasCorrectProj=F)
 
+set.seed(100)
 
 scenarioName <- "HMCap.Base"
 
@@ -355,20 +233,8 @@ TMB_Inputs <- TMB_Inputs_HM_priorCap
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                nMCMC=1000, nProj=5000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
                                 biasCorrectEst=T, biasCorrectProj=T)
-
-
-
-scenarioName <- "HMCap.Base_noBiasCorr"
-
-BMmodel <- "SR_HierRicker_SurvCap"
-TMB_Inputs <- TMB_Inputs_HM_priorCap_noBiasCor
-
-projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
-                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=5000, nProj=4000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
-                                biasCorrectEst=F, biasCorrectProj=F)
 
 
 
@@ -509,9 +375,9 @@ OMsToInclude<-c("IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig"
 OMsToInclude<-c("IM.Base","IM.Base_noBiasCorr","HM.Base","HM.Base_noBiasCorr",
                 "IMCap.Base","IMCap.Base_noBiasCorr","HMCap.Base","HMCap.Base_noBiasCorr")
 
-OMsToInclude<-c("Test", "Test2", "Test3", "Test_BiasCorr")
+OMsToInclude<-c("Test_randomTrue", "HM.Base", "IMCap.Base", "HMCap.Base")
 
-OMsToInclude<-c("Test3","Test3.2", "Test3.3")
+OMsToInclude<-c("Test_30Yrs_Thin", "Test_30Yrs_Thin_highER")
 
 for (p in 1:length(probThreshList)) {
 
@@ -523,7 +389,8 @@ for (i in 1:length(OMsToInclude)) {
   # Read in samSim outputs for OM
   filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
   projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
-  projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+ # projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+  projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4, expRate==0.125)
 
   # Create bins for projected spawner abundances
   binSize<-200 # Note: bin size is currently set here
@@ -568,7 +435,7 @@ for (i in 1:length(OMsToInclude)) {
   pdf(paste(cohoDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""), 
       width=6, height=6) 
   
-  plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), cex=0.2,
+  plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), ylim=c(0,1.0),cex=0.2,
        xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
   abline(h=probThresh, lty=2)
   abline(v=LRP, col="orange", lwd=2)
@@ -747,7 +614,7 @@ filename<-paste("projLRPDat_",OMsToInclude,".csv",sep="")
 projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
 CUpars <- read.csv(paste(cohoDir, "SamSimInputs/CUPars.csv",sep="/"))
 
-nTrials <- 5000
+nTrials <- 2000
 
 # Loop over nTrials
 for (i in 1:500) {
@@ -831,6 +698,8 @@ OMsToTest<-c("IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig","I
 OMsToTest<-c("IM.0.001cvER","IM.0.25cvER","IM.Base","IM.0.75cvER","IM.1.0cvER")
 
 
+OMsToTest<-c("Test", "Test_BiasCorr")
+
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
 probThresh<-0.5
 
@@ -883,6 +752,9 @@ SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
 # Save LRPs for all OM scenarios
 write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
 
+
+
+
 dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","IM.Base", "IM.0.25GammaSig","IM.0.50GammaSig","IM.0.75GammaSig",
                                                       "IM.1.0GammaSig"))
 
@@ -908,18 +780,33 @@ g2 <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(widt
 
  
  
+ 
+ 
+ 
+ 
+dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed", "Test_BiasCorr"))
+ 
+ 
+g3 <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
+   scale_x_discrete(limits=c("Observed","Test_BiasCorr"),
+                    labels=c("Obs","Test_BiasCorr")) +
+   xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
+ 
+ 
+ 
+ 
 # =============================================================================================
 # (9) Look at posterior samples from MCMC model parameterization
 # =============================================================================================
  
- Mod <- "SR_HierRicker_Surv_noLRP"
- OM<-"Test"
+ Mod <- "SR_IndivRicker_Surv_noLRP"
+ OM<-"Test3"
  
  muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
  muLSurv <- muLSurv$muLSurv
  
  post<-read.csv(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/",OM,"/","SR_IndivRicker_Surv","_mcmc.csv", sep=""))
- adjProd<-exp(post$alpha + post$gamma * rep(muLSurv, length=nrow(post)))
+ adjProd<-post$alpha + post$gamma * rep(muLSurv, length=nrow(post))
  post<- post %>% add_column(adjProd = adjProd)
 
  CU_list<-unique(SRDat[, "CU_Name"])
@@ -929,11 +816,11 @@ g2 <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(widt
  
  library(gridExtra)
  
- ps<-list()
- ps<-lapply(1:nCUs, plotPostHist, post=post, parName="Sgen", CUNames=CU_list)
- png(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",OM,"_SgenPost.png", sep=""))
- do.call(grid.arrange, ps)
- dev.off()
+ # ps<-list()
+ # ps<-lapply(1:nCUs, plotPostHist, post=post, parName="Sgen", CUNames=CU_list)
+ # png(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/ModelFits/",OM,"_SgenPost.png", sep=""))
+ # do.call(grid.arrange, ps)
+ # dev.off()
  
  ps<-list()
  ps<-lapply(1:nCUs, plotPostHist, post=post, parName="alpha",  CUNames=CU_list)

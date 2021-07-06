@@ -2,8 +2,8 @@
 
 # For stantmb example, see: https://github.com/kaskr/tmbstan#examples
 
-nIter<-5000
-estSgen<-TRUE
+nIter<-10000
+estSgen<-FALSE
 
 
 
@@ -260,7 +260,7 @@ write.table(cor_matrix, paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut
 
 # Fit mcmc with STAN ==================================================================
 
-fitmcmc <- tmbstan(obj, chains=3, iter=nIter, init=opt$par,
+fitmcmc <- tmbstan(obj, chains=3, iter=nIter, init=opt$par, thin=10,
                           control = list(adapt_delta = 0.99),upper=upper, lower=lower)
 
 ## Can get ESS and Rhat from rstan::monitor
