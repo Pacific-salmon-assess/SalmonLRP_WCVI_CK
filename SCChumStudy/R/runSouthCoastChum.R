@@ -30,9 +30,9 @@ TMB_for_chum <- c("SR_IndivRicker_NoSurv",
 # compile and load the TMB .cpp files
 compile_load_TMB(dir=codeDir, files=TMB_for_chum)
 
-# ====================================================================
-# Read in data and format for using in retrospective analysis
-# ====================================================================
+# ====================================================================#
+# Read in data and format for using in retrospective analysis------------
+# ====================================================================#
 # Run to re-do infilling and brood table
 #source("R/make_brood_table.r") 
 
@@ -56,9 +56,7 @@ names(ChumSRDat)[names(ChumSRDat) =="Year"] <- "BroodYear" # FLAG: Check that Ye
 names(ChumSRDat)[names(ChumSRDat) =="Escape"] <- "Spawners" # FLAG: Check that Escape column is spawners (as opposed to the Return column)
 names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits" 
 
-# ====================================================================================
 # Call functions to plot data availability (note that this is for infilled data, plots hide missing observations):
-# ====================================================================================
 # plot_CU_DataObs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_DataByCU")
 # plot_Num_CUs_Over_Time(ChumEscpDat, chumDir, plotName="SC_Chum_N_CUs")
 # 
@@ -66,10 +64,7 @@ names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits"
 # plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc", samePlot = T)
 # plot_CU_Escp_Over_Time(ChumEscpDat, chumDir, plotName="SCChum Esc Separate", samePlot = F)
 
-# =====================================================================================================================
 # Setup for retrospective analysis
-# =====================================================================================================================
-
 # Data prep
 
 # FLAG: Should probably limit stock-recruit data to year > 1959/1960 to allow for full brood year returns up to age 6. 
@@ -131,9 +126,9 @@ length(unique(ChumEscpDat_no_CU_infill_yrs$yr))
 # Specify p value for logistic regression
 ps <- c(seq(0.6, 0.95,.05), 0.99) 
 
-# ========================================================================
+# ========================================================================#
 # Run annual restrospective analysis using stock recruit parameter based Sgen----------
-# ========================================================================
+# ========================================================================#
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
@@ -164,7 +159,7 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T)
 
   # Run with CUs with CU-level infilling removed
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2012, BroodYrLag=4, genYrs=4, p = ps[pp],
                 BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BinLogistic", integratedModel=T,
                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                 bootstrapMode = F, plotLRP=T, runLogisticDiag = TRUE)
@@ -184,7 +179,7 @@ for(pp in 1:length(ps)){
   #                bootstrapMode = F, plotLRP=T, runLogisticDiag=TRUE)
   # 
   # Run with Bernoulli LRP model with individual model Ricker
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1975, endYr=2012, BroodYrLag=4, genYrs=4, p = ps[pp],
                  BMmodel = "SR_IndivRicker_NoSurv", LRPmodel="BernLogistic", integratedModel=T,
                  useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=chumDir, RunName = paste("Bern.IndivRicker_NoSurv_noCUinfill_",ps[pp]*100, sep=""),
                  bootstrapMode = F, plotLRP=T, runLogisticDiag=TRUE)
@@ -193,8 +188,9 @@ for(pp in 1:length(ps)){
 }
 
 # -----------------------------------------------------#
-# Get values for low aggregate likelihood penalty model 
+# Run Sgen LRP with low aggregate penalty 
 # -----------------------------------------------------#
+# Get values for low aggregate likelihood penalty model 
 # Idea is to parameterize (mu and sigma) the aggregate abundance 
 # associated with a very low proportion (essentially 0; p=0.01) of
 # CUs being above their benchmark. The idea is to have 95% of this 
@@ -202,69 +198,67 @@ for(pp in 1:length(ps)){
 # benchmarks or upper estimates of Sgens (e.g., all CUs are just 
 # below their lower benchmarks). The mean of this distribution is 
 # halfway between these lower (2.5% quantile) and upper (97.5% quantile) values. 
+# 
+# # get Sgen estimates from running integrated model without penalty
+# ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_90/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
+# 
+# ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
+# # make lower limit the lowest CU Sgen (this gives essentially the same results as 
+# # using the average abundance of the smallest CU)
+# low_lim <- min(ests1$est_Sgen) 
+# # make upper limit the sum of CU benchmarks
+# #hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
+# # sum upper CI of Sgen estimates to get upper limit for penalty mu
+# hi_lim <- sum(na.omit(ests1$up_Sgen)) 
+# 
+# # make mu of penalty value mean of these two values, divide by scale
+# B_penalty_mu <- mean(c(low_lim, hi_lim))
+# # get SD that gives 95% density between lower and upper limits (using getSD helper function)
+# dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=50000000, low_lim=low_lim, hi_lim=hi_lim)
+# B_penalty_sigma<-dum$par
+# 
+# # get SD for prior penalty so that 95% density is between lower and upper limits
+# # plot to check
+# plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=B_penalty_sigma), 
+#       xlim=c(0, max(ChumSRDat$Spawners)), type="l", ylab="density", xlab="aggregate adundance")
+# abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2,2,1)) # plot upper and lower values and mean
+# 
+# # Add penalty values to TMB_Inputs_IM
+# TMB_Inputs_IM_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
+#                       Tau_dist = 0.1,
+#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                       B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma, extra_eval_iter=TRUE)
+# 
+# # OBSOLETE ->
+# #B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2) # test with 1.5 and 2 times SD
+# # Effect of increasing SD:
+# #   Without CUs with CU infilling:
+# #       SD times 1.5 and 2 make very minor differences in LRP (very small increases). No flipping of logistic curve
+# #   With using CUs with CU infilling:
+# #    Using 1.5 times SD makes logistic curve flip in one year, and 2 times SD makes it flip several years (with p=0.9)
+# # <- OBSOLETE
+#
+# # Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
+# #       (to bring logistic curve intercept down)
+# 
+# for(pp in 1:length(ps)){
+#   #for (i in 1:length(B_penalty_sigmas)){ # for testing sensitivity to B_penalty_sigma
+#   # Run with Binomial LRP model with individual model Ricker without CU-level infilling
+#   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+#                 BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+#                 useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
+#                 bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
+#   # Run without Upper Knight CU
+#   # runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
+#   #                BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
+#   #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_no_knight_", ps[pp]*100, sep=""),
+#   #                bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
+#   #}
+# }
 
-# get Sgen estimates from running integrated model without penalty
-ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_90/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
-
-ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just last retro year for estimates
-# make lower limit the lowest CU Sgen (this gives essentially the same results as 
-# using the average abundance of the smallest CU)
-low_lim <- min(ests1$est_Sgen) 
-# make upper limit the sum of CU benchmarks
-#hi_lim <- sum(ests1$est_Sgen) # sum Sgen estimates to get upper limit for penalty mu
-# sum upper CI of Sgen estimates to get upper limit for penalty mu
-hi_lim <- sum(na.omit(ests1$up_Sgen)) 
-
-# make mu of penalty value mean of these two values, divide by scale
-B_penalty_mu <- mean(c(low_lim, hi_lim))
-# get SD that gives 95% density between lower and upper limits (using getSD helper function)
-dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=50000000, low_lim=low_lim, hi_lim=hi_lim)
-B_penalty_sigma<-dum$par
-
-# get SD for prior penalty so that 95% density is between lower and upper limits
-# plot to check
-plot( x = seq( 0, max(ChumSRDat$Spawners), 100), y=dnorm( seq(0, max(ChumSRDat$Spawners), 100), mean=mean(c(low_lim, hi_lim)), sd=B_penalty_sigma), 
-      xlim=c(0, max(ChumSRDat$Spawners)), type="l", ylab="density", xlab="aggregate adundance")
-abline(v=c(low_lim, hi_lim, mean(c(low_lim, hi_lim))), col="dodgerblue", lty=c(2,2,1)) # plot upper and lower values and mean
-
-# Add penalty values to TMB_Inputs_IM
-TMB_Inputs_IM_LowAggPrior <- list(Scale = 1000, logA_Start = 1,
-                      Tau_dist = 0.1,
-                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                      B_penalty_mu = B_penalty_mu, B_penalty_sigma = B_penalty_sigma, extra_eval_iter=TRUE)
-
-
-# Section below is obsolete
-#B_penalty_sigmas <- c(B_penalty_sigma, B_penalty_sigma* 1.5, B_penalty_sigma * 2) # test with 1.5 and 2 times SD
-# Effect of increasing SD:
-#   Without CUs with CU infilling:
-#       SD times 1.5 and 2 make very minor differences in LRP (very small increases). No flipping of logistic curve
-#   With using CUs with CU infilling:
-#    Using 1.5 times SD makes logistic curve flip in one year, and 2 times SD makes it flip several years (with p=0.9)
-
-# -------------------------------------#
-# Run retrospective analysis with likelihood penalty on aggregate abundance at low proportion CUs above benchmark 
-#       (to bring logistic curve intercept down)
-# -------------------------------------#
-
-for(pp in 1:length(ps)){
-  #for (i in 1:length(B_penalty_sigmas)){ # for testing sensitivity to B_penalty_sigma
-  # Run with Binomial LRP model with individual model Ricker without CU-level infilling
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_noCUinfill_", ps[pp]*100, sep=""),
-                bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
-  # Run without Upper Knight CU
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "SR_IndivRicker_NoSurv_LowAggPrior", LRPmodel="BinLogistic", integratedModel=T,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_LowAggPrior, outDir=chumDir, RunName = paste("Bin.IndivRicker_NoSurv_LowAggPrior_no_knight_", ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T , runLogisticDiag=F)
-  #}
-}
-
-# ---------------------------#
-# Percentile benchmarks-----------
-# ---------------------------#
+# ========================================================================#
+# Run aggregate LRP with Percentile benchmarks-----------
+# ========================================================================#
 
 # Currently there is a discrepancy between CU_ID variable in percentile/subpop and Sgen 
 # based retrospective. Need to sort this out. 
@@ -341,37 +335,42 @@ for(pp in 1:length(ps)){
   
 }
 
+# ---------------------------------------------#
+# Run percentile LRP with low aggregate penalty values
+# ---------------------------------------------#
 # Get low aggregate penalty values
-pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
-pdat1 <- pdat[pdat$retro_year ==max(pdat$retro_year),]
-pdat2 <- pdat1 %>% group_by(CU_Name, CU, benchmark_perc_25) %>% summarise(n())
-# make lower limit=0, upper limit sum of 25% benchmarks for retro year 2010
-low_lim_perc <- 0
-hi_lim_perc <- sum(pdat2$benchmark_perc_25)
+# pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
+# pdat1 <- pdat[pdat$retro_year ==max(pdat$retro_year),]
+# pdat2 <- pdat1 %>% group_by(CU_Name, CU, benchmark_perc_25) %>% summarise(n())
+# # make lower limit=0, upper limit sum of 25% benchmarks for retro year 2010
+# low_lim_perc <- 0
+# hi_lim_perc <- sum(pdat2$benchmark_perc_25)
+# 
+# B_penalty_perc_mu <- mean(c(low_lim_perc, hi_lim_perc)) 
+# dum_perc<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=1000000, low_lim=low_lim_perc, hi_lim=hi_lim_perc)
+# B_penalty_perc_sigma<-dum_perc$par
+# 
+# TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
+#                               Tau_dist = 0.1,
+#                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                               B_penalty_mu = B_penalty_perc_mu, B_penalty_sigma = B_penalty_perc_sigma)
+# 
+# # Run retrospective analysis using percentile benchmarks, with likelihood penalty
+# for(pp in 1:length(ps)){
+#   # with prior penalty on low aggregate abundance
+#   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+#                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
+#                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+#                  bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
+# }
 
-B_penalty_perc_mu <- mean(c(low_lim_perc, hi_lim_perc)) 
-dum_perc<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=1000000, low_lim=low_lim_perc, hi_lim=hi_lim_perc)
-B_penalty_perc_sigma<-dum_perc$par
+# ========================================================================#
+# Make figures from outputs ---------- 
+# ========================================================================#
 
-TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
-                              Tau_dist = 0.1,
-                              gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                              B_penalty_mu = B_penalty_perc_mu, B_penalty_sigma = B_penalty_perc_sigma)
-
-# Run retrospective analysis using percentile benchmarks, with likelihood penalty
-for(pp in 1:length(ps)){
-  # with prior penalty on low aggregate abundance
-  runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
-}
-
-# ----------------#
-# Examine output  
-# ----------------#
-
+# ---------------------------------------------#
 # Plot percentile benchmark over time
+# ---------------------------------------------#
 pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
 #pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
 
@@ -409,7 +408,7 @@ dev.off()
 # ---------------------------------------------#
 # Look at stock recruit parameters over time
 # ---------------------------------------------#
-# Plot Sgen over time
+# Plot alpha, beta, SMSY and Sgen over time
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
@@ -417,7 +416,7 @@ mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="
 png("Figures/fig_a_b_SMSY_Sgen_retro.png", width=6, height=8, res=300, units="in", pointsize=12)
 layout(mat=matrix(1:18, byrow=FALSE, ncol=3)) # 15 panels
 CUs <- unique(mdat$CU_Name)
-#brk_a <- seq(0,max(mdat$est_A)*1.05, 1)
+brk_a <- seq(0,max(mdat$est_A)*1.05, 1)
 #brk_b <- seq(0,max(mdat$est_B)*1.05, 0.00001)
 par(las=1)
 for(i in 1:2) {

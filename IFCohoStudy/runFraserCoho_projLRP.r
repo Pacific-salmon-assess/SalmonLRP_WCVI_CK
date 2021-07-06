@@ -183,6 +183,22 @@ setwd(codeDir)
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
+
+
+set.seed(100)
+
+
+scenarioName <- "quickTest"
+BMmodel <- "SR_HierRicker_Surv"
+TMB_Inputs <- TMB_Inputs_HM
+
+projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+                                nMCMC=1000, nProj=10, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                biasCorrectEst=T, biasCorrectProj=T)
+
+
+
 set.seed(100)
 # 
 # # Create samSim input files for current scenario
