@@ -36,6 +36,7 @@ library(ggplot2)
 library(gridExtra)
 library(reshape2)
 library(TMB)
+library(viridis)
 #library(tmbstan)
 library(here)
 library(zoo)
@@ -1392,7 +1393,9 @@ OMsToInclude<-c(
   # "cvER0.21")
 # "cvER0.21ER0.43n50000")
   # "cvER0ER0ricResid0.01")
-"cvER0.21multiERn10000")
+# "cvER0.21multiERn10000")
+  # "cvER0.21.annualcvERCU")
+  "cvER0.21.Anarrow")
 # "cvER0n5000")
 # "cvER0.42n5000")
 # "cvER0")
@@ -1432,7 +1435,7 @@ for (i in 1:length(probThresh)) {
   # For each bin, calculate probability that required proportion of CUs above benchmark
   projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
   # For each bin, calculate the difference between the threshold probability and the calculated probability
-  tmp3 <- projLRPDat %>% filter(nSims>10)# Remove bins where there are very few nSims among LRP options
+  tmp3 <- projLRPDat %>% filter(nSims>100)# Remove bins where there are very few nSims among LRP options
   min <- min(abs(probThresh[i]-tmp3$prob))
 
   projLRPDat$diff<-abs(probThresh[i]-projLRPDat$prob)
