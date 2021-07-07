@@ -616,10 +616,202 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   
   dev.off()
   
-  browser()
-  
 }
 
+#---------------------------------------------------------------------
+# Make Status Bar plots for WCVI Chinook
+#---------------------------------------------------------------------
+
+plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
+                                       AggEscp,EscpDat, pLRP, 
+                                       ps_Prop, WSP_estYr=NULL, 
+                                       WSP_AboveLRP=NULL, 
+                                       outDir, fName) {
+  
+  Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
+  
+  # Extract / calculate data for plot ==========================================================
+  
+  
+  # Step 1: Get projection-basedLRPs 
+
+    
+   projResults <- as_tibble( read.csv( 
+    paste(outDir,
+          "/DataOut/ProjectedLRPs/ProjectedLRPscvER0.21baseER_ALLp.csv", 
+          sep= "" )))
+    
+  for (j in 1:length(pLRP)) {
+    
+    dum<-projResults %>% filter(ProbThresh==pLRP[j])
+    LRP<-dum$LRP
+      
+    Name <- paste("ProjLPR_p",pLRP[j], sep="")
+      
+      
+    # Loop over years and summarize status as above (True) or below (False) 
+    # the LRP for each year. Note, the raw aggregate escapement is use instead
+    # of geometric generational mean, as there are frequent NAs, so running
+    # mean would be over 2,3, or 4 years depending on the calendar year. To
+    # avoid this inconsistency, the raw aggregate abundances are used (as in 
+    # WSP assessment of sBC CK)
+    for (yy in 1:length(retroYears)) { 
+      Curr_Esc <- AggEscp %>% filter(yr == retroYears[yy]) %>% pull(Agg_Escp)
+      Status <-  Curr_Esc > LRP
+      New_Row <- data.frame(LRP_estYr = LRP_estYr, retroYear = retroYears[yy], 
+                            Name = Name, AboveLRP=Status)
+      Status_DF <- rbind(Status_DF, New_Row)
+      
+    } # end of year (yy) loop
+      
+  } # end of projection model loop
+    
+
+  
+  
+  
+  # Step 2: Assess status for data-based LRP options based on the observed 
+  # proportion of CUs above LRP
+  
+  
+  # Inlet-specific Sgen's are estimated in the Watershed-Area-Model with 
+  # assumptions about productivity derived from life-stage model and expert 
+  # opinion. See Repository "Watershed-Area-Model", WCVILRPs.r calculated using 
+  # all data up to 2020
+  
+  Inlet_Names <- unique(EscpDat$Inlet_Name)
+  CU_Params <- read.csv(paste (wcviCKDir, "/DataIn/wcviRPs_noEnh.csv", 
+                               sep="")) %>% filter(Stock %in% Inlet_Names) %>% 
+    rename("Inlet_Name"="Stock")
+  
+  # Use raw escapaement instead ofgenerational means, becuase of large number 
+  # of gaps 
+  
+  # -- join together Escp data with Sgens
+  Inlet_Status <- left_join(EscpDat[ , c("Inlet_Name", "yr", "Escp")],
+                         CU_Params[, c( "Inlet_Name", "SGEN")],
+                         by = c("Inlet_Name" = "Inlet_Name"))
+    
+  # --- for each year, get proportion of stocks above Sgen
+  NInlets <- length(unique(Inlet_Status$Inlet_Name))
+  Inlet_Status_Summ <- Inlet_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
+    summarise(Prop = sum(Escp > SGEN)/NInlets)
+    
+  
+  
+  #START FIXING HERE....
+  # --- for each year, add to Status_DF using p thresholds, Ps
+  #    --- note: should make these an input variable in the future
+  Ps <- ps_Prop
+  for(pp in 1:length(Ps)){
+    # Would use this is wanted to show the proportion of CUs above Sgen
+    #Name <- paste(propName,Ps[pp]*100)
+    Status <- Inlet_Status_Summ$Prop >= Ps[pp]
+    New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Ppn: Sgen", AboveLRP=Status)
+    Status_DF <- rbind(Status_DF, New_Rows)
+  }
+ 
+  # Step 4: Add row to Status_DF for 2011 status assessment (Optional)
+  if (!is.null(WSP_estYr)) {
+    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "WSP (2016 only)", AboveLRP = WSP_AboveLRP)
+    Status_DF <- rbind(Status_DF, New_Row)
+    Status_DF <- arrange(Status_DF, Name)
+  }
+  
+  
+  
+  # Make Plot =============================================================
+  
+  methods <- unique(Status_DF$Name)
+  
+  # # Hack to re-order methods for plotting ===============
+  # methods<-c("AggAb_Hist: Sgen", "AggAb_Proj: Sgen", "Prop: Sgen",
+  #            "AggAb_Hist: Sgen.HiSrep", "AggAb_Proj: Sgen.HiSrep", "Prop: Sgen.HiSrep",
+  #            "AggAb_Hist: Dist")
+  
+  
+  # --- set-up pdf to save to
+  #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
+  png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=700, height=580)
+  par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
+  
+  # ---- specify colouts 
+  #  cols <- c( "#FF0900", "#08AB0B") # (red, green)
+  cols <- c( "#FF0900", "grey80") # (red, grey)
+  
+  
+  #---- set xlims for all sites
+  Xlow <- min(retroYears)
+  Xhigh <- max(retroYears)
+  
+  # --- standardize aggregate escapement values
+  AggEscp <- AggEscp %>% filter(yr %in% retroYears)
+  AggEscp$Std<- AggEscp$Agg_Escp/mean(AggEscp$Agg_Escp, na.rm=T)
+  #AggEscp$StdAgg_Escp <- AggEscp$Agg_Escp/mean(AggEscp$Agg_Escp, na.rm=T) # - do not need this at present bc only comparing to Gen_Mean
+  
+  # --- plot margin, also use for jittering
+  low <- min(AggEscp$Std, na.rm=T) 
+  high <- max(AggEscp$Std, na.rm=T)
+  
+  # --- create empty plotting region
+  plot(1, type="n", xlab="", ylab="", xlim=c(Xlow, Xhigh), ylim=c(low-(high-low)/8*length(methods), high), axes=F,
+       main = paste("LRP Estimation Year = ",LRP_estYr, sep=""))
+  
+  # --- add generational mean escapement
+  lines(x=AggEscp$yr, y=AggEscp$Std, lwd=1.5)
+  
+  # --- loop over methods and ....
+  for(mm in 1:length(methods)){
+    #subset data by method
+    Mdat <- Status_DF %>% filter(Name == methods[mm] & is.na(AboveLRP)==F)
+    
+    if(dim(Mdat)[1] > 0){
+      #set y location for that method
+      #set increment
+      inc <- (high-low)/8
+      y <- low-inc*(mm)
+      #do each plot segment by segment with appropriate colors
+      for(k in 1:dim(Mdat)[1]){
+        segments(x0=Mdat$retroYear[k]-0.5, x1=Mdat$retroYear[k]+0.5, y0=y, y1=y, col=cols[Mdat$AboveLRP[k]+1], lwd=4)
+      }
+      #label the method
+      text(x=(Xlow-((Xhigh-Xlow)/2)), y=y, labels=methods[mm], 
+           xpd=NA, pos=4, cex=0.8)
+    }
+  }
+  
+  
+  # Add vertical lines to plots to help distinguish years
+  addVertLines_minor<-function(x,low,high,n) {
+    segments(x0=x, y0=low-(high-low)/8*n, x1=x, y1=high, lty=3,col="grey85")
+  }
+  
+  addVertLines_major<-function(x,low,high,n) {
+    segments(x0=x, y0=low-(high-low)/8*n, x1=x, y1=high, lty=2)
+  }
+  
+  
+  sapply(seq(1999.5,2018.5,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
+  sapply(seq(1999.5,2015.5,by=5), addVertLines_major,low=low,high=high,n=length(methods))
+  
+  #sapply(seq(1998,2018,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
+  #sapply(seq(2000,2015,by=5), addVertLines_major,low=low,high=high,n=length(methods))
+  
+  # add x-axis label
+  axis(1)
+  mtext(side = 1, "Year", outer = T)
+  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4)
+  
+  # legend( "topright", bty="n", lty=c(1,1,1,1), lwd=c(2,2,4,2) , 
+  #         col=c("black", "grey", "#08AB0B", Tcols[1]),
+  #         legend=c( "Gen. Mean Esc.", "Escapement", 
+  #                   "Status", "Status 95% CI"),
+  #         cex = 0.7) 
+  
+  dev.off()
+  
+
+}
 
 
 plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, inputPrefix, plotAveLine) {
