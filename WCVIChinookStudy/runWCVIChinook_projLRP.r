@@ -569,10 +569,13 @@ probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abunda
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
-  # "cvER0",
-  "cvER0.21baseER",
-  "cvER0.21ER0",
-  "cvER0.21ER0.43")
+  # "baseERn10000",
+  # "agePpnConst")
+  "cvER0",
+  "baseERn10000",
+  "cvER0.17")
+# "cvER0.21ER0",
+  # "cvER0.21ER0.43")
 # #"cvER0.21n50000_20yrs")
   # "cvER0.21.AlifeStageModel")
   # "cvER0.21.annualcvERCU")
@@ -674,9 +677,9 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_cvER_acrossERs.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_cvER.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_cvER_acrossERs.csv", sep="/"), row.names=F)
+write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_cvER.csv", sep="/"), row.names=F)
 
 
 
@@ -940,10 +943,17 @@ if(calcTau){
 
 
 OMsToTest<-c(
-  "cvER0",
-  "cvER0.21baseERn10000",
-  # "cvER0.21.annualcvERCU")
-  "cvER0.42")
+  "recCorSca0",
+  "recCorSca0.5",
+  "baseERn10000")
+
+  # "agePpnConst")
+    # "cvER0",
+    # "baseERn10000",
+    # "cvER0.17")
+  # "cvER0.21baseERn10000",
+  # # "cvER0.21.annualcvERCU")
+  # "cvER0.42")
 #
               # "cvER0.21",
               # "cvER0.21.recCorSca0",
@@ -1012,20 +1022,49 @@ for (j in 1:length(OMsToTest)) {
 }
 
 # Identify a subset of correlations to jitter on the boxplot
+# SpwnCorr.df <- read.csv(paste(wcviCKDir, "/DataOut/ProjectedLRPs/SpwnCorr.df.csv", sep=""))
 len <- dim(SpwnCorr.df)[1]
 SpwnCorr.df <- SpwnCorr.df %>% dplyr::select(c(OM_Name,SpwnCorrValues))
 SpwnCorr.df <- SpwnCorr.df %>% add_column(
-  highlight = sample(c(1,NA), len, replace=T,prob=c(0.05*len,0.95*len)))
+  highlight = sample(c(1,NA), len, replace=T,prob=c(0.005*len,0.995*len)))
 # SpwnCorr.df <- SpwnCorr.df %>% mutate(
 #   highlight = c(sample(c(1,NA), len, replace=T,prob=c(0.01*len,0.99*len)),rep(1,10)))
 
 
 # Add observed escapement correlations to correlation data frame
-# spawners.obs<-data.frame(SRDat$BroodYear, SRDat$CU_ID, SRDat$Spawners)
-# names(spawners.obs)<-c("year", "CU", "spawners")
-# cor_mat<-spawners.obs %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% dplyr::select(-year) %>% cor()
-cor_mat <- corMat
-SpwnCorrValues.Obs<-cor_mat[lower.tri(cor_mat)==TRUE]
+# cor_mat <- corMat
+# SpwnCorrValues.Obs <- cor_mat[lower.tri(cor_mat)==TRUE]
+
+# Over the most recent 20 years:
+Years <- 1995:2000
+tri <- matrix(NA, nrow=10,ncol=length(Years))
+med <- NA
+Inlet_Sum.df.long <- read.csv(paste(wcviCKDir, "/DataIn/Inlet_Sum.csv", sep=""))
+for (i in 1:length(Years)){
+  Year.Start <- Years[i]
+  Inlet_Sum.df <-   Inlet_Sum.df.long %>%
+    filter(BroodYear %in% c(Year.Start : (Year.Start + 20) ) ) %>%
+    dplyr::select(-c(CU_Name, Inlet_ID, Recruits)) %>%
+    pivot_wider(id_cols= c (Inlet_Name, BroodYear),
+                names_from=Inlet_Name, values_from=Spawners) %>%
+    dplyr::select(-BroodYear) %>% na.omit()
+
+  co <- cor(Inlet_Sum.df)
+  tri[,i] <- co[lower.tri(co)==TRUE]
+  med[i] <- median(co[lower.tri(co)==TRUE])
+}
+
+dum <- as.data.frame(tri)
+names(dum) <- as.character(Years)
+tri_longer <- dum %>% pivot_longer(col=names(dum), names_to="StartYear",
+                                   values_to="Correlation")
+tri_longer$StartYear <- factor(tri_longer$StartYear, levels = names(dum),
+                               ordered = TRUE)
+
+SpwnCorrValues.Obs <- tri_longer %>% filter(StartYear==2000) %>% pull(Correlation)
+
+
+#Add observed values to simulated values in df
 tmp<-data.frame(OM_Name = "Observed",SpwnCorrValues = SpwnCorrValues.Obs, highlight=1)
 SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
 
@@ -1040,10 +1079,19 @@ write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names
 
 
 factor(SpwnCorr.df$OM_Name,levels = c(
-  "cvER0",
-  "cvER0.21baseERn10000",
-  # "cvER0.21.annualcvERCU")
-  "cvER0.42"),
+  "recCorSca0",
+  "recCorSca0.5",
+  "baseERn10000"),
+  # "baseERn10000",
+  # "agePpnConst"),
+  # "cvER0",
+  # "baseERn10000",
+  # "cvER0.17"),
+
+  # "cvER0",
+  # "cvER0.21baseERn10000",
+  # # "cvER0.21.annualcvERCU")
+  # "cvER0.42"),
   # "cvER0.21",
        # "cvER0.21.recCorSca0",
        # "cvER0.21.recCorSca0.1",
@@ -1079,10 +1127,20 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
               position=position_jitter(0.2), col="dark grey", alpha=0.95,
               size=0.2) +
   scale_x_discrete(limits=c("Observed",
-                            "cvER0",
-                            "cvER0.21baseERn10000",
-                            # "cvER0.21.annualcvERCU")
-                            "cvER0.42"),
+                            # "cvER0",
+                            # "cvER0.21baseERn10000",
+                            # # "cvER0.21.annualcvERCU")
+                            # "cvER0.42"),
+                            # "baseERn10000",
+                            # "agePpnConst"),
+                            "recCorSca0",
+                            "recCorSca0.5",
+                            "baseERn10000"),
+
+                            # "cvER0",
+                            # "baseERn10000",
+                            # "cvER0.17"),
+
                    #
                             # "cvER0.21",
                             # "cvER0.21.recCorSca0",
@@ -1110,25 +1168,26 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
 # "cvER0.21.noMCMC"),
 
                      labels=c("Observed",
-                            "0",
-                            "0.21",
-                            #"const\ndeviations\nover years",
-                            #"annual\ndeviations\nover years")) +
-                            "0.42" )) +
-                            # "1",
                             # "0",
+                            # "0.085",
+                            # # #"const\ndeviations\nover years",
+                            # # #"annual\ndeviations\nover years")) +
+                            # "0.17" )) +
+                            # "1",
+                            "0",
                             # "0.1",
                             # "0.2",
                             # "0.3",
                             # "0.4",
-                            # "0.5",
+                            "0.5",
                             # "0.6",
                             # "0.7",
                             # "0.8",
-                            # "0.9" )) +
+                            # "0.9"
+                            "1")) +
                             # "Variable\nAge Ppn\nAmong Inlets",
                             # "Constant\nAge Ppn\nAmong Inlets" )) +
-                            # "0",
+                            # # "0",
                             # "0.21",
                             # "0.42",
                             # "0.21:Const\nAge Ppn\nAmong Inlets")) +
@@ -1153,7 +1212,7 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
 
 
 
-ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor_cvER.png",sep=""), plot = g,
+ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor_recCorSca.png",sep=""), plot = g,
        width = 4, height = 3, units = "in")
 
 # summary(SpwnCorr.df %>% filter(OM_Name=="cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc") %>% pull(SpwnCorrValues))
@@ -1431,118 +1490,242 @@ for (p in 1:length(probThresh)){
 # Specify threshold to use when calculating LRP
 # # Note: may want to loop over probThresholds as well; still needs to be added
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
-probThresh<-c(0.50,0.66,0.9, 0.99) # probability theshhold; the LRP is set as the aggregate abundance that has this
+probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as the aggregate abundance that has this
 # probability that the propCUThreshold is met
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
-  "cvERSMU0.17")
-  # "cvER0.21")
-# "cvER0.21ER0.43n50000")
-  # "cvER0ER0ricResid0.01")
-# "cvER0.21multiERn10000")
-  # "cvER0.21.annualcvERCU")
-  # "cvER0.42")
-  # "cvER0.21.AlifeStageModel")
-  # "cvER0.21.Anarrow")
-# "cvER0n5000")
-# "cvER0.42n5000")
-# "cvER0")
-   # "cvER0.42")
-# "cvER0.21.alphaScalar0.75")
- # "cvER0.21.alphaScalar1.5")
- # "cvER0.21.Anarrow")
-# "cvER0.21.AlifeStageModel")
+  #"ER0",
+  "ER0.05",
+  "ER0.10",
+  "ER0.15",
+  "ER0.20",
+  "ER0.25",
+  "baseERn10000",
+  "ER0.35",
+  "ER0.40",
+  "ER0.45")
+  # "alphaScalar0.75",
+  # "baseERn10000",
+  # "alphaScalar1.5")
+  # "cvER0",
+  # "baseERn10000",
+  # "cvER0.17")
 
+
+
+
+if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERs"
+if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphas"#"cvER"#"
 
 LRP <- NA
-# Loop over OM Scenarios
-for (i in 1:length(probThresh)) {
 
-  # Read in samSim outputs for OM
-  filename<-paste("projLRPDat_",OMsToInclude,".csv",sep="")
-  projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
-  CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
-  projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*10)#)max(SRDat$yr_num)+4)
+for (OM in 1:length(OMsToInclude)){
 
-  # Create bins for projected spawner abundances
-  minBreak<-0
-  maxBreak<-round(max(projLRPDat$sAg),digits=-2)
-  binSize<-200 # Note: bin size is currently set here
-  breaks<-seq(minBreak, maxBreak,by=binSize)
+  # Loop over OM Scenarios
+  for (i in 1:length(probThresh)) {
 
-  # Set bin labels as the mid-point
-  projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+    # Read in samSim outputs for OM
+    filename<-paste("projLRPDat_",OMsToInclude[OM],".csv",sep="")
+    projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
+    CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
+    projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*10)#)max(SRDat$yr_num)+4)
 
-  # Summarize nSims in each bin
-  tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+    # Create bins for projected spawner abundances
+    minBreak<-0
+    maxBreak<-round(max(projLRPDat$sAg),digits=-2)
+    binSize<-200 # Note: bin size is currently set here
+    breaks<-seq(minBreak, maxBreak,by=binSize)
 
-  # Filter out bins with < 100 nSims
-  tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
-    add_column(nSims=tmp$nSims) %>% filter(nSims>=10)
+    # Set bin labels as the mid-point
+    projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
 
-  # For each bin, calculate probability that required proportion of CUs above benchmark
-  projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
-  # For each bin, calculate the difference between the threshold probability and the calculated probability
-  tmp3 <- projLRPDat %>% filter(nSims>100)# Remove bins where there are very few nSims among LRP options
-  min <- min(abs(probThresh[i]-tmp3$prob))
+    # Summarize nSims in each bin
+    tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
 
-  projLRPDat$diff<-abs(probThresh[i]-projLRPDat$prob)
+    # Filter out bins with < 100 nSims
+    tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
+      add_column(nSims=tmp$nSims) %>% filter(nSims>=10)
 
-  # Save projection summaries used to create plots
-  projLRPDat$OM.Name<-OMsToInclude
-  if (i == 1) projLRPDat.plot<-projLRPDat
-  if (i > 1) projLRPDat.plot<-rbind(projLRPDat.plot,projLRPDat)
+    # For each bin, calculate probability that required proportion of CUs above benchmark
+    projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+    # For each bin, calculate the difference between the threshold probability and the calculated probability
+    tmp3 <- projLRPDat %>% filter(nSims>100)# Remove bins where there are very few nSims among LRP options
+    min <- min(abs(probThresh[i]-tmp3$prob))
 
-  # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
-  #LRP[i]<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
-  LRP[i]<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min]))
+    projLRPDat$diff<-abs(probThresh[i]-projLRPDat$prob)
 
-  # Create a table of LRP estimates to be saved for each OM model
-  if (i ==1) {
-    LRP_Ests<-data.frame(OMsToInclude, probThresh[i], propCUThresh, LRP[i], binSize)
-    names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
-  } else {
-    tmp.df<-data.frame(OMsToInclude, probThresh[i], propCUThresh, LRP[i], binSize)
-    names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
-    LRP_Ests<-rbind(LRP_Ests,tmp.df)
+    # Save projection summaries used to create plots
+    projLRPDat$OM.Name<-OMsToInclude[OM]
+    if (i == 1) projLRPDat.plot<-projLRPDat
+    if (i > 1) projLRPDat.plot<-rbind(projLRPDat.plot,projLRPDat)
+
+    # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
+    #LRP[i]<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
+    LRP[i]<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min]))
+
+    # Create a table of LRP estimates to be saved for each OM model
+    if (i ==1) {
+      LRP_Ests<-data.frame(OMsToInclude[OM], probThresh[i], propCUThresh, LRP[i], binSize)
+      names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+    } else {
+      tmp.df<-data.frame(OMsToInclude[OM], probThresh[i], propCUThresh, LRP[i], binSize)
+      names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+      LRP_Ests<-rbind(LRP_Ests,tmp.df)
+    }
+
+    if(i==1){# Plot projected LRP abundance relationship ===============================================================
+      if(OM==1) {
+        if(length(OMsToInclude)==1|length(OMsToInclude)==9) {
+          plot.width <- 5
+          plot.height <- 4
+        }
+        if(length(OMsToInclude)==3) {
+          plot.width <- 5
+          plot.height <- 1.5
+        }
+
+        png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToIncludeName,
+                  "_ProjLRPCurve_ALLp.png", sep=""), width=plot.width,
+            height=plot.height,
+            units="in", res=500)
+        if(length(OMsToInclude)==9) layout(matrix(c(1:9), 3, 3, byrow = TRUE))
+        if(length(OMsToInclude)==3) layout(matrix(c(1:3), 1, 3, byrow = TRUE))
+
+      }# End of if(OM==1) {
+
+
+    if(length(OMsToInclude)==1){
+      plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19,
+           xlim=c(0, max( as.numeric(as.character(projLRPDat$bins)),
+                          na.rm=T)*1.0 ),
+           ylim=c(0,1),
+           cex=0.5, cex.lab=1,#1.5,
+           xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
+    }# End of if(length(OMsToInclude)==1){
+
+    if(length(OMsToInclude)==9){
+      par(mar=c(2.8,3,0.6,1))
+      xMax <- 50000
+      if(OM<7){
+        xaxt <- "n"#par(xaxt="n")
+      }
+      if(OM>=7){
+        xaxt <- "s"#par(xaxt="s")
+      }
+    }# End of if(length(OMsToInclude)==9){
+    if(length(OMsToInclude)==3){
+        par(mar=c(2.8,3,1,1))
+        xaxt <- "s"
+        xMax <- 70000
+      }
+
+      if(length(OMsToInclude)>1){
+        plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19,
+             xlim=c(0, xMax ),
+             ylim=c(0,1),
+             cex=0.3, cex.lab=1,#1.5,
+             xlab="", ylab="", xaxt=xaxt)
+
+      }
+
+
+      if(length(OMsToInclude)==9){
+        if(OM<7){
+          at1 <- seq(0, 50000, 10000)
+          axis(side =1,  at=at1, labels = FALSE)
+        }
+
+
+        panel.title <- c("5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%",
+                         "45%")
+        mtext(text=panel.title[OM], side=3, line=0, at=5000, cex=0.4)
+
+        LRP_50 <- (read.csv(paste(wcviCKDir,
+                               "/DataOut/ProjectedLRPs/ProjectedLRPs",
+                               OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
+                  pull(LRP))[1]
+        LRP_66 <- (read.csv(paste(wcviCKDir,
+                                  "/DataOut/ProjectedLRPs/ProjectedLRPs",
+                                  OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
+                     pull(LRP))[2]
+
+        text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)
+        text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
+
+        if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
+                        line=1.8,at=0.5, cex=1) }
+        if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=40000,
+                         cex=0.7) }
+
+      }# End of if(length(OMsToInclude)==9){
+
+
+    if(length(OMsToInclude)==3){
+
+      panel.title <- c("0.75 x productivity", "Base productivty",
+                       "1.5 x productivity")
+      # panel.title <- c("cvER = 0", "cvER = 0.085",
+      #                  "cvER = 0.17")
+      mtext(text=panel.title[OM], side=3, line=0, at=20000, cex=0.5)
+
+      LRP_50 <- (read.csv(paste(wcviCKDir,
+                              "/DataOut/ProjectedLRPs/ProjectedLRPs",
+                              OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
+                  pull(LRP))[1]
+      LRP_66 <- (read.csv(paste(wcviCKDir,
+                                "/DataOut/ProjectedLRPs/ProjectedLRPs",
+                                OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
+                  pull(LRP))[2]
+
+      text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)
+      text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
+
+      if(OM==1) {mtext("Prob(all inlets)>lower benchmark", side=2,
+                       line=1.8,at=0.4, cex=0.55) }
+      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=40000,
+                       cex=0.7) }
+
+    }# End of if(length(OMsToInclude)==3){
+
+    }# End of if(i==1){
+
+    if (length(OMsToInclude == 9)) lrp.lwd <- 1
+    if (length(OMsToInclude != 9)) lrp.lwd <- 2
+    abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
+    if(OMsToInclude[OM]!="alphaScalar1.5") { if (i==1)
+      abline(v=LRP[i], col="orange", lwd=lrp.lwd) }
+    if(OMsToInclude[OM]!="alphaScalar0.75") { if (i==2)
+      abline(v=LRP[i], col=viridis(4, alpha=0.3)[3], lwd=lrp.lwd) }
+    abline(h=0.9, lty=2)
+    abline(h=0.99, lty=2)
+
+    # if(i==3) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[2] )
+    # if(i==4) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.2)[1] )
+
+    if(i==length(probThresh)) {
+      if(OM==length(OMsToInclude)) {
+        dev.off()
+      }
+    }
+
+    # Option to plot histogram of nSims in each Agg Abundance Bin
+    #barplot(height = projLRPDat$nSims,names.arg = projLRPDat$bins)
+
   }
 
-  if(i==1){# Plot projected LRP abundance relationship ===============================================================
-  png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude,
-            "_ProjLRPCurve_ALLp.png", sep=""), width=5, height=4,
-      units="in", res=500)
-  # pdf(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""),
-  #     width=6, height=6)
+  # Save LRPs for all OM scenarios
+  write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
+                            "_ALLp.csv", sep=""), row.names=F)
+  # Save LRP projection summaries used for calculating and plotting LRP (Optional)
+  write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude[OM],
+                                   "_Allp.csv", sep=""), row.names=F)
 
 
-    plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19,
-         xlim=c(0, max( as.numeric(as.character(projLRPDat$bins)), na.rm=T)*1.0 ),
-         ylim=c(0,1),
-         cex=0.5, cex.lab=1,#1.5,
-         xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
-  }
+}# End of for OM in 1:length(OMsToInclude)
 
-  abline(h=probThresh[i], lty=2)
-  if(i==1) abline(v=LRP[i], lwd=4, col="orange")
-  if(i==2) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[3])
-  # if(i==3) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[2] )
-  # if(i==4) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.2)[1] )
-
-  if(i==length(probThresh)) dev.off()
-
-  # Option to plot histogram of nSims in each Agg Abundance Bin
-  #barplot(height = projLRPDat$nSims,names.arg = projLRPDat$bins)
-
-}
-
-# Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude,
-                          "_ALLp.csv", sep=""), row.names=F)
-# Save LRP projection summaries used for calculating and plotting LRP (Optional)
-write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude,
-                                 "_Allp.csv", sep=""), row.names=F)
 
 # ===================================================================
 # (13) Run reconstruction for WCIV  CK
