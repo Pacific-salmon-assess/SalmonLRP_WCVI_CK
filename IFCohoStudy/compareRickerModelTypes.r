@@ -70,7 +70,7 @@ CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 CoSRDat$yr_num <- CoSRDat$BroodYear - min(CoSRDat$BroodYear)
 CoSRDat$CU_ID <- group_indices(CoSRDat, CU_ID) - 1
 
-CoEscpDat$yr_num <- group_indices(CoEscpDat, BroodYear) - 1
+CoEscpDat$yr_num <- group_indices(CoEscpDat, yr) - 1
 CoEscpDat<- CoEscpDat %>% right_join(unique(CoSRDat[,c("CU_ID", "CU_Name")]))
 
 
@@ -313,7 +313,7 @@ for (i in 1:N_Stocks) {
  cap[i] <- log(logA)/B
 }
 
-cap_priorMean<- cap*1.35
+cap_priorMean<- cap*1.4
 
 print("Prior means for capacity in Hier model, by CU:")
 print(cap_priorMean)
@@ -737,7 +737,7 @@ for (i in 1:N_Stocks) {
   cap[i] <- log(A)/B
 }
 
-cap_priorMean<- cap*1.35
+cap_priorMean<- cap*1.4
 
 print("Prior means for capacity in individual models, by CU:")
 print(cap_priorMean)
@@ -1019,7 +1019,10 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
   dat_cap<-plotDat_cap %>% filter(CU_ID == i)
   SR_dat <- SRDat %>% filter(CU_ID == i)
   
-  xyMax<-max(c(SR_dat$Recruits,SR_dat$Spawners))*1.2
+  xMax<-max(c(SR_dat$Recruits,SR_dat$Spawners))*1.2
+  yMax<-max(c(SR_dat$Recruits,SR_dat$Spawners))*1.4
+  
+  if (i == 1) yMax<-max(c(SR_dat$Recruits,SR_dat$Spawners))*2
 
   # Create plot
   p <- ggplot(data=dat, mapping=aes(x=Pred_Spwn,y=Pred_Rec)) +
@@ -1040,8 +1043,9 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
     # add title, labels, theme
     ggtitle(unique(SRDat$CU_Name[SRDat$CU_ID==i])) +
     xlab(Xlab) + ylab(Ylab) +
-    xlim(0, xyMax) + ylim(0, xyMax) +
+    xlim(0, xMax) + ylim(0, yMax) +
     theme_classic()
+
   
 }
 
@@ -1058,6 +1062,10 @@ do.call(grid.arrange,  ps)
 dev.off()
  
 
+ps<-lapply(CUID_list, makeSRplots, plotDat=plotDat_IM, plotDat_cap=plotDat_IM_cap, SRDat=SRDat)
+png(paste(cohoDir,"/Figures/", "compareSR_fits_IMw.cap.png", sep=""))
+do.call(grid.arrange,  ps)
+dev.off()
 
 # ========================================================================================================
 # Create plots to compare parameter estimates
@@ -1156,5 +1164,6 @@ ps<-lapply(CUID_list, makeParEstPlots, est_hier=est_hier, est_hierCap=est_hierCa
 png(paste(cohoDir,"/Figures/", "compareSRpar_logA_Ests.png", sep=""))
 do.call(grid.arrange,  ps)
 dev.off()
+
 
 

@@ -14,7 +14,6 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
                          TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T,
                          runLogisticDiag=F) {
  
-  
   yearList<-startYr:endYr
   
   # Put together Run info
@@ -47,12 +46,12 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
   for (yy in 1:length(yearList)) {
   
       # Only use SR data for brood years that have recruited by current year yy 
-       # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
+       # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 4 years) from current year)
       if (!is.null(SRDat)) {
         Dat <- SRDat %>%  filter(BroodYear <= (yearList[yy])-BroodYrLag)
       }
       EscpDat.yy <- EscpDat %>% filter(yr <= yearList[yy]) 
-  
+ 
       # get trigger ready so can be used with both basic and TMB
       if (LRPmodel == "BernLogistic") useBern_Logistic <- TRUE
       if (LRPmodel == "BinLogistic") useBern_Logistic <- FALSE
@@ -206,7 +205,10 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     }
    # # If plotLRP=T, plot model fit and data  
    # if (plotLRP == T & LRPmodel != "Proj") {
-      
+
+   
+   
+    
     if (plotLRP == T) {
       plotLogistic(Data = LRP_Mod$Logistic_Data, Preds = LRP_Mod$Preds, 
                    LRP = LRP_Mod$LRP, useGenMean = useGenMean,
@@ -214,6 +216,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
                    p = p, useBern_Logistic = useBern_Logistic)
     }
 
+  
     # 
     # if (plotLRP == T & LRPmodel == "Proj") {
     # 
@@ -225,9 +228,10 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     #   
     # }
     
+
     ## Run logistic model diagnostics =======
-    if (runLogisticDiag==TRUE) {
-    
+    if (runLogisticDiag==TRUE & is.na(LRP_Mod$LRP$fit) == FALSE) {
+  
       logisticDiagStats<-LRdiagnostics(All_Ests=LRP_Mod$Diagnostic_Data$All_Ests, 
                   AggAbund=LRP_Mod$Diagnostic_Data$AggAbund, 
                   obsPpnAboveBM=LRP_Mod$Diagnostic_Data$obsPpnAboveBM, 
@@ -239,6 +243,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       save(LRP_Mod, file = paste(outputDir,"/logisticFit_",yearList[yy] ,".rda", sep=""))
     
     }
+    
     
   } # end of year loop
 

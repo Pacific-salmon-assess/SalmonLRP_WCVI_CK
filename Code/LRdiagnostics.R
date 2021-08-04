@@ -100,7 +100,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
   library(patchwork)
   #-------------------------------------------------------------------------------
   
-  
+
   #-------------------------------------------------------------------------------
   # Step 1. Estimate Pearson resiudals and deviance residuals (Assumption 3). 
   #   Are deviance residuals >2?
@@ -117,6 +117,9 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
   
   PearResid <- ( obsPpnAboveBM - predPpnAboveBM ) / sqrt( predPpnAboveBM * 
                                                             (1 - predPpnAboveBM) ) 
+  
+  # Added by K.Holt to deal with rare case where (obs - pred) really is 0.  Otherwise, Pearson resid calc wil be 0/0 = NaN
+  PearResid[obsPpnAboveBM - predPpnAboveBM==0]<-0
   
   # Deviance residual: Eq3.16 https://data.princeton.edu/wws509/notes/c3s8
   # setting n=1 (number of trials at each observation of x)
@@ -186,7 +189,7 @@ LRdiagnostics <- function(All_Ests, AggAbund, obsPpnAboveBM, p, nLL, dir,
           plot.title = element_text(size = 20)
     ) 
 
-  
+
   # See ggplot.cor function in "helperFunctions.r"
   p3 <- ggplot.corr(data=PearResid, title="Pearsons's residuals") 
   p4 <- ggplot.corr(data=DevResid, title="Deviance residuals") 
