@@ -1,0 +1,82 @@
+---
+title: "Exploitation Rates WCVI Chinook"
+author: "Carrie Holt"
+date: "7/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_knit$set(root.dir = normalizePath(".."))  
+
+
+library(tidyverse)
+library(ggplot2)
+```
+
+
+Pre-terminal exploitation rates for Robertson Creek CWT Hatchery Indicator Stock were are provided by Diana Dobson in 2019 and updated by Diana McHugh in 2021. Age-specific exploitation rates were multiplied by the annual proportion of natural spawners at each age in that return year to derive an overall exploitation rate each year (shown below). 
+
+```{r ERs, fig.cap = "**Figure 1**. Pre-terminal exploitation rates for Robertson Creek CWT indicators 1985-2019."}
+# setwd('..')
+# rootDir<-getwd()
+# codeDir<-paste(rootDir,"/Code",sep="")
+# wcviCKDir<-paste(rootDir,"/WCVIChinookStudy",sep="")
+
+# ERs <- read.csv(paste(wcviCKDir, "/DataIn/ER.csv", sep="")
+ERs <- read.csv("DataIn/ER.csv")
+ggplot(ERs,aes(Year, ER)) + geom_point() + geom_line()
+
+```
+
+
+
+The mean exploitation rate over the entire time-series is `r round(mean(ERs$ER),2)`, and for the last 10 years is `r round(mean(ERs %>% filter(Year>=2010) %>% pull(ER)),2)`. The coefficient of variation (SD/mean) in exploitation rates for the entire time-series is `r round(sd(ERs$ER)/mean(ERs$ER),2)`, and for the last 10 years is `r round(sd(ERs %>% filter(Year>=2010) %>% pull(ER)) / mean(ERs %>% filter(Year>=2010) %>% pull(ER)),2)`. The recent cv in exploitation rates, `r round(sd(ERs %>% filter(Year>=2010) %>% pull(ER)) / mean(ERs %>% filter(Year>=2010) %>% pull(ER)),2)`,  is used to parameterize interannaual variability in exploitatoin rates in the forward projections (Fig. 2). Half of that value, `r round(sd(ERs %>% filter(Year>=2010) %>% pull(ER)) / mean(ERs %>% filter(Year>=2010) %>% pull(ER)),2)/2`, is used as to parameterize the variability among inlets (varied in sensitivity analyses from 0 to `r round(sd(ERs %>% filter(Year>=2010) %>% pull(ER)) / mean(ERs %>% filter(Year>=2010) %>% pull(ER)),2)`). The cv over the entire time-series is also shown (Fig. 2).
+
+```{r pressure, echo=FALSE, fig.cap="**Figure 2.** Variability in simulated exploitation rates over time (cv=0.17) and among inlets (cv=0.085), from the average explotation of 0.30. An upper value for interannual variability is also shown (0.27)."}
+nTrials <- 100000
+canERlabel <- 0.30
+set.seed(100)
+
+# Density of ERs with cvER=0.085 ( among CUs)
+canER <- canERlabel
+cvER <- 0.085
+sigCanER <- cvER*canER
+shape1 <- canER^2 * (((1-canER)/sigCanER^2)-(1/canER))
+shape2 <-shape1 * (1/canER-1)
+out1 <- rbeta(nTrials,shape1,shape2)
+
+# Density of ERs with cvER=0.17
+cvER <- 0.17
+sigCanER <- cvER*canER
+shape1 <- canER^2 * (((1-canER)/sigCanER^2)-(1/canER))
+shape2 <-shape1 * (1/canER-1)
+out2 <- rbeta(nTrials,shape1,shape2)
+
+# Density of ERs with cvER=0.17
+cvER <- 0.27
+sigCanER <- cvER*canER
+shape1 <- canER^2 * (((1-canER)/sigCanER^2)-(1/canER))
+shape2 <-shape1 * (1/canER-1)
+out3 <- rbeta(nTrials,shape1,shape2)
+
+
+out <- data.frame( cvER = c(rep("0.085",nTrials), rep("0.17",nTrials),
+                            rep("0.27",nTrials)),
+                   ExploitationRate = c(out1, out2, out3) )
+
+
+
+
+g <- out %>% dplyr::filter(cvER=="0.085"|cvER=="0.17"|cvER=="0.27") %>%
+  ggplot(aes(ExploitationRate, colour = cvER, fill = cvER)) +
+  geom_density (alpha = 0.1) +
+  xlim (0,1) +
+  geom_vline (xintercept = canERlabel) +
+  theme(axis.title.x = element_text(size=18),
+        axis.title.y = element_text(size=18))
+g
+
+```
+
+
