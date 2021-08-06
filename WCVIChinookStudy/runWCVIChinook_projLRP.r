@@ -79,11 +79,6 @@ sourceAll()
 # =====================================================================
 setwd(wcviCKDir)
 
-CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
-# Restrict data set to years 1998+ based on recommendation from Michael Arbeider
-CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
-
-
 
 wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")
 wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
@@ -814,19 +809,19 @@ if(createMCMCout){
     rsig <-  rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
       filter(stkName==Inlet_Names[i]) %>% dplyr::select(sigma,stk)
 
-    meanlnalpha_nBC <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha_nBC)#1-(rsig$sigma^2)/2#
-    meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)#1
+    meanlnalpha_nBC <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha_nBC)#1-(rsig$sigma^2)/2# (life-stage model)
+    meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)#1# (life-stage model)
     # ULlnalpha <- 2
     # LLlnalpha <- 0
-    siglnalpha <- 0.5 # Assuming 95% CIs at 0 and 2, sig ~0.5.
+    siglnalpha <- 0.5 # Assuming 95% CIs at 0 and 2, sig ~0.5.#0.25 (narrow)
 
 
     # Generate random lnalpha values using same random numbers with and withtout
     # bias correction (but diff for each CU or inlet)
     rlnalpha_nBC <- data.frame(a=qnorm(a_rand[,i], meanlnalpha_nBC, siglnalpha))
     rlnalpha <- data.frame(a=qnorm(a_rand[,i], meanlnalpha, siglnalpha))
-    amin <- 0#(meanlnalpha - siglnalpha)# (narrow)
-    amax <- max(2,alphaScalar*2)#(meanlnalpha + siglnalpha)# (narrow)
+    amin <- 0#(meanlnalpha - siglnalpha)# (narrow)- not implemented
+    amax <- max(2,alphaScalar*2)#(meanlnalpha + siglnalpha)# (narrow)- not implemented
 
 
 
@@ -862,8 +857,8 @@ if(createMCMCout){
     geom_density(alpha=0.1) +theme(legend.title = element_blank()) +xlim(0,30000)
 
   if(alphaScalar==1 & SREPScalar==1) {
-    ggsave(paste(wcviCKDir,"/Figures/AlphaDensity.png",sep=""),#_lifeStageModel
-           plot = alphaDensity,#"/Figures/AlphaDensity_narrow.png"
+    ggsave(paste(wcviCKDir,"/Figures/AlphaDensity.png",sep=""),#_lifeStageModel#_narrow
+           plot = alphaDensity,
            width = 6, height = 4, units = "in")
     ggsave(paste(wcviCKDir,"/Figures/SREPDensity.png",sep=""),
            plot = SREPDensity,#"/Figures/AlphaDensity_narrow.png"

@@ -32,7 +32,7 @@ WCVI-South              San Juan,               San Juan
                         Clayoquot,              Bedwell/Ursus* , Megin* , Moyeha* , Tranquil
                                                           
 WCVI-Nootka & Kyuoquot  Nootka/Esperanza,       Burman, Conuma, Gold, Leiner, Tahsis*
-(CK-32)                 Kyuquot                 Artlish* , Kaouk* , Tahsish*
+(CK-32)                 Kyuquot                 Artlish* , Kaouk* , Tahsish* , Zeballos
                                          
 WCVI-North              Quatsino                Cayeghle* , Marble*
 (CK-33)                
