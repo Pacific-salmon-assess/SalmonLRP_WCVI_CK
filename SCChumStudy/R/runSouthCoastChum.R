@@ -483,33 +483,10 @@ AggEscp <- ChumEscpDat_full %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp))
 
 md <- read.csv("DataIn/LRP_compare_methods.csv", header=TRUE)
 
+md$AboveLRP <- ifelse(md$lrp_status=="above", TRUE, FALSE)
 
 
-
-# Make a list of all modeled combinations to be shown in plots
-## (note: the output folders/files for each of options must already exist)
-
-# modelFitList<-c("Bern.IndivRickerSurv_50",
-#                 "Bern.HierRickerSurv_50",
-#                 "Bern.IndivRickerSurvCap_50",
-#                 "Bern.HierRickerSurvCap_50",
-#                 "Bern.SPopAbundThreshST_50")
-# 
-# # Specify which thresholds should be tested in the data-based proportional thresholds
-# ps_Prop<-c(1.0)
-# 
-# # Provide WSP assessment results
-# WSP_estYr<-2014
-# WSP_AboveLRP<-TRUE
-# 
-# LRP_estYr<-2018
-# retroYears<-2000:LRP_estYr
-
-
-
-# plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
-#                           modelFitList=modelFitList, ps_Prop=ps_Prop,
-#                           outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
+plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
 
 # --------------------------------------------------------------#
 # Plot ricker, SMSY, Sgen estimates from integrated model
