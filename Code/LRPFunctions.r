@@ -73,7 +73,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   param$logA <- rep(TMB_Inputs$logA_Start, N_Stocks)
   param$logSigma <- rep(-2, N_Stocks)
   param$logSgen <-  log((SRDat %>% group_by(CU_Name) %>%  summarise(x=quantile(Spawners, 0.5)))$x/Scale) 
-  param$B_0 <- 2
+  param$B_0 <- -5#2
   param$B_1 <- 0.1
   data$Tau_dist <- TMB_Inputs$Tau_dist
   
@@ -131,6 +131,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   
   }
 
+
   # Phase 1: estimate SR params
   map <- list(logSgen=factor(rep(NA, data$N_Stks)), B_0=factor(NA), B_1=factor(NA)) # Determine which parameters to fix
 
@@ -138,7 +139,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   #   browser()
   # }
   # 
-  
+    
   if(Mod %in% c("SR_IndivRicker_Surv", "SR_IndivRicker_SurvCap", "SR_IndivRicker_NoSurv", "SR_IndivRicker_NoSurv_LowAggPrior",
                 "SR_IndivRicker_Surv_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior")){
     obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE, map=map)
@@ -200,6 +201,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
       mutate(Param = row.names(summary(sdreport(obj)))) %>% 
       filter(Param %in% c("logMuA", "logSigmaA"))
     obj <- MakeADFun(data, pl2, DLL=Mod, silent=TRUE, map=map3)
+    obj <- MakeADFun(data, pl2, DLL=Mod, silent=TRUE)
   }
   
   # Create upper & lower bounds vectors that are same length and order as nlminb start vector
@@ -211,6 +213,7 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   lower<-unlist(obj$par)
   lower[1:length(lower)]<--Inf
   lower[names(lower) =="logSgen"] <- log(0.001) # constrain Sgen to be positive
+  #lower[names(lower) =="B_0"] <- -10 # constrain B_0 not to go too negative
   lower<-unname(lower)
 
   opt <- tryCatch(
@@ -257,6 +260,8 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     out <- list()
     out$All_Ests <- All_Ests
 
+    
+    
         # also return agg abundance and num CUs over Sgen
     # depending on whether bernoulli or prop, grab correct N
     if(Bern_Logistic == T){
@@ -273,7 +278,6 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
       diagDat$p <- p
       diagDat$nLL<-obj$report()$ans
 
-    
     Logistic_Data <- data.frame(Mod = Mod, yr = Agg_Abund$yr, 
                                 yy = N_CUs, xx = Agg_Abund$Agg_Esc)
 
@@ -282,13 +286,19 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
     Logistic_Fits <- data.frame(xx = data$Pred_Abund*Scale, fit = inv_logit(Preds$Estimate),
                                 lwr = inv_logit(Preds$Estimate - 1.96*Preds$Std..Error),
                                 upr = inv_logit(Preds$Estimate + 1.96*Preds$Std..Error))
-    
     out$Preds <- Logistic_Fits
     
     out$LRP <- data.frame(fit = All_Ests %>% filter(Param == "Agg_LRP") %>% pull(Estimate), 
                           lwr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate - 1.96*Std..Error) %>% pull(xx),
                           upr = All_Ests %>% filter(Param == "Agg_LRP") %>% mutate(xx =Estimate + 1.96*Std..Error) %>% pull(xx))
 
+    
+    if (is.na(out$LRP$upr) == TRUE | out$LRP$lwr < 0) {
+      
+      out$LRP[,1:3]<-NA
+   
+    }
+    
     out$Diagnostic_Data<-diagDat
 
     out

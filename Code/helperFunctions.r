@@ -1,4 +1,4 @@
-# Inverse logit and logit funcitons can come in handy =====================================================================
+# Inverse logit and logit functions can come in handy =====================================================================
 inv_logit <- function(x){
   exp(x)/(1+exp(x))
 }
