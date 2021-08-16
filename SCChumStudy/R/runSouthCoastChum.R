@@ -71,7 +71,7 @@ names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits"
 # This may be done automatically, see retroFunctions.r line 20 
 # This is done automatically using the BroodYrLag variable 
 # First make full time series to use with percentile benchmarks (don't need recruit parameters so can use 1953-1957)
-ChumEscDat_full <- ChumEscpDat
+ChumEscpDat_full <- ChumEscpDat
 ChumSRDat_full <- ChumSRDat
 # remove years without full recruitment  - FLAG: still needing to run this, otherwise have NA recruitment going into model optimization
 ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
@@ -287,7 +287,7 @@ for(pp in 1:length(ps)){
 #
 # Howe Sound-Burrard Inlet: alpha = 2.6, ER = 0.32, benchmark = 25%
 
-# Make data frame with CU names and which perecntile to use for 
+# Make data frame with CU names and which percentile to use for 
 which_perc_benchmark <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
   "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
   "percentile" = c(NA, 0.5, 0.5, 0.5, NA, 0.25, 0.25))
@@ -369,7 +369,7 @@ for(pp in 1:length(ps)){
 # ========================================================================#
 
 # ---------------------------------------------#
-# Plot percentile benchmark over time
+# Plot percentile benchmark over time----------
 # ---------------------------------------------#
 pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
 #pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
@@ -381,8 +381,8 @@ pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_60/annualRetro_perc
 pdat2 <- merge(pdat, which_perc_benchmark, by.x="CU_Name", by.y="CU", all.x=TRUE)
 pdat2$perc_appr <- ifelse(is.na(pdat2$percentile)==FALSE, 1,0) # add variable that is 1 if percentile benchmarks are appropriate, 0 if not
 # add column to chum escapement data that is true if CU infilling was done
-ChumEscDat_full$CU_infill <- ifelse(is.na(ChumEscDat_full$Escape), TRUE, FALSE)
-pdat3 <- merge(pdat2, ChumEscDat_full[,names(ChumEscDat_full) %in% c("CU_Name","yr", "CU_infill")], by=c("CU_Name","yr"), all.x=TRUE)
+ChumEscpDat_full$CU_infill <- ifelse(is.na(ChumEscpDat_full$Escape), TRUE, FALSE)
+pdat3 <- merge(pdat2, ChumEscpDat_full[,names(ChumEscpDat_full) %in% c("CU_Name","yr", "CU_infill")], by=c("CU_Name","yr"), all.x=TRUE)
 
 # Get data frame that has one row per year, and the corresponding retro year benchmarks. 
 # Also has the rows from before retro years (years used up to first retro year)
@@ -405,10 +405,9 @@ ggplot(pbm, aes(y=benchmark_perc_25, x=retro_year, shape=as.factor(perc_appr))) 
   theme(strip.background = element_blank())
 dev.off()
 
-# ---------------------------------------------#
-# Look at stock recruit parameters over time
-# ---------------------------------------------#
-# Plot alpha, beta, SMSY and Sgen over time
+# --------------------------------------------------------------#
+# Plot alpha, beta, SMSY and Sgen over time---------
+# --------------------------------------------------------------#
 mdat <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 mdat1 <- mdat %>% pivot_longer(cols=est_B:up_Sgen, names_to="param", values_to="est")
 
@@ -469,14 +468,38 @@ dev.off()
 #   theme_bw()
 # dev.off()
 
+# --------------------------------------------------------------#
+# Plot LRP status by year, compare different methods -----------
+# --------------------------------------------------------------#
+
+# Roll up escpaments, and get Gen Mean of that
+AggEscp <- ChumEscpDat_full %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
+  mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
+
+
+# Plot annual status with bars to show years in which LRP was breached
+
+# Read in data from multi-dimensional/ decision tree and simple percentile approach for comparison
+
+md <- read.csv("DataIn/LRP_compare_methods.csv", header=TRUE)
+
+md$AboveLRP <- ifelse(md$lrp_status=="above", TRUE, FALSE)
+
+
+plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
+
+# --------------------------------------------------------------#
 # Plot ricker, SMSY, Sgen estimates from integrated model
+# --------------------------------------------------------------#
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
 ests1 <- ests[ests$retroYr ==max(ests$retroYr),] # get just one retro year for estimates
 t <- merge(ests1, ChumSRDat[, names(ChumSRDat) %in% c("BroodYear", "Spawners", "Recruits", "CU_Name")], by=c("CU_Name"))
 
 CUs <- unique(t$CU_Name)
 
+# --------------------------------------------------------------#
 # Plot recruits~spawner with ricker and Sgen and SMSY
+# --------------------------------------------------------------#
 png("Figures/fig_ricker_integrated_model.png", width=10, height=6, res=300, units="in")
 layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
 par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
@@ -491,7 +514,9 @@ for(i in 1:length(unique(ests$CU_ID))) {
   legend(x=1,y=5, lty=2, col=c("orange", "dodgerblue"), legend=c("Sgen", "SMSY"))
 dev.off()
 
+# --------------------------------------------------------------#
 # Plot log(recruits/spawner)~spawner with linear ricker and Sgen and SMSY
+# --------------------------------------------------------------#
 png("Figures/fig_linear_ricker_integrated_model.png", width=10, height=6, res=300, units="in")
 layout(mat=matrix(1:8, byrow = TRUE, ncol=4))
 par(mfrow=c(2,4), mar=c(4,4,4,0)+0.2)
@@ -505,6 +530,10 @@ for(i in 1:length(unique(ests$CU_ID))) {
 plot(x=1:10, y=1:10, type='n', ann = FALSE, xaxt = 'n', yaxt = 'n', bty = 'n')
 legend(x=1,y=5, lty=2, col=c("black", "orange", "dodgerblue"), legend=c("linear Ricker", "Sgen", "SMSY"))
 dev.off()
+
+# --------------------------------------------------------------#
+# Residual plots
+# --------------------------------------------------------------#
 
 # get residuals
 t$pred_rec <- t$Spawners * t$est_A * exp(-t$est_B * t$Spawners) 
