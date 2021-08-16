@@ -44,6 +44,11 @@ knitr-cache
 !/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor-cvER.png
 !/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor-Ages.png
 !/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor-recCorSca.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/Alphas-ProjLRPCurve-ALLp.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/baseER-ProjLRPCurve-ALLp.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/baseERn10000-ProjLRPCurve-ALLp.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/cvER-ProjLRPCurve-ALLp.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/ERs-ProjLRPCurve-ALLp.png
 /WCVIChinookStudy/DataOut/*
 
 
