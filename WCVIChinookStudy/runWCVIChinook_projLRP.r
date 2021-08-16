@@ -1410,18 +1410,18 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  # "ER0.05",
-  # "ER0.10",
-  # "ER0.15",
-  # "ER0.2",
-  # "ER0.25",
+  "ER0.05",
+  "ER0.10",
+  "ER0.15",
+  "ER0.2",
+  "ER0.25",
+  "baseER",
+  "ER0.35",
+  "ER0.4",
+  "ER0.45")
+  # "alphaScalar0.75",
   # "baseERn10000",
-  # "ER0.35",
-  # "ER0.4",
-  # "ER0.45")
-  "alphaScalar0.75",
-  "baseERn10000",
-  "alphaScalar1.5")
+  # "alphaScalar1.5")
   # "cvER0",
   # "baseER",
   # "cvER0.17")
@@ -1431,7 +1431,7 @@ OMsToInclude<-c(
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
 if(length(OMsToInclude)==9) OMsToIncludeName <- "ERs"
-if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphas"#"cvER"#"Alphas"#"cvER"#"
+if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
 
@@ -1578,10 +1578,10 @@ for (OM in 1:length(OMsToInclude)){
 
     if(length(OMsToInclude)==3){
 
-      panel.title <- c("0.75 x productivity", "Base productivty",
-                       "1.5 x productivity")
-      # panel.title <- c("cvER = 0", "cvER = 0.085",
-      #                  "cvER = 0.17")
+      # panel.title <- c("0.75 x productivity", "Base productivty",
+      #                  "1.5 x productivity")
+      panel.title <- c("cvER = 0", "cvER = 0.085",
+                       "cvER = 0.17")
       mtext(text=panel.title[OM], side=3, line=0, at=20000, cex=0.5)
 
       LRP_50 <- (read.csv(paste(wcviCKDir,
@@ -1593,8 +1593,8 @@ for (OM in 1:length(OMsToInclude)){
                                 OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
                   pull(LRP))[2]
 
-      if (OM<3) text(x=40000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
-      if (OM>1) text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
+      text(x=40000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
+      text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
 
       if(OM==1) {mtext("Prob(all inlets)>lower benchmark", side=2,
                        line=1.8,at=0.4, cex=0.55) }
