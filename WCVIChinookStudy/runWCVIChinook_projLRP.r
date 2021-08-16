@@ -1124,7 +1124,7 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
 
 
 
-ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor_recCorSca.png",sep=""), plot = g, #_recCorSca#_cvER#_Ages
+ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor-recCorSca.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
        width = 4, height = 3, units = "in")
 
 # summary(SpwnCorr.df %>% filter(OM_Name=="cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc") %>% pull(SpwnCorrValues))

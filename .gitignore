@@ -41,9 +41,9 @@ knitr-cache
 !/WCVIChinookStudy/samSimInputs/Ricker_mcmc_alphaScalar1_SREPScalar0.5.csv
 /WCVIChinookStudy/samSimOutputs/*
 /WCVIChinookStudy/Figures/*
-!/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor_cvER.png
-!/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor_Ages.png
-!/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor_recCorSca.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor-cvER.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor-Ages.png
+!/WCVIChinookStudy/Figures/ProjectedLRPs/compareEscCor-recCorSca.png
 /WCVIChinookStudy/DataOut/*
 
 
