@@ -106,6 +106,9 @@ for(i in 1:length(CUs)){
 }
 write.csv(ObsDF, "DataOut/summary_n_infilled_by_year.csv")
 
+# Get percentage of year-stream combinations that need infilling
+sum(ObsDF$Ninfilled)/(sum(ObsDF$Nobs)+sum(ObsDF$Ninfilled))
+
 #Now Infill for total escapement, no summer run
 AllDat <- Infill(data = ldat_s, groupby=c("CU_Name"), Uid = c("Rabcode", "GroupName"), unit="NME")
 # The output is a list of two elements. 

@@ -73,6 +73,7 @@ names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits"
 # First make full time series to use with percentile benchmarks (don't need recruit parameters so can use 1953-1957)
 ChumEscpDat_full <- ChumEscpDat
 ChumSRDat_full <- ChumSRDat
+
 # remove years without full recruitment  - FLAG: still needing to run this, otherwise have NA recruitment going into model optimization
 ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
 ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
