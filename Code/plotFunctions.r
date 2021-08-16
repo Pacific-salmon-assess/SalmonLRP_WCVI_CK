@@ -638,7 +638,7 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     
    projResults <- as_tibble( read.csv( 
     paste(outDir,
-          "/DataOut/ProjectedLRPs/ProjectedLRPscvER0.21baseER_ALLp.csv", 
+          "/DataOut/ProjectedLRPs/ProjectedLRPsbaseER_ALLp.csv", 
           sep= "" )))
     
   for (j in 1:length(pLRP)) {
@@ -699,12 +699,11 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     
   
   
-  #START FIXING HERE....
   # --- for each year, add to Status_DF using p thresholds, Ps
   #    --- note: should make these an input variable in the future
   Ps <- ps_Prop
   for(pp in 1:length(Ps)){
-    # Would use this is wanted to show the proportion of CUs above Sgen
+    # Would use this if wanted to show the proportion of CUs above Sgen
     #Name <- paste(propName,Ps[pp]*100)
     Status <- Inlet_Status_Summ$Prop >= Ps[pp]
     New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Ppn: Sgen", AboveLRP=Status)

@@ -1503,7 +1503,7 @@ for (OM in 1:length(OMsToInclude)){
         png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToIncludeName,
                   "-ProjLRPCurve-ALLp.png", sep=""), width=plot.width,
             height=plot.height,
-            units="in", res=500)
+            units="in", res=300)#500
         if(length(OMsToInclude)==9) layout(matrix(c(1:9), 3, 3, byrow = TRUE))
         if(length(OMsToInclude)==3) layout(matrix(c(1:3), 1, 3, byrow = TRUE))
 
