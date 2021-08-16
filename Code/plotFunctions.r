@@ -771,7 +771,13 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
       y <- low-inc*(mm)
       #do each plot segment by segment with appropriate colors
       for(k in 1:dim(Mdat)[1]){
-        segments(x0=Mdat$retroYear[k]-0.5, x1=Mdat$retroYear[k]+0.5, y0=y, y1=y, col=cols[Mdat$AboveLRP[k]+1], lwd=4)
+        segments(x0=Mdat$retroYear[k]-0.5, x1=Mdat$retroYear[k]+0.5, y0=y, y1=y, 
+                 col=cols[Mdat$AboveLRP[k]+1], lwd=4)
+      }
+      noAss <- !(retroYears %in%  Mdat$retroYear)
+      for(p in 1:length(retroYears)){
+        if(noAss[p]) points(x=retroYears[p], y=y, pch=4, col=grey(0.8), 
+                            cex=0.5)
       }
       #label the method
       text(x=(Xlow-((Xhigh-Xlow)/2)), y=y, labels=methods[mm], 
