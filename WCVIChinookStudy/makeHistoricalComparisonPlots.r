@@ -32,7 +32,7 @@ sourceAll <- function(){
 sourceAll()
 
 # ======================================================================
-# Read-in Coho data:
+# Read-in Chinook data:
 # =====================================================================
 setwd(wcviCKDir)
 
@@ -76,7 +76,7 @@ plotStatusBarsChinook_byYear(LRP_estYr, retroYears,  genYrs, AggEscp,
                              EscpDat=EscpDat, pLRP=0.5, ps_Prop=ps_Prop,
                              WSP_estYr=2016, WSP_AboveLRP=WSP_AboveLRP,
                              outDir = wcviCKDir,
-                             fName = paste("statusPlot_withBars",
+                             fName = paste("statusPlot-withBars",
                                            LRP_estYr,sep=""))
 
 
