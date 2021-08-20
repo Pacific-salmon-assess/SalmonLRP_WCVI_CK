@@ -486,7 +486,16 @@ md <- read.csv("DataIn/LRP_compare_methods.csv", header=TRUE)
 
 md$AboveLRP <- ifelse(md$lrp_status=="above", TRUE, FALSE)
 
-
+# Make new names for scenarios
+snames <- c("(a) CUs with data in all years & perc. benchmarks",
+            "(b) All years with data & perc. benchmarks",
+            "(a) CUs with data in all years & perc. benchmarks",
+            "(c) CUs with data in all years",
+            "(d) All years with data",
+            "(b) All years with data & perc. benchmarks")
+skey <- data.frame(id = sort(unique(md$scenario)), name=snames) 
+md$data_name <- skey$name[match(md$scenario, skey$id)]
+md$data_name <- paste0(md$scenario_name, " - ", md$data_name)
 plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
 
 # --------------------------------------------------------------#
