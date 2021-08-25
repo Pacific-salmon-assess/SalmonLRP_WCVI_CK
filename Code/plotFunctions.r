@@ -74,11 +74,11 @@ plot_CU_DataObs_Over_Time <-function(Dat, Dir, plotName) {
 }
 
 # Plot available CU estimates over time, by CU
-plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T) {
+plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withSgen=NULL) {
   
   theme_update(plot.title = element_text(hjust = 0.5))
   
-  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""), height = 6, width = 5)
+  png(paste(Dir,"/Figures/",plotName,".png",sep=""),width=780, height=510)
 
   p <- list()
   
@@ -88,27 +88,44 @@ plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T) {
         Dat.MU <- Dat %>% filter(MU == MUs[mm])
         escpDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU_Name, yr) %>% summarise(value=sum(Escp))
         p[[mm]]<-ggplot(data=escpDat,aes(x=yr,y=value)) + 
-              geom_line(aes(colour=CU_Name),size=1.1 ) + 
+              geom_line(aes(colour=CU_Name),size=1.2 ) + 
               labs(title=MUs[mm], x = "Year", y = "Escapement") + 
               theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
               theme_classic()
+        
       }
       
       
   } else {
     CUs <- unique(Dat$CU_Name)
+    
+    if (withSgen == T) {
+      # Get Sgen estimates for IM model
+       IM.ests<-read.csv(paste(Dir,"/DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv.csv", sep=""))
+       Sgen_IM<-IM.ests[IM.ests$Param=="Sgen","Estimate"]
+       IMcap.ests<-read.csv(paste(Dir,"/DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv_priorCap.csv",sep=""))
+       Sgen_IMcap<-IMcap.ests[IMcap.ests$Param=="Sgen","Estimate"]
+      }
+    
+    
+    
     for(ss in 1:length(CUs)){
+    
+      CU_label<-str_replace(CUs[ss], "_", " ")
+      
        escpDat <- Dat %>% filter(CU_Name == CUs[ss]) 
       p[[ss]]<-ggplot(data=escpDat,aes(x=yr,y=Escp)) +
-        geom_line() +
-        labs(title=CUs[ss], x = "Year", y = "Escapement") + 
-        theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
-        theme_classic()
+        geom_line(col="darkslategrey", size=1.2) +
+        labs(title=CU_label, x = "Year", y = "Escapement") + 
+        theme_classic() + ylim(0,28000) +
+        theme(plot.title = element_text(size=16, face="bold",hjust=0.5),
+              axis.text = element_text(size=12), axis.title =element_text(size=15)) 
+        
     }
   }
 
   
-  do.call( grid.arrange, args = c(p, nrow=2))
+  do.call(grid.arrange, args = c(p, nrow=2))
   
   
   dev.off()
