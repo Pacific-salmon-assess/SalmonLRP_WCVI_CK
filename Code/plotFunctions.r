@@ -655,7 +655,7 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     
    projResults <- as_tibble( read.csv( 
     paste(outDir,
-          "/DataOut/ProjectedLRPs/ProjectedLRPscvER0.21baseER_ALLp.csv", 
+          "/DataOut/ProjectedLRPs/ProjectedLRPsbaseER_ALLp.csv", 
           sep= "" )))
     
   for (j in 1:length(pLRP)) {
@@ -716,12 +716,11 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     
   
   
-  #START FIXING HERE....
   # --- for each year, add to Status_DF using p thresholds, Ps
   #    --- note: should make these an input variable in the future
   Ps <- ps_Prop
   for(pp in 1:length(Ps)){
-    # Would use this is wanted to show the proportion of CUs above Sgen
+    # Would use this if wanted to show the proportion of CUs above Sgen
     #Name <- paste(propName,Ps[pp]*100)
     Status <- Inlet_Status_Summ$Prop >= Ps[pp]
     New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Ppn: Sgen", AboveLRP=Status)
@@ -789,7 +788,13 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
       y <- low-inc*(mm)
       #do each plot segment by segment with appropriate colors
       for(k in 1:dim(Mdat)[1]){
-        segments(x0=Mdat$retroYear[k]-0.5, x1=Mdat$retroYear[k]+0.5, y0=y, y1=y, col=cols[Mdat$AboveLRP[k]+1], lwd=4)
+        segments(x0=Mdat$retroYear[k]-0.5, x1=Mdat$retroYear[k]+0.5, y0=y, y1=y, 
+                 col=cols[Mdat$AboveLRP[k]+1], lwd=4)
+      }
+      noAss <- !(retroYears %in%  Mdat$retroYear)
+      for(p in 1:length(retroYears)){
+        if(noAss[p]) points(x=retroYears[p], y=y, pch=4, col=grey(0.8), 
+                            cex=0.5)
       }
       #label the method
       text(x=(Xlow-((Xhigh-Xlow)/2)), y=y, labels=methods[mm], 
@@ -829,6 +834,100 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
   
 
 }
+
+
+#---------------------------------------------------------------------
+# Make Status Bar plots for Inside South Coast Chum
+#---------------------------------------------------------------------
+
+  
+plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
+    LRP_estYr <- max(Status_DF$year)
+    # Make Plot =============================================================
+    
+    methods <- sort(unique(Status_DF$scenario_name))
+
+    # --- set-up pdf to save to
+    png(paste("Figures/", fName, ".png", sep=""), width=700, height=580)
+    par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
+    
+    # ---- specify colouts 
+    cols <- c( "#FF0900", "grey80") # (red, grey)
+    
+    #---- set xlims for all sites
+    Xlow <- min(Status_DF$year)
+    Xhigh <- max(Status_DF$year)
+    
+    # --- standardize aggregate escapement values
+    AggEscp <- AggEscp %>% filter(yr %in% unique(Status_DF$year))
+    AggEscp$StdGen_Mean<- AggEscp$Gen_Mean/mean(AggEscp$Gen_Mean, na.rm=TRUE)
+    #AggEscp$StdAgg_Escp <- AggEscp$Agg_Escp/mean(AggEscp$Agg_Escp, na.rm=T) # - do not need this at present bc only comparing to Gen_Mean
+    
+    # --- plot margin, also use for jittering
+    low <- min(AggEscp$StdGen_Mean, na.rm=TRUE) 
+    high <- max(AggEscp$StdGen_Mean, na.rm=TRUE)
+    
+    # --- create empty plotting region
+    plot(1, type="n", xlab="", ylab="", xlim=c(Xlow, Xhigh), ylim=c(low-(high-low)/8*length(methods), high), axes=FALSE,
+         main = paste("LRP Estimation Year = ",LRP_estYr, sep=""))
+    
+    # --- add generational mean escapement
+    lines(x=AggEscp$yr, y=AggEscp$StdGen_Mean, lwd=1.5)
+    
+    # --- loop over methods and ....
+    for(mm in 1:length(methods)){
+      #subset data by method
+      Mdat <- Status_DF %>% filter(scenario_name == methods[mm] & is.na(AboveLRP)==FALSE)
+      
+      if(dim(Mdat)[1] > 0){
+        #set y location for that method
+        #set increment
+        inc <- (high-low)/8
+        y <- low-inc*(mm)
+        #do each plot segment by segment with appropriate colors
+        for(k in 1:dim(Mdat)[1]){
+          segments(x0=Mdat$year[k]-0.5, x1=Mdat$year[k]+0.5, y0=y, y1=y, col=cols[Mdat$AboveLRP[k]+1], lwd=4)
+        }
+        #label the method
+        text(x=(Xlow-((Xhigh-Xlow)/2)), y=y, labels=methods[mm], 
+             xpd=NA, pos=4, cex=0.8)
+      }
+    }
+    
+    
+    # Add vertical lines to plots to help distinguish years
+    addVertLines_minor<-function(x,low,high,n) {
+      segments(x0=x, y0=low-(high-low)/8*n, x1=x, y1=high, lty=3,col="grey85")
+    }
+    
+    addVertLines_major<-function(x,low,high,n) {
+      segments(x0=x, y0=low-(high-low)/8*n, x1=x, y1=high, lty=2)
+    }
+    
+    
+    # sapply(seq(1999.5,2018.5,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
+    # sapply(seq(1999.5,2015.5,by=5), addVertLines_major,low=low,high=high,n=length(methods))
+    
+    #sapply(seq(1998,2018,by=1), addVertLines_minor,low=low,high=high,n=length(methods))
+    #sapply(seq(2000,2015,by=5), addVertLines_major,low=low,high=high,n=length(methods))
+    
+    # add x-axis label
+    axis(1)
+    mtext(side = 1, "Year", outer = TRUE)
+    text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4)
+    
+    # legend( "topright", bty="n", lty=c(1,1,1,1), lwd=c(2,2,4,2) , 
+    #         col=c("black", "grey", "#08AB0B", Tcols[1]),
+    #         legend=c( "Gen. Mean Esc.", "Escapement", 
+    #                   "Status", "Status 95% CI"),
+    #         cex = 0.7) 
+    
+    dev.off()
+    
+  }
+
+
+
 
 
 plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, inputPrefix, plotAveLine) {
