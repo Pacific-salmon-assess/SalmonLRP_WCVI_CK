@@ -119,7 +119,9 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # 
 # # Note: these next 2 two escpt plots need to have formatting fixed
 # plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
-# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc Separate", samePlont = F)
+ plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-escapeSeries", samePlot = F)
+ plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-escapeSeries", samePlot = F, withSgen=TRUE)
+
 # plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
 # plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
 
@@ -157,7 +159,14 @@ TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
 
 # Prior means come from running "compareRickerModelTypes.r"
 # with only 1.40 expansion of mean
-cap_priorMean_IM<-c(11.617086, 6.222576, 14.357245, 23.451891, 17.510972)
+#cap_priorMean_IM<-c(11.617086, 6.222576, 14.357245, 23.451891, 17.510972)
+
+# Prior means come from running "compareRickerModelTypes_onlySR.r"
+# with only 1.40 expansion of mean
+cap_priorMean_IM<-c(11.093778, 4.404835, 13.115026, 26.147670, 17.075453)
+
+# with only 1.35 expansion of mean
+#cap_priorMean_IM<-c(10.697571, 4.247519, 12.646633, 25.213824, 16.465615)
 
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
