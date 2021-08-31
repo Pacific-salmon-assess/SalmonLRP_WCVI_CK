@@ -828,10 +828,10 @@ plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
     LRP_estYr <- max(Status_DF$year)
     # Make Plot =============================================================
     
-    methods <- sort(unique(Status_DF$scenario_name))
+    methods <- sort(unique(Status_DF$data_name))
 
     # --- set-up pdf to save to
-    png(paste("Figures/", fName, ".png", sep=""), width=700, height=580)
+    png(paste("Figures/", fName, ".png", sep=""), width=8, height=6, units="in", res=300)
     par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
     
     # ---- specify colouts 
@@ -860,7 +860,7 @@ plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
     # --- loop over methods and ....
     for(mm in 1:length(methods)){
       #subset data by method
-      Mdat <- Status_DF %>% filter(scenario_name == methods[mm] & is.na(AboveLRP)==FALSE)
+      Mdat <- Status_DF %>% filter(data_name == methods[mm] & is.na(AboveLRP)==FALSE)
       
       if(dim(Mdat)[1] > 0){
         #set y location for that method
