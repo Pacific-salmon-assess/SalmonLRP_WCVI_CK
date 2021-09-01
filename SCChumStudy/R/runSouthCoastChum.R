@@ -498,6 +498,21 @@ md$data_name <- skey$name[match(md$scenario, skey$id)]
 plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
 
 # --------------------------------------------------------------#
+# Write csv for diagnostics - Box-Tidwell Test
+# --------------------------------------------------------------#
+head(md)
+head(AggEscp)
+unique(md$scenario_name)
+md1 <- md[md$scenario_name=="1 - Percentile",]
+md1$ppn <- ifelse(md1$lrp_status=="above", 1,0)
+
+AggEscp_no_CU_infill <- ChumEscpDat_no_CU_infill %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
+  mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
+ld <- merge(md1, AggEscp_no_CU_infill, by.x="year", by.y="yr")
+ld1 <- ld[ , names(ld) %in% c("year", "Agg_Escp", "ppn" )  ]
+write.csv(ld1, "DataOut/agg_abund_no_CU_infill_for_diagnostics.csv", row.names = FALSE)
+
+# --------------------------------------------------------------#
 # Plot ricker, SMSY, Sgen estimates from integrated model
 # --------------------------------------------------------------#
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
