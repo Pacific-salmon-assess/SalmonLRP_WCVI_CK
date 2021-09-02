@@ -504,26 +504,6 @@ md$data_name <- skey$name[match(md$scenario, skey$id)]
 plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
 
 # --------------------------------------------------------------#
-# Write csv for diagnostics - Box-Tidwell Test
-# --------------------------------------------------------------#
-# Get aggregate abundnace of just the 4 CUs used for percentile benchmark with no CU infilling
-AggEscp_full_no_CU_infill <- ChumEscpDat_perc %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
-  mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
-
-head(md)
-head(AggEscp_full_no_CU_infill)
-unique(md$scenario_name)
-# Select just the scenario that uses 4 CUs, percentile benchmark
-md1 <- md[md$scenario_name=="1 - Percentile",]
-# add 1 or 0 column for whether it is above LRP
-md1$ppn <- ifelse(md1$lrp_status=="above", 1,0)
-
-
-ld <- merge(md1, AggEscp_full_no_CU_infill, by.x="year", by.y="yr")
-ld1 <- ld[ , names(ld) %in% c("year", "Agg_Escp", "ppn" )  ]
-write.csv(ld1, "DataOut/agg_abund_no_CU_infill_for_diagnostics.csv", row.names = FALSE)
-
-# --------------------------------------------------------------#
 # Plot ricker, SMSY, Sgen estimates from integrated model
 # --------------------------------------------------------------#
 ests <- read.csv("DataOut/AnnualRetrospective/Bin.IndivRicker_NoSurv_noCUinfill_60/annualRetro_SRparsByCU.csv", stringsAsFactors = FALSE)
