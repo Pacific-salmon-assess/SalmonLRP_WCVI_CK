@@ -74,7 +74,7 @@ names(ChumSRDat)[names(ChumSRDat) == "Recruit"] <- "Recruits"
 ChumEscpDat_full <- ChumEscpDat
 ChumSRDat_full <- ChumSRDat
 
-# remove years without full recruitment  - FLAG: still needing to run this, otherwise have NA recruitment going into model optimization
+# remove years without age data. need to run this, otherwise have NA recruitment going into model optimization
 ChumEscpDat <- ChumEscpDat[ChumEscpDat$yr >= 1958 ,] # remove years without full recruitment
 ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without full recruitment
 
@@ -82,6 +82,11 @@ ChumSRDat <- ChumSRDat[ChumSRDat$BroodYear >= 1958 ,] # remove years without ful
 CUs_not_use <- unique(ChumEscpDat$CU_Name[which(is.na(ChumEscpDat$Escape))]) # get CUs that have NA values for escapement in some years (means that they were infilled at CU level)
 ChumEscpDat_no_CU_infill <- ChumEscpDat[!(ChumEscpDat$CU_Name %in% CUs_not_use), ]
 ChumSRDat_no_CU_infill <- ChumSRDat[!(ChumSRDat$CU_Name %in% CUs_not_use), ]
+
+# do with full data time series for percentile retrospective
+ChumEscpDat_full_no_CU_infill <- ChumEscpDat_full[!(ChumEscpDat_full$CU_Name %in% CUs_not_use), ]
+ChumSRDat_full_no_CU_infill <- ChumSRDat_full[!(ChumSRDat_full$CU_Name %in% CUs_not_use), ]
+
 
 # make data frames that do not include any observations from years that have any amount of CU-level infilling
 years_not_use <- unique(ChumEscpDat$yr[which(is.na(ChumEscpDat$Escape))])
@@ -125,7 +130,115 @@ length(unique(ChumEscpDat_no_CU_infill_yrs$yr))
 # ChumSRDat_no_knight <- ChumSRDat[  !(ChumSRDat$CU_Name=="Upper Knight" | ChumSRDat$BroodYear %in% years_not_use_bute2),  ]
 
 # Specify p value for logistic regression
-ps <- c(seq(0.6, 0.95,.05), 0.99) 
+ps <- c(0.5, seq( 0.6, 0.95,.05), 0.99) 
+
+# ========================================================================#
+# Run aggregate LRP with Percentile benchmarks-----------
+# ========================================================================#
+
+# Currently there is a discrepancy between CU_ID variable in percentile/subpop and Sgen 
+# based retrospective. Need to sort this out. 
+
+# First, make data frame of CUs and which percentile to use for their lower benchmark,
+# based on their productivity (Ricker alpha) and mean exploitation rate (ER), 
+# according to Table 6 in Holt et al. 2018
+# Here, I do this manually, taking alpha values from data outputs from retro year 2010 and from mean of exploitation rates
+#
+# Southern Coastal Streams: alpha = 1.3, ER = 0.04, benchmark = NA (further evaluation required) 
+#
+# Northeast Vancouver Island: alpha = 1.7, ER = 0.05, benchmark = 50%
+#
+# Upper Knight: alpha = 2.6 (note this is higher than Holt et al. 2018, likely due to recent CU-level infilling escapement;
+#       choosing alpha = 2.22 value from Holt et al. 2018 table 2 to be conservative. It doesn't really matter for the logistic 
+#       regression because this CU is not used in the logistic regression because of CU-level infilling), ER = 0.07, benchmark = 50%
+#
+# Loughborough: alpha = 2.4, ER = 0.18, benchmark = 50%
+#
+# Bute Inlet: alpha = 2.7 (note this is higher than Holt et al. 2018, likely due to recent CU-level infilling escapement;
+#       choosing alpha = 2.46 value from Holt et al. 2018 table 2 to be conservative. It doesn't really matter for the logistic 
+#       regression because this CU is not used in the logistic regression because of CU-level infilling), ER = 0.22, 
+#       benchmark = NA (further evaluation required) 
+#
+# Georgia Strait: alpha = 3.3, ER = 0.38, benchmark = 25%
+#
+# Howe Sound-Burrard Inlet: alpha = 2.6, ER = 0.32, benchmark = 25%
+
+# Make data frame with CU names and which percentile to use for 
+which_perc_benchmark <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
+                                            "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
+                                   "percentile" = c(NA, 0.5, 0.5, 0.5, NA, 0.25, 0.25))
+# also make one with 0.75 for the two CUs where percentiles are not recommended, to make figure with all 7 CUs
+which_perc_benchmark_hack <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
+                                                 "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
+                                        "percentile" = c(0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0.25))
+
+# Remove any CUs that have NA percentile benchmark (percentile benchmarks not recommended in Holt et al. 2018 Table 6)
+ChumEscpDat_perc <- ChumEscpDat_full_no_CU_infill[ !(ChumEscpDat_full_no_CU_infill$CU_Name %in% which_perc_benchmark$CU[is.na(which_perc_benchmark$percentile)] ), ]
+ChumSRDat_perc <- ChumSRDat_full_no_CU_infill[ !(ChumSRDat_full_no_CU_infill$CU_Name %in% which_perc_benchmark$CU[is.na(which_perc_benchmark$percentile)] ), ]
+
+TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
+                              Tau_dist = 0.1,
+                              gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                              B_penalty_mu = NA, B_penalty_sigma = NA, perc_benchmark= which_perc_benchmark)
+TMB_Inputs_Percentile_hack <- list(Scale = 1000, logA_Start = 1,
+                                   Tau_dist = 0.1,
+                                   gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                                   B_penalty_mu = NA, B_penalty_sigma = NA, perc_benchmark= which_perc_benchmark_hack)
+# Run retrospective analysis using percentile benchmarks
+for(pp in 1:length(ps)){
+  # Run with Binomial LRP with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
+  # runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T,  runLogisticDiag=T)
+  # # Run with CU-level infilling (to make plots with percentile benchmarks over time for all 7 CUs)
+  # # This is just for making the plot with status for all 7 CUs
+  # runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile_hack, outDir=chumDir, RunName = paste("Bin.Percentile_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
+  # Run without Upper Knight CU
+  # runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
+  #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_no_knight_",ps[pp]*100, sep=""),
+  #                bootstrapMode = F, plotLRP=T)
+  # 
+  # Run with Bernouli regression with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
+  runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1957, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
+                 BMmodel = "Percentile", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                 useGenMean=FALSE, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bern.Percentile_noCUinfill_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
+}
+
+# ---------------------------------------------#
+# Run percentile LRP with low aggregate penalty values
+# ---------------------------------------------#
+# Get low aggregate penalty values
+# pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
+# pdat1 <- pdat[pdat$retro_year ==max(pdat$retro_year),]
+# pdat2 <- pdat1 %>% group_by(CU_Name, CU, benchmark_perc_25) %>% summarise(n())
+# # make lower limit=0, upper limit sum of 25% benchmarks for retro year 2010
+# low_lim_perc <- 0
+# hi_lim_perc <- sum(pdat2$benchmark_perc_25)
+# 
+# B_penalty_perc_mu <- mean(c(low_lim_perc, hi_lim_perc)) 
+# dum_perc<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=1000000, low_lim=low_lim_perc, hi_lim=hi_lim_perc)
+# B_penalty_perc_sigma<-dum_perc$par
+# 
+# TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
+#                               Tau_dist = 0.1,
+#                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                               B_penalty_mu = B_penalty_perc_mu, B_penalty_sigma = B_penalty_perc_sigma)
+# 
+# # Run retrospective analysis using percentile benchmarks, with likelihood penalty
+# for(pp in 1:length(ps)){
+#   # with prior penalty on low aggregate abundance
+#   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
+#                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
+#                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
+#                  bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
+# }
+
 
 # ========================================================================#
 # Run annual restrospective analysis using stock recruit parameter based Sgen----------
@@ -257,113 +370,6 @@ for(pp in 1:length(ps)){
 #   #}
 # }
 
-# ========================================================================#
-# Run aggregate LRP with Percentile benchmarks-----------
-# ========================================================================#
-
-# Currently there is a discrepancy between CU_ID variable in percentile/subpop and Sgen 
-# based retrospective. Need to sort this out. 
-
-# First, make data frame of CUs and which percentile to use for their lower benchmark,
-# based on their productivity (Ricker alpha) and mean exploitation rate (ER), 
-# according to Table 6 in Holt et al. 2018
-# Here, I do this manually, taking alpha values from data outputs from retro year 2010 and from mean of exploitation rates
-#
-# Southern Coastal Streams: alpha = 1.3, ER = 0.04, benchmark = NA (further evaluation required) 
-#
-# Northeast Vancouver Island: alpha = 1.7, ER = 0.05, benchmark = 50%
-#
-# Upper Knight: alpha = 2.6 (note this is higher than Holt et al. 2018, likely due to recent CU-level infilling escapement;
-#       choosing alpha = 2.22 value from Holt et al. 2018 table 2 to be conservative. It doesn't really matter for the logistic 
-#       regression because this CU is not used in the logistic regression because of CU-level infilling), ER = 0.07, benchmark = 50%
-#
-# Loughborough: alpha = 2.4, ER = 0.18, benchmark = 50%
-#
-# Bute Inlet: alpha = 2.7 (note this is higher than Holt et al. 2018, likely due to recent CU-level infilling escapement;
-#       choosing alpha = 2.46 value from Holt et al. 2018 table 2 to be conservative. It doesn't really matter for the logistic 
-#       regression because this CU is not used in the logistic regression because of CU-level infilling), ER = 0.22, 
-#       benchmark = NA (further evaluation required) 
-#
-# Georgia Strait: alpha = 3.3, ER = 0.38, benchmark = 25%
-#
-# Howe Sound-Burrard Inlet: alpha = 2.6, ER = 0.32, benchmark = 25%
-
-# Make data frame with CU names and which percentile to use for 
-which_perc_benchmark <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
-  "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
-  "percentile" = c(NA, 0.5, 0.5, 0.5, NA, 0.25, 0.25))
-# also make one with 0.75 for the two CUs where percentiles are not recommended, to make figure with all 7 CUs
-which_perc_benchmark_hack <- data.frame("CU" = c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight", 
-                                            "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound-Burrard Inlet"),
-                                   "percentile" = c(0.5, 0.5, 0.5, 0.5, 0.5, 0.25, 0.25))
-
-# Remove any CUs that have NA percentile benchmark (percentile benchmarks not recommended in Holt et al. 2018 Table 6)
-ChumEscpDat_perc <- ChumEscpDat_no_CU_infill[ !(ChumEscpDat_no_CU_infill$CU_Name %in% which_perc_benchmark$CU[is.na(which_perc_benchmark$percentile)] ), ]
-ChumSRDat_perc <- ChumSRDat_no_CU_infill[ !(ChumSRDat_no_CU_infill$CU_Name %in% which_perc_benchmark$CU[is.na(which_perc_benchmark$percentile)] ), ]
-
-TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
-                              Tau_dist = 0.1,
-                              gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                              B_penalty_mu = NA, B_penalty_sigma = NA, perc_benchmark= which_perc_benchmark)
-TMB_Inputs_Percentile_hack <- list(Scale = 1000, logA_Start = 1,
-                              Tau_dist = 0.1,
-                              gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                              B_penalty_mu = NA, B_penalty_sigma = NA, perc_benchmark= which_perc_benchmark_hack)
-# Run retrospective analysis using percentile benchmarks
-for(pp in 1:length(ps)){
-  # Run with Binomial LRP with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
-  # runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_noCUinfill_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T,  runLogisticDiag=T)
-  # # Run with CU-level infilling (to make plots with percentile benchmarks over time for all 7 CUs)
-  # # This is just for making the plot with status for all 7 CUs
-  runAnnualRetro(EscpDat=ChumEscpDat, SRDat=ChumSRDat, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
-                 BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-                 useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile_hack, outDir=chumDir, RunName = paste("Bin.Percentile_",ps[pp]*100, sep=""),
-                 bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
-  # Run without Upper Knight CU
-  # runAnnualRetro(EscpDat=ChumEscpDat_no_knight, SRDat=ChumSRDat_no_knight, startYr=1967, endYr=1998, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_no_knight_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T)
-  # 
-  # Run with Bernouli regression with CUs with CU-level infilling removed # changed endYr to 2018 as recruits not needed
-  # runAnnualRetro(EscpDat=ChumEscpDat_perc, SRDat=ChumSRDat_perc, startYr=1967, endYr=2018, BroodYrLag=4, genYrs=4, p = ps[pp],
-  #                BMmodel = "Percentile", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-  #                useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bern.Percentile_noCUinfill_",ps[pp]*100, sep=""),
-  #                bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
-  
-}
-
-# ---------------------------------------------#
-# Run percentile LRP with low aggregate penalty values
-# ---------------------------------------------#
-# Get low aggregate penalty values
-# pdat <- read.csv("DataOut/AnnualRetrospective/Bin.Percentile_noCUinfill_60/annualRetro_perc_benchmarks.csv", stringsAsFactors = FALSE)
-# pdat1 <- pdat[pdat$retro_year ==max(pdat$retro_year),]
-# pdat2 <- pdat1 %>% group_by(CU_Name, CU, benchmark_perc_25) %>% summarise(n())
-# # make lower limit=0, upper limit sum of 25% benchmarks for retro year 2010
-# low_lim_perc <- 0
-# hi_lim_perc <- sum(pdat2$benchmark_perc_25)
-# 
-# B_penalty_perc_mu <- mean(c(low_lim_perc, hi_lim_perc)) 
-# dum_perc<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=1000000, low_lim=low_lim_perc, hi_lim=hi_lim_perc)
-# B_penalty_perc_sigma<-dum_perc$par
-# 
-# TMB_Inputs_Percentile <- list(Scale = 1000, logA_Start = 1,
-#                               Tau_dist = 0.1,
-#                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-#                               B_penalty_mu = B_penalty_perc_mu, B_penalty_sigma = B_penalty_perc_sigma)
-# 
-# # Run retrospective analysis using percentile benchmarks, with likelihood penalty
-# for(pp in 1:length(ps)){
-#   # with prior penalty on low aggregate abundance
-#   runAnnualRetro(EscpDat=ChumEscpDat_no_CU_infill, SRDat=ChumSRDat_no_CU_infill, startYr=1967, endYr=2010, BroodYrLag=4, genYrs=4, p = ps[pp],
-#                  BMmodel = "Percentile", LRPmodel="BinLogistic", LRPfile="LRP_Logistic_Only_LowAggPrior", integratedModel=F,
-#                  useGenMean=F, TMB_Inputs=TMB_Inputs_Percentile, outDir=chumDir, RunName = paste("Bin.Percentile_LowAggPrior_noCUinfill_",ps[pp]*100, sep=""),
-#                  bootstrapMode = F, plotLRP=T, runLogisticDiag=T)
-# }
 
 # ========================================================================#
 # Make figures from outputs ---------- 
@@ -500,15 +506,20 @@ plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LR
 # --------------------------------------------------------------#
 # Write csv for diagnostics - Box-Tidwell Test
 # --------------------------------------------------------------#
+# Get aggregate abundnace of just the 4 CUs used for percentile benchmark with no CU infilling
+AggEscp_full_no_CU_infill <- ChumEscpDat_perc %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
+  mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
+
 head(md)
-head(AggEscp)
+head(AggEscp_full_no_CU_infill)
 unique(md$scenario_name)
+# Select just the scenario that uses 4 CUs, percentile benchmark
 md1 <- md[md$scenario_name=="1 - Percentile",]
+# add 1 or 0 column for whether it is above LRP
 md1$ppn <- ifelse(md1$lrp_status=="above", 1,0)
 
-AggEscp_no_CU_infill <- ChumEscpDat_no_CU_infill %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
-  mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
-ld <- merge(md1, AggEscp_no_CU_infill, by.x="year", by.y="yr")
+
+ld <- merge(md1, AggEscp_full_no_CU_infill, by.x="year", by.y="yr")
 ld1 <- ld[ , names(ld) %in% c("year", "Agg_Escp", "ppn" )  ]
 write.csv(ld1, "DataOut/agg_abund_no_CU_infill_for_diagnostics.csv", row.names = FALSE)
 
