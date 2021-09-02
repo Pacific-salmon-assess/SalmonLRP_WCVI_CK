@@ -291,7 +291,7 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
           plot.title = element_text(size = 20)
     ) 
   p1+p2
-  ggsave(p1+p2, file=paste(dir, plotname, ".png", sep=""))
+  ggsave(p2, file=paste(dir, plotname, ".png", sep=""))
   
   #-----------------------------------------------------------------------------
   # Step 3:
@@ -305,7 +305,7 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   p4 <- ggplot.corr(data=DevResid, title="Deviance residuals") 
   
   p3+p4
-  ggsave(p3+p4, file=paste(dir, plotname, "acf.png"))
+  ggsave(p4, file=paste(dir, plotname, "acf.png", sep=""))
   
   
   #-----------------------------------------------------------------------------
