@@ -194,26 +194,20 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
       dum<-mpdOut$All_Ests[mpdOut$All_Ests$Param != "logSigmaA",]
       CUpars$sigma <- exp(dum[grepl("logSigma",dum$Param),"Estimate"])
 
-      CUpars$coef1 <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
+      CUpars$gamma <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
       # -- add initial marine survival covariate based on recent average, scaled by stock-specific return at age
-      
-      #muSurv <- SRDat %>% group_by(CU_ID) %>%
-      #  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
-      #CUpars$covarInit<-muSurv
+    
       
       # -- specify distribution for marine survival for annual sampling
-      #means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
-      # Do not take out pre-1999 years so that estimation and projection are consistent
-      means_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
-      CUpars$mu_logCovar1 <- means_log$coVariate
-      #sigs_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
-      sigs_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
-      CUpars$sig_logCovar1 <- sigs_log$coVariate
-      CUpars$min_logCovar <- rep(-5.914504,length(unique(SRDat$CU_ID)))
-      CUpars$max_logCovar <- rep(-2.701571,length(unique(SRDat$CU_ID)))
-      CUpars$covarInit <-exp(means_log$coVariate)
-      
-      
+      # Do not take out pre-1999 years (like Arbeider et al. 2020 did) so that estimation and projection are consistent
+      mean_logMS<-SRDat %>% group_by(CU_ID) %>% summarise(mean_logMS=mean(log(STAS_Age_3)))
+      CUpars$mu_logCovar1 <- mean_logMS$mean_logMS
+      sig_logMS<-SRDat %>% group_by(CU_ID) %>% summarise(sig_logMS=sd(log(STAS_Age_3)))
+      CUpars$sig_logCovar1 <- sig_logMS$sig_logMS
+      CUpars$min_logCovar <- rep(log(0.000128),length(unique(SRDat$CU_ID))) # lowest observed mSurv in updated 2020 dataset
+      CUpars$max_logCovar <- rep(log(0.036),length(unique(SRDat$CU_ID))) # highest observed mSurv in updated 2020 dataset
+    
+
       # -- add mean recruitment, by age
       CUpars$meanRec2 <- rep(0,length(unique(SRDat$CU_ID)))
       rec3<-SRDat %>% group_by(CU_ID) %>% summarize(rec3=mean(Age_3_Recruits/Recruits))
@@ -256,8 +250,8 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
       # Use standard deviation of gamma posterior is mcmc output is available
       gammaSig<-as.numeric(mcmcOut %>% filter(stk==1) %>% summarize(sd(gamma)))
     }
-    simPars$sampCU_coef1<-TRUE
-    simPars$sigCU_coef1<-gammaSig*gammaSigScalar
+    simPars$sampCU_gamma<-TRUE
+    simPars$sigCU_gamma<-gammaSig*gammaSigScalar
   }
   
   # Add BiasCorr to simPars
@@ -556,24 +550,18 @@ run_ScenarioProjParallel <- function(SRDat, BMmodel, scenarioName, useGenMean,
       dum<-mpdOut$All_Ests[mpdOut$All_Ests$Param != "logSigmaA",]
       CUpars$sigma <- exp(dum[grepl("logSigma",dum$Param),"Estimate"])
       
-      CUpars$coef1 <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
+      CUpars$gamma <- rep(mpdOut$All_Ests[grepl("gamma", mpdOut$All_Ests$Param), "Estimate" ],length(unique(SRDat$CU_ID)))
       # -- add initial marine survival covariate based on recent average, scaled by stock-specific return at age
+     
       
-      #muSurv <- SRDat %>% group_by(CU_ID) %>%
-      #  summarise(muSurv = mean(STAS_Age_3*(Age_3_Recruits/Recruits) + STAS_Age_4*(Age_4_Recruits/Recruits)))
-      #CUpars$covarInit<-muSurv
       # -- specify distribution for marine survival for annual sampling
-      #means_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
-      # Do not take out pre-1999 years so that estimation and projection are consistent
-      means_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=mean(log(STAS_Age_3)))
-      CUpars$mu_logCovar1 <- means_log$coVariate
-      #sigs_log<-SRDat %>% filter(BroodYear > 1999) %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
-      sigs_log<-SRDat %>% group_by(CU_ID) %>% summarise(coVariate=sd(log(STAS_Age_3)))
-      CUpars$sig_logCovar1 <- sigs_log$coVariate
-      CUpars$min_logCovar <- rep(-5.914504,length(unique(SRDat$CU_ID)))
-      CUpars$max_logCovar <- rep(-2.701571,length(unique(SRDat$CU_ID)))
-      CUpars$covarInit <-exp(means_log$coVariate)
-      
+      # Do not take out pre-1999 years (like Arbeider et al. 2020 did) so that estimation and projection are consistent
+      mean_logMS<-SRDat %>% group_by(CU_ID) %>% summarise(mean_logMS=mean(log(STAS_Age_3)))
+      CUpars$mu_logCovar1 <- mean_logMS$mean_logMS
+      sig_logMS<-SRDat %>% group_by(CU_ID) %>% summarise(sig_logMS=sd(log(STAS_Age_3)))
+      CUpars$sig_logCovar1 <- sig_logMS$sig_logMS
+      CUpars$min_logCovar <- rep(log(0.000128),length(unique(SRDat$CU_ID))) # lowest observed mSurv in updated 2020 dataset
+      CUpars$max_logCovar <- rep(log(0.036),length(unique(SRDat$CU_ID))) # highest observed mSurv in updated 2020 dataset
       
       # -- add mean recruitment, by age
       CUpars$meanRec2 <- rep(0,length(unique(SRDat$CU_ID)))
@@ -625,8 +613,8 @@ run_ScenarioProjParallel <- function(SRDat, BMmodel, scenarioName, useGenMean,
       # Use standard deviation of gamma posterior is mcmc output is available
       gammaSig<-as.numeric(mcmcOut %>% filter(stk==1) %>% summarize(sd(gamma)))
     }
-    simPars$sampCU_coef1<-TRUE
-    simPars$sigCU_coef1<-gammaSig*gammaSigScalar
+    simPars$sampCU_gamma<-TRUE
+    simPars$sigCU_gamma<-gammaSig*gammaSigScalar
   }
   
   # Add BiasCorr to simPars

@@ -188,13 +188,14 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 set.seed(100)
 
 
-scenarioName <- "quickTest"
-BMmodel <- "SR_HierRicker_Surv"
-TMB_Inputs <- TMB_Inputs_HM
+
+scenarioName <- "IM"
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs <- TMB_Inputs_IM
 
 projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
-                                nMCMC=1000, nProj=10, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+                                nMCMC=5000, nProj=1000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
                                 biasCorrectEst=T, biasCorrectProj=T)
 
 
@@ -381,6 +382,8 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=s
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
 probThreshList<-c(0.50, 0.66, 0.90, 0.95) # probability theshhold; the LRP is set as the aggregate abundance that has this 
                     # probability that the propCUThreshold is met
+
+OMsToInclude<-"IM"
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
