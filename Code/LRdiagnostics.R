@@ -125,7 +125,7 @@ source(here::here("Code", "helperFunctions.r"))
 #----------------------------------------------------------------------------
 # Input data
 
-caseStudy <- "WCVIchinook"#"ISCchum"# 
+caseStudy <- "ISCchum"# #"WCVIchinook"#"ISCchum"# 
 
 if(caseStudy=="WCVIchinook") {
   load(here::here("WCVIChinookStudy", "DataIn", "Input_LRdiagnostics.rda"))
@@ -141,16 +141,16 @@ if(caseStudy=="WCVIchinook") {
 
 # ISC Chum
 if(caseStudy=="ISCchum") {
-  load(here::here("DataIn", "Input_logisticFit_ISC2018.rda"))
+  load(here::here("SCChumStudy", "DataIn", "logisticFit_2018.rda"))
   
   SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
                                                       Years=yr)
   nCU <- 4
   All_Ests <- LRP_Mod$All_Ests
-  p <- input$p
-  Bern_logistic <- input$Bern_logistic
-  dir <- input$dir
-  plotname <- input$plotname  
+  p <- 0.5
+  Bern_logistic <- TRUE
+  dir <- "/SCChumStudy/DataOut/"
+  plotname <- "LogRegDiagPlot"  
 }
 
 #-------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   ScaleSMU <- min(10^(digits -1 ), na.rm=T)
   
   data$LM_Agg_Abund <- SMUlogisticData$SMU_Esc/ScaleSMU
-  data$LM_Agg_AbundxLn <- SMUlogisticData$SMU_Esc/ScaleSMU * 
+  data$LM_Agg_AbundxLn <- SMUlogisticData$SMU_Esc/ScaleSMU *
     log(SMUlogisticData$SMU_Esc/ScaleSMU)
   data$N_Above_BM <- SMUlogisticData$ppn * data$N_Stks
   data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund)*1.5, 0.1)
@@ -204,10 +204,11 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   param$B_1 <- 0.1
   param$B_2 <- 0.1
   
-  dyn.load(dynlib(paste("TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
+  dyn.load(dynlib(paste("Code/TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
+  #dyn.load(dynlib(paste("TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
   
   obj <- MakeADFun(data, param, DLL="Logistic_LRPs_BoxTidwell", silent=TRUE)
-  
+
   opt <- nlminb(obj$par, obj$fn, obj$gr, 
                 control = list(eval.max = 1e5, iter.max = 1e5))
   pl <- obj$env$parList(opt$par) 
@@ -526,6 +527,18 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   return(out)
   
 } # End of Function 1: LRdiagnostics()
+#-------------------------------------------------------------------------------
+
+# #----------------------------------------------------------------------------
+# # Run code using WCVI CK input data from above
+# # load("DataIn/Input_LRdiagnostics.rda")
+# 
+# LRdiagOut <- LRdiagnostics(SMUlogisticData = input$SMUlogisticData,
+#                            nCU = input$nCU,
+#                            All_Ests = input$All_Ests,
+#                            p = input$p, Bern_logistic = input$Bern_logistic,
+#                            dir = input$dir, plotname = input$plotname)
+# 
 #-------------------------------------------------------------------------------
 
 
