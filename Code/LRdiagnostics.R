@@ -11,7 +11,7 @@
 # Function 2: LOO_LRdiagnostic(), performs leave-one-out cross-validation by 
 # iteratively re-running LRP estimation of subsets of data, leaving one data 
 # point out each time, and estimating classification accuracy on removed data 
-# point
+# point. Only applied to IFR coho at this point.
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
@@ -85,26 +85,6 @@
 
 # plotname = filename for residual plots
 
-#----------------------------------------------------------------------------
-## Carrie's inputs for testing
-# 
-# source("R/WCVILRPs.R")
-# zz <- Get.LRP(remove.EnhStocks = TRUE)
-# All_Ests <- zz$out$All_Ests
-# p <- zz$LRPppn
-# Bern_logistic <- as.numeric(FALSE) #For this dummy example on WCVI; usually
-#                                    #set to TRUE
-# dir <- "DataOut/"
-# plotname <- "WCVI_ResidPlots"
-# 
-# SMUlogisticData <- zz$out$Logistic_Data %>% rename(Years=yr, SMU_Esc =xx ,
-#                                                   ppn=yy)
-# nCU <- length(names(zz$CU_Status))
-# 
-# input <- list(SMUlogisticData=SMUlogisticData, nCU=nCU,
-#            All_Ests=All_Ests, p=p, Bern_logistic=Bern_logistic, dir="",
-#            plotname="test")
-# save(input, file="DataIn/Input_LRdiagnostics.rda")
 
 
 #----------------------------------------------------------------------------
@@ -118,14 +98,12 @@ library(TMB)
 library(here)
 
 source(here::here("Code", "helperFunctions.r"))
-#source(here::here("R", "helperFunctions.r"))
-#source(here::here("R", "WCVILRPs.R")) # Needed for Step 10 (LOO), specific to 
-# WCVI Chinook
+
 
 #----------------------------------------------------------------------------
 # Input data
 
-caseStudy <- "ISCchum"# #"WCVIchinook"#"ISCchum"# 
+caseStudy <- "SCChum"# #"WCVIchinook"#
 
 if(caseStudy=="WCVIchinook") {
   load(here::here("WCVIChinookStudy", "DataIn", "Input_LRdiagnostics.rda"))
@@ -140,7 +118,7 @@ if(caseStudy=="WCVIchinook") {
 }
 
 # ISC Chum
-if(caseStudy=="ISCchum") {
+if(caseStudy=="SSChum") {
   load(here::here("SCChumStudy", "DataIn", "logisticFit_2018.rda"))
   
   SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
@@ -149,7 +127,7 @@ if(caseStudy=="ISCchum") {
   All_Ests <- LRP_Mod$All_Ests
   p <- 0.5
   Bern_logistic <- TRUE
-  dir <- "/SCChumStudy/DataOut/"
+  dir <- "SCChumStudy/DataOut/"
   plotname <- "LogRegDiagPlot"  
 }
 
@@ -164,7 +142,7 @@ if(caseStudy=="ISCchum") {
 # Function:
 
 LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir, 
-                          plotname){
+                          plotname, caseStudy){
   
   #-----------------------------------------------------------------------------
   # Step 1. Box-Tidwell test to assess linearity between aggregate abundances
@@ -231,6 +209,11 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   
   # Get predicted probability of all CUs being above their lower benchmark (or
   # proportion for binomial regression)
+  
+  # For ISC chum, rescale data by 1000 (hard coded into that case study)
+  if(caseStudy=="SCChum"){
+    data$LM_Agg_Abund <- SMUlogisticData$SMU_Esc/1000
+  }
   B_0 <- All_Ests %>% filter(Param=="B_0") %>% pull(Estimate)
   B_1 <- All_Ests %>% filter(Param=="B_1") %>% pull(Estimate)
   predPpnAboveBM <- inv_logit(B_0 + B_1*data$LM_Agg_Abund)
@@ -394,13 +377,13 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   #-----------------------------------------------------------------------------
   # Step 7. 
   # Evaluate goodness-of-fit based on ratio of Deviance to the null model 
-  #   Is there statistical evidence for lack of fit?
+  #   Is there an improvement in fit with the inclusion of the aggregate 
+  #   abundance variable? 
   #-----------------------------------------------------------------------------
   
   # Evaluate goodness of fit by comparing the residual deviance to null 
   # deviance, and evaluating this ratio relative to  a Chi-square distribution 
   # (df = 1, the difference in the number of parameters) 
-  # P < 0.05 indicates a significant lack of fit.
   # Agresti et al. 2007 (LRT); Ahmad et al. 2011 (definition of deviance as
   # -2LL)
   
@@ -409,13 +392,14 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   
   NullDev <- deviance(glm( SMUlogisticData$ppn ~ 1 , family = 
                              quasibinomial))
-  
-  pDRT <- signif( pchisq(q= - (- NullDev + Deviance), df=1), digits=2)
-  
+  #pDRT <- signif( pchisq(q=  - (- NullDev + Deviance), df=1), digits=2)
+
+  pDRT <- 1 - pchisq(q= NullDev - Deviance, df=1)
+  #https://stats.stackexchange.com/questions/6505/likelihood-ratio-test-in-r
   
   names(pDRT) <- c("pDRT")
   pDRT
-  # P-value is significant (<0.05) indicating a lack of fit.
+  # P-value  <0.05 indicates a significant improvement in fit with variable
   
   
   # Note, Roback and Legler 2021 suggest evaluating overall model fit based on 
@@ -529,16 +513,16 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
 } # End of Function 1: LRdiagnostics()
 #-------------------------------------------------------------------------------
 
-# #----------------------------------------------------------------------------
-# # Run code using WCVI CK input data from above
-# # load("DataIn/Input_LRdiagnostics.rda")
-# 
-# LRdiagOut <- LRdiagnostics(SMUlogisticData = input$SMUlogisticData,
-#                            nCU = input$nCU,
-#                            All_Ests = input$All_Ests,
-#                            p = input$p, Bern_logistic = input$Bern_logistic,
-#                            dir = input$dir, plotname = input$plotname)
-# 
+#----------------------------------------------------------------------------
+## Run code for SSChum using inputs from above
+
+# LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
+#                            nCU = nCU,
+#                            All_Ests = All_Ests,
+#                            p = p, Bern_logistic = Bern_logistic,
+#                            dir = dir, plotname = plotname,
+#                            caseStudy = "SCChum")
+# save(LRdiagOut, file="SCChumStudy/DataOut/logisticFit_2018Output.rda")
 #-------------------------------------------------------------------------------
 
 
