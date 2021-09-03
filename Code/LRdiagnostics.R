@@ -118,7 +118,7 @@ if(caseStudy=="WCVIchinook") {
 }
 
 # ISC Chum
-if(caseStudy=="SSChum") {
+if(caseStudy=="SCChum") {
   load(here::here("SCChumStudy", "DataIn", "logisticFit_2018.rda"))
   
   SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
@@ -516,14 +516,14 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
 #----------------------------------------------------------------------------
 ## Run code for SSChum using inputs from above
 
-# LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
-#                            nCU = nCU,
-#                            All_Ests = All_Ests,
-#                            p = p, Bern_logistic = Bern_logistic,
-#                            dir = dir, plotname = plotname,
-#                            caseStudy = "SCChum")
-# save(LRdiagOut, file="SCChumStudy/DataOut/logisticFit_2018Output.rda")
-#-------------------------------------------------------------------------------
+LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
+                           nCU = nCU,
+                           All_Ests = All_Ests,
+                           p = p, Bern_logistic = Bern_logistic,
+                           dir = dir, plotname = plotname,
+                           caseStudy = "SCChum")
+save(LRdiagOut, file="SCChumStudy/DataOut/logisticFit_2018Output.rda")
+-------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
