@@ -780,13 +780,14 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     # Would use this if wanted to show the proportion of CUs above Sgen
     #Name <- paste(propName,Ps[pp]*100)
     Status <- Inlet_Status_Summ$Prop >= Ps[pp]
-    New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Ppn: Sgen", AboveLRP=Status)
-    Status_DF <- rbind(Status_DF, New_Rows)
+    New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Ppn1: Sgen", AboveLRP=Status)
+    New_Rows2 <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Ppn2: Multi-D", AboveLRP=Status)
+    Status_DF <- rbind(Status_DF, New_Rows, New_Rows2)
   }
  
   # Step 4: Add row to Status_DF for 2011 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
-    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "WSP (2016 only)", AboveLRP = WSP_AboveLRP)
+    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "WSP (2014 only)", AboveLRP = WSP_AboveLRP)
     Status_DF <- rbind(Status_DF, New_Row)
     Status_DF <- arrange(Status_DF, Name)
   }
@@ -902,10 +903,10 @@ plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
     LRP_estYr <- max(Status_DF$year)
     # Make Plot =============================================================
     
-    methods <- sort(unique(Status_DF$scenario_name))
+    methods <- sort(unique(Status_DF$data_name))
 
     # --- set-up pdf to save to
-    png(paste("Figures/", fName, ".png", sep=""), width=700, height=580)
+    png(paste("Figures/", fName, ".png", sep=""), width=8, height=6, units="in", res=300)
     par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
     
     # ---- specify colouts 
@@ -934,7 +935,7 @@ plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
     # --- loop over methods and ....
     for(mm in 1:length(methods)){
       #subset data by method
-      Mdat <- Status_DF %>% filter(scenario_name == methods[mm] & is.na(AboveLRP)==FALSE)
+      Mdat <- Status_DF %>% filter(data_name == methods[mm] & is.na(AboveLRP)==FALSE)
       
       if(dim(Mdat)[1] > 0){
         #set y location for that method

@@ -51,8 +51,11 @@ knitr-cache
 !/WCVIChinookStudy/Figures/ProjectedLRPs/ERs-ProjLRPCurve-ALLp.png
 !/WCVIChinookStudy/Figures/statusPlot-withBars2020.png
 /WCVIChinookStudy/DataOut/*
-
-
+!/WCVIChinookStudy/DataIn/Input_LRdiagnostics.rda
+!/SCChumStudy/DataIn/logisticFit_2018.rda
+!/Code/TMB_Files/Logistic_LRPs_BoxTidwell.dll
+!/Code/TMB_Files/Logistic_LRPs_BoxTidwell.o
+!/SCChumStudy/DataOut/logisticFit_2018Output.rda
 
 
 myNotes.*

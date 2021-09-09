@@ -355,9 +355,10 @@ Run_LRP <- function(Dat, Mod, useBern_Logistic,
  #   Mod<-LRPMod
 #  }
   
-  data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale
+  if(useGenMean==TRUE) {
+  data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale } else {
   # switch to this if not wanting to fit to geometric mean of aggregate escapement
-  #data$LM_Agg_Abund <- Agg_Abund$Agg_Esc / Scale
+  data$LM_Agg_Abund <- Agg_Abund$Agg_Esc / Scale }
   # switch to this if wanting to match Arbeider et al. approach of calculating geomean at sub-population level before aggregating (not; will need to add dum as a model input first)
   #dum2 <- dum2 %>% filter(yr %in% Mod_Yrs)
   #data$LM_Agg_Abund <- dum2$AggEscp.gm / Scale
