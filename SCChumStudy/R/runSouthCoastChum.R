@@ -14,6 +14,7 @@ options(scipen=1000000)
 chumDir <- here() # needed for some plot functions
 codeDir <- file.path(dirname(here()), "Code") # get code directory in project parent folder
 r_to_source <- dir(codeDir, pattern="\\.R|\\.r", full.names=TRUE) # get r files to source from parent code directory
+r_to_source <- r_to_source[-grep("LRdiagnostics.R",r_to_source)]
 # function to source all files required
 sourceAll <- function(files){
   walk(files, function(x) {source(x, chdir=TRUE)})
