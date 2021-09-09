@@ -200,7 +200,9 @@ We assumed an average exploitation rate as observed for WCVI Chinook in recent y
 
 ```{r echo=FALSE, fig.cap = "**Figure 3**. Pre-terminal exploitation rates for Robertson Creek CWT indicator."}
 ERs <- read.csv("DataIn/ER.csv")
-ggplot(ERs,aes(Year, ER)) + geom_point() + geom_line()
+g<- ggplot(ERs,aes(Year, ER)) + geom_point() + geom_line()
+g
+#ggsave(g, filename="ERs.png")
 ```
 
 In forward projections, interannual variability in exploitation rates was assumed to be beta distributed (constrained between 0 and 1), parameterized from estimated pre-terminal exploitation rates for Robertson Creek, with a coefficient of variation (cv) = 0.17. Without data to parameterize inlet-specific variability in exploitation rates, we assumed the inlet-specific variability was half the common (SMU-level) interannual variability (cv=0.085), and varied this in sensitivity analyses from 0 and 0.17 to cover plausible bounds. Figure 4 shows the distribution of realized exploitation rates from the average exploitation rate of 0.3, for two levels of variability, cv = 0.17 and cv = 0.085 (the third level cv=0 represents no variability in exploitation among inlets). 
@@ -325,6 +327,7 @@ g4 <- out %>%
   theme(axis.title.x = element_text(size=18),
         axis.title.y = element_text(size=18))
 g2
+#ggsave(g2, "ERdist.png")
 
 ```
 An example time-series of interannual variability in exploitation rates that is common among inlets (blue line), and inlet-specific variability around that common trend (green lines) is is shown in Fig. 5. We assumed that inlets were either consistently under or over-harvested relative to the average over the entire time-series (e.g., due to the spatial and temporal variability in inlet-specific migration patterns affecting vulnerability to fisheries), but that this bias changed over MC trials. Future analyses could include consistent biases in exploitation for specific inlets (e.g., positive biases for southern inlets and negative biases for northern inlets).
@@ -438,10 +441,12 @@ cuAges$CU_Names. <- factor(cuAges$CU_Names,
                                      "Northwest_Vancouver_Island",
                                      "Westcoast_Vancouver_Island"))
 
-cuAges %>% filter(CU_Names!="Westcoast_Vancouver_Island") %>%
+g.ages <- cuAges %>% filter(CU_Names!="Westcoast_Vancouver_Island") %>%
   ggplot(aes(Year, Proportion, group=CU_Names., colour=CU_Names.)) +
   geom_line() + 
   facet_wrap(~Age, ncol=1)
+g.ages
+#ggsave(g.ages, filename="Figures/agePpns.png")
 # If required, consider adding geom_density of pairwise correlations in estimated age ppns of recruits
 
 ```
