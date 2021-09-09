@@ -13,13 +13,14 @@ options(scipen=1000000)
 
 chumDir <- here() # needed for some plot functions
 codeDir <- file.path(dirname(here()), "Code") # get code directory in project parent folder
-r_to_source <- list.files(codeDir, pattern="\\.R|\\.r") # get r files to source from parent code directory
+r_to_source <- dir(codeDir, pattern="\\.R|\\.r", full.names=TRUE) # get r files to source from parent code directory
+print(r_to_source[2])
+source(r_to_source[3])
 # function to source all files required
-sourceAll <- function(dir, files){
-  fpaths <- paste0( dir, "/", files)
-  sapply(fpaths, source)
+sourceAll <- function(files){
+  walk(files, function(x) {source(x, chdir=TRUE)})
 }
-sourceAll(dir=codeDir, files= r_to_source) # source all r files from parent directory
+sourceAll(files= r_to_source) # source all r files from parent directory
 
 # Load TMB models
 # make vector of TMB cpp file names without .cpp extension
