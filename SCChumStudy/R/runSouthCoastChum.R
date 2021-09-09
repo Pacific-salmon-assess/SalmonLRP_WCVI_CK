@@ -483,7 +483,6 @@ dev.off()
 AggEscp <- ChumEscpDat_full %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
 
-
 # Plot annual status with bars to show years in which LRP was breached
 
 # Read in data from multi-dimensional/ decision tree and simple percentile approach for comparison
