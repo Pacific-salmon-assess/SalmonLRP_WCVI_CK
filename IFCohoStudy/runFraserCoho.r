@@ -119,10 +119,14 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # 
 # # Note: these next 2 two escpt plots need to have formatting fixed
 # plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
- plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-escapeSeries", samePlot = F)
- plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-escapeSeries", samePlot = F, withSgen=TRUE)
+ #plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-escapeSeries", samePlot = F)
+ plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries", samePlot = F, withSgen=TRUE, addGenMean=T,
+                        SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
 
-# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc Separate - by Subpop", samePlot = F)
+ plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries-Combined", samePlot = TRUE, withSgen=FALSE, addGenMean=FALSE,
+                       SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
+ 
+ plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="coho-Subpop-EscpSeries", samePlot = F, addGenMean=T)
 # plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
 
 
@@ -130,20 +134,20 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # Run retrospective analyses:
 # =====================================================================================================================
 
-B_penalty_mu<-4489
-B_penalty_sigma<-2048
+#B_penalty_mu<-4489
+#B_penalty_sigma<-2048
 
 # TMB input parameters:
 TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                 logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
                 gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
-                B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
                 extra_eval_iter=FALSE,biasCorrect=TRUE)
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                      B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                      #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
                       extra_eval_iter=FALSE,biasCorrect=TRUE)
 
 # Prior means come from running "compareRickerModelTypes.r"
@@ -154,7 +158,8 @@ cap_priorMean_HM<-c(10.923210,  4.606973, 12.775798, 19.513601, 15.986513)
 TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
                    logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
                    gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),
+                   #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
                    extra_eval_iter=FALSE, biasCorrect=T)
 
 # Prior means come from running "compareRickerModelTypes.r"
@@ -171,19 +176,21 @@ cap_priorMean_IM<-c(11.093778, 4.404835, 13.115026, 26.147670, 17.075453)
 
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+                               cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),
+                               #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
                                extra_eval_iter=FALSE,biasCorrect=TRUE)
 
 
 # Calculate penalty for sub-population approach
-subPop_B_penalty_lwr<-1000 # set at abundance below which no one CU could be above subpop have at least half of subpops above 1000 fish
-subPop_B_penalty_upr<-8000 # set at minimum abundance at which all 5 CUs could have half of subpops above 1000 fish 
+#subPop_B_penalty_lwr<-1000 # set at abundance below which no one CU could be above subpop have at least half of subpops above 1000 fish
+#subPop_B_penalty_upr<-8000 # set at minimum abundance at which all 5 CUs could have half of subpops above 1000 fish 
       # (i.e., MFr = 1 subpop>1000, FCany=1 subpop>1000, LThomp=1 subpop>1000, NThomp=2 subpop>3000, SThomp = 2 subpop> 1000)
-B_penalty_mu<-mean(c(subPop_B_penalty_lwr,subPop_B_penalty_upr))
-dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
-B_penalty_sigma<-dum$par
+#B_penalty_mu<-mean(c(subPop_B_penalty_lwr,subPop_B_penalty_upr))
+#dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
+#B_penalty_sigma<-dum$par
 
-TMB_Inputs_Subpop <- list(Scale = 1000, B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
+TMB_Inputs_Subpop <- list(Scale = 1000, 
+                          #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
                           extra_eval_iter=FALSE)
 
 
@@ -311,19 +318,21 @@ for (pp in 1:length(ps)){
 
 # Plot aggregate status by method and number of CUs
 
-yearList<-2015:2020
-
-
+yearList<-2017:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.50, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
 
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=0.50, Dir=cohoDir,
-                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE)
-
+yearList<-2015:2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.50, Dir=cohoDir,
+                     inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE)
+yearList<-2015:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.50, Dir=cohoDir,
                      inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE)
 
 
+yearList<-2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.50, Dir=cohoDir,
+                     inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
 
 # 
 # # 
