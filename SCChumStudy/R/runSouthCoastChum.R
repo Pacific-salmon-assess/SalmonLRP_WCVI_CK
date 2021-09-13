@@ -13,13 +13,13 @@ options(scipen=1000000)
 
 chumDir <- here() # needed for some plot functions
 codeDir <- file.path(dirname(here()), "Code") # get code directory in project parent folder
-r_to_source <- list.files(codeDir, pattern="\\.R|\\.r") # get r files to source from parent code directory
+r_to_source <- dir(codeDir, pattern="\\.R|\\.r", full.names=TRUE) # get r files to source from parent code directory
+r_to_source <- r_to_source[-grep("LRdiagnostics.R",r_to_source)]
 # function to source all files required
-sourceAll <- function(dir, files){
-  fpaths <- paste0( dir, "/", files)
-  sapply(fpaths, source)
+sourceAll <- function(files){
+  walk(files, function(x) {source(x, chdir=TRUE)})
 }
-sourceAll(dir=codeDir, files= r_to_source) # source all r files from parent directory
+sourceAll(files= r_to_source) # source all r files from parent directory
 
 # Load TMB models
 # make vector of TMB cpp file names without .cpp extension
@@ -482,7 +482,6 @@ dev.off()
 # Roll up escpaments, and get Gen Mean of that
 AggEscp <- ChumEscpDat_full %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
-
 
 # Plot annual status with bars to show years in which LRP was breached
 
