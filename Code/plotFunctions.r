@@ -850,7 +850,7 @@ plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
 
     # --- set-up pdf to save to
     png(paste("Figures/", fName, ".png", sep=""), width=8, height=6, units="in", res=300)
-    par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
+    par( oma=c(1,8,1,0), mar=c(3,3,3,3), lend=2, xpd=T)
     
     # ---- specify colouts 
     cols <- c( "#FF0900", "grey80") # (red, grey)
