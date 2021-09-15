@@ -10,7 +10,7 @@
 
 # Projections are done using the LRP branch of the samSim model (https://github.com/Pacific-salmon-assess/samSim)
 # The code in this file is divided into the following sections:
-#     (1) Read-in Coho data
+#     (1) Read-in WCVI Chinook data
 #     (2) Specify initial parameters & data sets for projections
 #     (3) Run base projections (Using 4 different OM models at present)
 #     (4) Run sensitivity analysis projections
@@ -25,7 +25,8 @@
 #     (12) Plot LRPs with various plevels
 #     (13) Run reconstruction for WCVI CK CUs
 #     (14) Plot age proportions in recruitment
-#     (15) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+#     (15) Plot SMU time-series
+#     (16) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
 
 # ===============================================================================
 
@@ -75,7 +76,7 @@ sourceAll()
 #
 
 # ======================================================================
-#(1)  Read-in WCVI Chinook data:
+#(1)  Read-in WCVI Chinook data aand plot:
 # =====================================================================
 setwd(wcviCKDir)
 
@@ -83,6 +84,51 @@ setwd(wcviCKDir)
 wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")
 wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 wcviCKSRDat$CU_ID <- group_by(wcviCKSRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+
+wcviInletsDF <- wcviCKSRDat %>% group_by(Inlet_Name) %>%
+  mutate(genS=genSmooth(Spawners)) %>% ungroup() %>% rename(Year=BroodYear,
+                                                            Stock=Inlet_Name,
+                                                            SiteEsc=Spawners,
+                                                            Value=genS)
+
+#Value = generational geometric smoothed Value
+wcviInletsDF <- wcviInletsDF %>% select(Year, Stock, SiteEsc, Value)
+
+wcviCK_inlet <- unique(wcviCKSRDat$Inlet_Name)
+wcviCKbench <- read.csv("DataIn/wcviRPs_noEnh.csv")
+wcviCKbench <- wcviCKbench %>% filter(Stock %in% wcviCK_inlet) %>%
+  select(Stock, SGEN)
+
+
+statusFn <- function(x, LBM){
+    if(is.na(x)) out <- NA
+    if(!is.na(x) ) {
+      if(x <= LBM) out <- "Red"
+      if(x > LBM) out <- "Amber"#Could be green, but not relevant for this calc & plot
+    }
+  return(out)
+}
+
+# Calculate status for generational smoothed spawner abundance
+wcviInletsDF <- wcviInletsDF %>% left_join(wcviCKbench, by = "Stock")
+Status <- unlist(pmap(list(x=c(wcviInletsDF$Value), LBM=c(wcviInletsDF$SGEN)), statusFn))
+wcviInletsDF <- wcviInletsDF %>% add_column(Status=Status)
+
+
+# Plot timeseries with status
+inletPlot <- ggplot(wcviInletsDF) +
+  geom_path(aes(y=SiteEsc, x=Year), colour='black', alpha=0.5) +
+  geom_point(aes(y=Value, x=Year, colour=Status)) +
+  geom_hline(aes(yintercept=SGEN), colour="orange") +
+  #geom_hline(aes(yintercept=UBM), colour="black", linetype=2) +
+  ylab("Escapement") +
+  scale_colour_manual(guide = NULL, breaks = c("None", "Amber", "Green", "Red"), values=c("gray", "gray", "gray","red")) +
+  facet_wrap(~interaction(Stock), scales = "free_y") +
+  theme_classic()
+# ggsave("Figures/chinook-inlet-timeseries.png", plot=inletPlot, width = 6,
+#        height = 4, units = "in")
+
+
 # ======================================================================
 # (2) Specify initial parameters & datasets for projections
 # =====================================================================
@@ -1718,10 +1764,49 @@ cuAges %>% filter(CU_Names!="Westcoast_Vancouver_Island") %>%
   ggplot(aes(Year, Proportion, group=CU_Names., colour=CU_Names.)) +
   geom_line() + facet_wrap(~Age, ncol=1)
 
+# ===================================================================
+# (15) Plot SMU time-series with LRPs
+# ==================================================================
 
+SMU_Sum <- read.csv("DataIn/SMU_Sum.csv")
+SMU_SumDf <- data.frame(Year = SMU_Sum$Year, SiteEsc = SMU_Sum$SiteEsc, Stock="WCVI Chinook")
+SMU_SumDf <- SMU_SumDf %>% mutate(Value=genSmooth(SiteEsc))
+LRPproj_50<-read.csv("DataOut/ProjectedLRPs/ProjectedLRPsbaseER_ALLp.csv")$LRP[1]
+LRPproj_66<-read.csv("DataOut/ProjectedLRPs/ProjectedLRPsbaseER_ALLp.csv")$LRP[2]
+
+SMU_SumDf <- SMU_SumDf %>% add_column(LRPproj_50 = LRPproj_50) %>%
+  add_column(LRPproj_66 = LRPproj_66)
+
+statusFn <- function(x, LBM){
+  if(is.na(x)) out <- NA
+  if(!is.na(x) ) {
+    if(x <= LBM) out <- "Red"
+    if(x > LBM) out <- "Amber"#Could be green, but not relevant for this calc & plot
+  }
+  return(out)
+}
+
+# Calculate status for generational smoothed spawner abundance
+Status <- unlist(pmap(list(x=c(SMU_SumDf$Value), LBM=c(SMU_SumDf$LRPproj_50)), statusFn))
+SMU_SumDf <- SMU_SumDf %>% add_column(Status=Status) %>% filter(Year >= 1990)
+
+
+# Plot timeseries with status
+SMUPlot <- ggplot(SMU_SumDf) +
+  geom_path(aes(y=SiteEsc, x=Year), colour='black', alpha=0.5) +
+  geom_point(aes(y=Value, x=Year, colour=Status)) +
+  geom_hline(aes(yintercept=LRPproj_50), colour="orange") +
+  geom_hline(aes(yintercept=LRPproj_66), colour="#66FFB2") + #, linetype=2) +
+  ylab("Escapement") +
+  scale_colour_manual(guide = NULL, breaks = c("None", "Amber", "Green", "Red"), values=c("gray", "gray", "gray","red")) +
+  facet_wrap(~interaction(Stock), scales = "free_y") +
+  theme_classic()
+SMUPlot
+# ggsave("Figures/chinook-SMU-timeseries.png", plot=SMUPlot, width = 6,
+#        height = 4, units = "in")
 
 # ===================================================================
-# (15) Look at distribution of alphas used in samSim
+# (16) Look at distribution of alphas used in samSim
 # ==================================================================
 scenarioToLook <- "cvER0.21n5000"
 d <- readr::read_rds(paste(wcviCKDir, "/SamSimOutputs/simData/", scenarioToLook,

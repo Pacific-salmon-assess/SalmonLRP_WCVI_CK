@@ -74,58 +74,96 @@ plot_CU_DataObs_Over_Time <-function(Dat, Dir, plotName) {
 }
 
 # Plot available CU estimates over time, by CU
-plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withSgen=NULL) {
+plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withSgen=NULL, SgenFileName=NULL, addGenMean=TRUE) {
   
   theme_update(plot.title = element_text(hjust = 0.5))
   
-  png(paste(Dir,"/Figures/",plotName,".png",sep=""),width=780, height=510)
-
   p <- list()
   
   if(samePlot == T){
+    
+    png(paste(Dir,"/Figures/",plotName,".png",sep=""), width=380, height=225)
+    
+    Dat$CU_Name[Dat$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
+    Dat$CU_Name[Dat$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
+    Dat$CU_Name[Dat$CU_Name == "North_Thompson"] <- "North Thompson"
+    Dat$CU_Name[Dat$CU_Name == "South_Thompson"] <- "South Thompson"
+    Dat$CU_Name[Dat$CU_Name == "Lower_Thompson"] <- "Lower Thompson"
+    
       MUs <- unique(Dat$MU)
       for(mm in 1:length(MUs)){
         Dat.MU <- Dat %>% filter(MU == MUs[mm])
-        escpDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU_Name, yr) %>% summarise(value=sum(Escp))
-        p[[mm]]<-ggplot(data=escpDat,aes(x=yr,y=value)) + 
+        escpDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU_Name, yr) %>% summarise(Escp=sum(Escp))
+        p[[mm]]<-ggplot(data=escpDat,aes(x=yr,y=Escp)) + 
               geom_line(aes(colour=CU_Name),size=1.2 ) + 
-              labs(title=MUs[mm], x = "Year", y = "Escapement") + 
+              labs(x = "Year", y = "Escapement") + 
               theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
               theme_classic()
         
       }
       
-      
+    
+      do.call(grid.arrange, args = c(p, nrow=1))
+        
   } else {
+    
+    png(paste(Dir,"/Figures/",plotName,".png",sep=""),width=780, height=510)
+    
+    
     CUs <- unique(Dat$CU_Name)
     
     if (withSgen == T) {
       # Get Sgen estimates for IM model
-       IM.ests<-read.csv(paste(Dir,"/DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv.csv", sep=""))
-       Sgen_IM<-IM.ests[IM.ests$Param=="Sgen","Estimate"]
-       IMcap.ests<-read.csv(paste(Dir,"/DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv_priorCap.csv",sep=""))
-       Sgen_IMcap<-IMcap.ests[IMcap.ests$Param=="Sgen","Estimate"]
+       ests<-read.csv(paste(Dir,"/DataOut/",SgenFileName,".csv", sep=""))
+       Sgen_base<-ests[ests$Param=="Sgen","Estimate"]
+       SRep_base<-ests[ests$Param=="SRep","Estimate"]
+       cap.ests<-read.csv(paste(Dir,"/DataOut/",SgenFileName,"_priorCap.csv",sep=""))
+       Sgen_cap<-cap.ests[cap.ests$Param=="Sgen","Estimate"]
+       SRep_cap<-cap.ests[cap.ests$Param=="SRep","Estimate"]
       }
-    
-    
     
     for(ss in 1:length(CUs)){
     
       CU_label<-str_replace(CUs[ss], "_", " ")
       
-       escpDat <- Dat %>% filter(CU_Name == CUs[ss]) 
-      p[[ss]]<-ggplot(data=escpDat,aes(x=yr,y=Escp)) +
-        geom_line(col="darkslategrey", size=1.2) +
+       escpDat <- Dat %>% filter(CU_Name == CUs[ss]) %>%
+         mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right"))
+      
+       p[[ss]]<-ggplot(data=escpDat,aes(x=yr,y=Escp)) +
+        geom_line(col="darkgrey", size=1) +
         labs(title=CU_label, x = "Year", y = "Escapement") + 
         theme_classic() + ylim(0,28000) +
         theme(plot.title = element_text(size=16, face="bold",hjust=0.5),
               axis.text = element_text(size=12), axis.title =element_text(size=15)) 
-        
+    
+       if (addGenMean ==TRUE) 
+       {
+         
+         p[[ss]]<- p[[ss]] + geom_line(data=escpDat, aes(x=yr,y=Gen_Mean), size=1.4)
+         
+       }
+       
+       
+       if (withSgen ==TRUE) 
+       {
+         
+         p[[ss]]<- p[[ss]] + 
+           geom_hline(yintercept=Sgen_base[[ss]], linetype="solid", color = "red") +
+           geom_hline(yintercept=Sgen_cap[[ss]], linetype="dashed", color = "red") #+
+         #geom_hline(yintercept=SRep_base[[ss]], linetype="solid", color = "blue") +
+         #geom_hline(yintercept=SRep_cap[[ss]], linetype="dashed", color = "blue")
+         
+       }
+       
+
     }
+    
+    do.call(grid.arrange, args = c(p, nrow=2))
+    
   }
 
   
-  do.call(grid.arrange, args = c(p, nrow=2))
+  
   
   
   dev.off()
@@ -135,31 +173,50 @@ plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withSgen=NUL
 
 
 # Plot available CU estimates over time, by CU
-plot_Subpop_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T) {
+plot_Subpop_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withThresh=TRUE, addGenMean=TRUE) {
   
   theme_update(plot.title = element_text(hjust = 0.5))
   
-  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""), height = 7, width = 10)
+  png(paste(Dir,"/Figures/",plotName,".png",sep=""),width=570, height=480)
   
   p <- list()
  
   if(samePlot == T){
-    escpDat <- Dat %>% group_by(Subpop_Name, yr) %>% summarise(value=sum(Escp))
-    p<-ggplot(data=escpDat,aes(x=yr,y=value)) + 
+    #escpDat <- Dat %>% group_by(Subpop_Name, yr) %>% summarise(value=sum(Escp))
+    escpDat <- Dat %>% filter(Subpop_Name == Subs[ss]) %>% group_by(yr) %>% summarise(Escp=sum(Escp)) %>% 
+      mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right"))
+    p<-ggplot(data=escpDat,aes(x=yr,y=Escp)) + 
       geom_line(aes(colour=Subpop_Name),size=1.1 ) + 
       labs( x = "Year", y = "Escapement") + 
-      theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
+      theme(plot.title = element_text(size=12, face="bold",hjust=0.5)) + 
       theme_classic()
     print(p)
   } else {
     Subs <- unique(Dat$Subpop_Name)
     for(ss in 1:length(Subs)){
-      escpDat <- Dat %>% filter(Subpop_Name == Subs[ss]) %>% group_by(yr) %>% summarise(value=sum(Escp))
-      p[[ss]]<-ggplot(data=escpDat,aes(x=yr,y=value)) +
-        geom_line() +
+      #escpDat <- Dat %>% filter(Subpop_Name == Subs[ss]) %>% group_by(yr) %>% summarise(Escp=sum(Escp))
+      escpDat <- Dat %>% filter(Subpop_Name == Subs[ss]) %>% group_by(yr) %>% summarise(Escp=sum(Escp)) %>% 
+        mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right"))
+      
+      if (Subs[ss] == "Middle and Lower Shuswap Rivers") Subs[ss] <- "Middle + Lower Shuswap" 
+      
+        p[[ss]]<-ggplot(data=escpDat,aes(x=yr,y=Escp)) +
+        geom_line(colour="darkgrey") +
         labs(title=Subs[ss], x = "Year", y = "Escapement") + 
-        theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
+        theme(plot.title = element_text(size=8, face="bold",hjust=0.5)) + 
         theme_classic()
+    
+        
+      if (addGenMean == T) {
+        p[[ss]]<-p[[ss]] + geom_line(data=escpDat, aes(x=yr,y=Gen_Mean), size=1.4)
+        
+      }
+        
+        
+      if (withThresh==T) {
+        p[[ss]]<-p[[ss]] + geom_hline(yintercept=1000,colour="red")
+      }
+      
     }
     do.call( grid.arrange, args = c(p, ncol=3))
   }
@@ -989,9 +1046,9 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
     }
     
 }
-
-  LRP.mod<-LRPmodel
   
+  LRP.mod<-LRPmodel
+
   ps <- lapply(yearList, makeYrPlot, Dat = nCUDat %>% filter(LRPmodel == LRP.mod), aveLine=plotAveLine)
 
   outputDir<-paste(Dir,"/Figures/nCUCombinations",sep="")
