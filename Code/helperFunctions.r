@@ -13,6 +13,12 @@ gm_mean = function(x, na.rm=TRUE){
   exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
 }
 
+genSmooth <- function (x, gen=4) {
+  exp(as.vector(stats::filter(log(x), filter=rep(1/gen,gen),sides=1)))
+}# Handles NAs, calculates generational average with 3 preceding years
+
+
+
 stdErr <- function(x) sd(x)/sqrt(length(x))
 
 # Crop data: Filter to only include years with data in all years between startYr and endYr for MU =======================
