@@ -252,7 +252,9 @@ TMB_Inputs_Subpop <- list(Scale = 1000,
 
 
 
-# Run annual restrospective analyses using subpopulations ===========================
+
+
+# Run annual retrospective analyses using subpopulations ===========================
 
 ps <- c(0.5, 0.66, 0.9, 0.99)
 for(pp in 1:length(ps)){
@@ -334,23 +336,79 @@ yearList<-2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.50, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
 
-# 
-# # 
-# # 
-# # # Plot CVs on LRP estimates by method and number of CUs
-# yearList<-2015:2018
-#  
-# plotLRP.CV_by_nCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv", p=0.50, Dir=cohoDir,
-#                     inputPrefix = "Bern.HierRickerSurv", fName = paste("statusPlot_byCUs_",plotYear, sep=""))
-# 
-# 
-# 
-# plotLRP.CV_by_nCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv", p=0.50, Dir=cohoDir,
-#                    inputPrefix = "Bern.IndivRickerSurv", fName = paste("statusPlot_byCUs_",plotYear, sep=""))
-# 
-# plotLRP.CV_by_nCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.5, Dir=cohoDir,
-#                     inputPrefix = "Bern.SPopAbundThreshST", fName = paste("statusPlot_byCUs_",plotYear, sep=""))
-# 
+
+# ===================================================================================
+## Special logistic fit runs to create figure with two or more probabilities on a logistic fit
+# ===================================================================================
+
+# Plot 1: Show all 4 p-values without error bars ======
+
+BMmodel <- "SR_HierRicker_Surv"
+TMB_Inputs<-TMB_Inputs_HM
+
+year<-2019
+BroodYrLag<-4
+genYrs<-3
+
+plotMultiP <-c(0.50, 0.66, 0.90, 0.99)
+# Specify which years to use
+EscpDat<-CoEscpDat
+SRDat<-CoSRDat
+Dat <- SRDat %>%  filter(BroodYear <= (year - BroodYrLag))
+EscpDat.yy <- EscpDat %>% filter(yr <= (year - BroodYrLag))
+
+Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")])) # This line is creating problems when I make CU_ID in data being read in
+
+LRP_List<-list()
+
+colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
+
+for (pp in 1:length(plotMultiP)) {
+  
+  LRP_List[[pp]] <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = TRUE, 
+                            useGenMean = FALSE, genYrs = genYrs, p = plotMultiP[pp],  TMB_Inputs)
+
+
+  if (pp == 1) {
+    # Create plot using first p value
+    example_LRP_plot <- ggplot(data=LRP_List[[1]]$Preds, mapping=aes(x=xx,y=fit)) + 
+      geom_ribbon(aes(ymin = lwr, ymax = upr, x=xx), fill = "grey90") +
+      geom_line(mapping=aes(x=xx, y=fit), col="black", size=1) +
+      geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
+      geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
+      geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      xlab("Aggregate Escapement") + ylab("Pr(All CUs > Lower Benchmark)") +
+      coord_cartesian(ylim=c(0,1)) +
+      theme_classic()
+  }
+
+  # Add LRP estimates for each p-value =============================
+  example_LRP_plot <- example_LRP_plot +
+    geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
+    geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) 
+
+  
+  # # Defunct code with error bars:
+  # annual_LRP_plot <- annual_LRP_plot +
+  #   geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp], size=1) +
+  #  # annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill="blue", alpha = .2)
+  #   geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$upr,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp], linetype = "dashed") +
+  #   geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$lwr,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],linetype = "dashed") +
+  #   #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$upr),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color="black",linetype = "dotted")
+  #   geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5)
+  
+}
+
+example_LRP_plot <- example_LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
+
+# Save plot
+ggsave(paste(cohoDir, "/Figures/","methods-Example-Logistic.png",sep=""), plot = example_LRP_plot,
+       width = 4, height = 3, units = "in")  
+
+
+
 
 # ===================================================================================
 # Plot annual status with bars to show years in which LRP was breached 

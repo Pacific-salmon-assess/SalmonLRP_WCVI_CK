@@ -406,7 +406,7 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
     theme_classic()
   
   # If LRP$lwr is <0, assume can't fit LRP
-  if(LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
+  if(length(p) == 1 & LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
     annual_LRP_plot <- annual_LRP_plot + 
       geom_vline(xintercept=LRP$fit, color="orange", size = 1) +
       geom_hline(yintercept= p, linetype="dotted", color="black", size = 0.5) + 
