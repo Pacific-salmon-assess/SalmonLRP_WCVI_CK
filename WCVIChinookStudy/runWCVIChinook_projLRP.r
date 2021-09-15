@@ -805,10 +805,12 @@ for (i in 1:length(OMsToInclude)) {
 # For now, I have copied the SREP files to the SalmonLRP_RetroEval repository
 # If the watershed-area-model is updated, these files will need to be updated
 
-createMCMCout <- TRUE
+createMCMCout <- FALSE
 setwd(wcviCKDir)
 alphaScalar <- 1
 SREPScalar <- 1
+evenPars <- TRUE
+
 # Only need to run once to create mcmcOut.csv file with a given assumed
 # distribution of alpha and SREP
 Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
@@ -872,7 +874,7 @@ if(createMCMCout){
     #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
     rSREP <- exp(rnorm(nTrials*1.5, logmeanSREP,sigSREP))
 
-    rsig <-  rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+    rsig <-  read.csv(paste("samSimInputs/CUPars.csv")) %>%
       filter(stkName==Inlet_Names[i]) %>% dplyr::select(sigma,stk)
 
     meanlnalpha_nBC <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha_nBC)#1-(rsig$sigma^2)/2# (life-stage model)
@@ -947,6 +949,22 @@ if(createMCMCout){
 
 }
 
+# sd((mcmcOut %>% filter(stkName=="Quatsino"))$beta)
+# 0.0001692311
+
+nInlets <- length(Inlet_Names)
+rlnalpha_even <- data.frame(a=qnorm(runif(nTrials * nInlets), 1.5, 0.5))
+rbeta_even <- data.frame(a=qnorm(runif(nTrials * nInlets), 1/3155, 0.0001692344))
+rsigma <- rep(0.6821667,nTrials * nInlets)
+
+mcmc_even <- data.frame( stk=rep(1:5, 1, each=nTrials),
+                         alpha = rlnalpha_even,
+                         beta = rbeta_even,
+                         sigma = rsigma,
+                         SREP = 1/beta,
+                         stkName=stk=rep(Inlet_Names, 1, each=nTrials),
+                         alpha_nBC = rlnalpha_even )
+# not sure if I need alpha_nBC for mcmc_even??
 
 #Look at Sgens by inlet
 # test <- mcmcOut#
