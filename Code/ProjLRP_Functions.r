@@ -5,7 +5,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
                              corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPScalar=NULL,
-                             biasCorrectEst=NULL, biasCorrectProj=NULL, ER=NULL){
+                             biasCorrectEst=NULL, biasCorrectProj=NULL, ER=NULL, evenPars=NULL){
 
 
   scenInputDir <- paste(outDir, "SamSimInputs", scenarioName, sep="/")
@@ -122,8 +122,19 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     if (runMCMC) {
       if(is.null(alphaScalar) & is.null(SREPScalar)){
         if(is.null(aNarrow)) {
-          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
-                                    sep="/"))
+          #mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv", sep="/"))
+          
+          if(is.null(evenPars)) {
+            mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                      sep="/"))
+          }        
+          if(!is.null(evenPars)){# This mcmc SR set assume even pars across CUs
+            if(evenPars){
+              mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Even_mcmc.csv",
+                                        sep="/"))
+            }
+          }
+  
         }# End of  if(is.null(aNarrow) {
         if(!is.null(aNarrow)) {
           if(aNarrow){
@@ -136,8 +147,8 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
       if(!is.null(alphaScalar)&!is.null(SREPScalar)){
 
         if(alphaScalar==1 & SREPScalar==1){
-          mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
-                                    sep="/"))
+            mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
+                                      sep="/"))
         }
         if(alphaScalar==1.5 & SREPScalar==1){
           mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_alphaScalar1.5_SREPScalar1.csv",
@@ -169,7 +180,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     }# End of if (runMCMC) {
 
     if (!runMCMC) mcmcOut <- NULL
-  }
+  }# End of  if(is.null(SRDat) || all(is.na(SRDat$Recruits)) ){
 
 
   # Read-in CU pars file and re-write with updated scenario pars =====================
@@ -178,6 +189,13 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   # -- specify ER scenario
   CUpars$cvER <- rep(cvER,length(unique(CUpars$stk)))
 
+  # For Sensitivity analysis assuming even SR pars among CU (WCVI CK)
+  if(!is.null(evenPars)){
+    if(evenPars){
+      CUpars$Sinit <- rep(3384,5)
+    }
+  }
+  
   # -- fill-in MPD fits, only for stocks with SR data
   if(!is.null(SRDat)){
     if (all(is.na(SRDat$Recruits)) == FALSE){
