@@ -406,7 +406,7 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
     theme_classic()
   
   # If LRP$lwr is <0, assume can't fit LRP
-  if(LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
+  if(length(p) == 1 & LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
     annual_LRP_plot <- annual_LRP_plot + 
       geom_vline(xintercept=LRP$fit, color="orange", size = 1) +
       geom_hline(yintercept= p, linetype="dotted", color="black", size = 0.5) + 
@@ -907,7 +907,7 @@ plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
 
     # --- set-up pdf to save to
     png(paste("Figures/", fName, ".png", sep=""), width=8, height=6, units="in", res=300)
-    par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
+    par( oma=c(1,8,1,0), mar=c(3,3,3,3), lend=2, xpd=T)
     
     # ---- specify colouts 
     cols <- c( "#FF0900", "grey80") # (red, grey)

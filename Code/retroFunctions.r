@@ -203,11 +203,6 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         out.perc.df <- rbind(out.perc.df, new.perc.df) # as looping through retro years, add rows with percentile benchmarks for each CU (with escapement too)
       }
     }
-   # # If plotLRP=T, plot model fit and data  
-   # if (plotLRP == T & LRPmodel != "Proj") {
-
-   
-   
     
     if (plotLRP == T) {
       plotLogistic(Data = LRP_Mod$Logistic_Data, Preds = LRP_Mod$Preds, 
