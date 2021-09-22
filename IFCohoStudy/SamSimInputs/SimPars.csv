@@ -1,2 +1,2 @@
 scenario,nameOM,nameMP,keyVar,plotOrder,species,simYears,harvContRule,benchmark,canER,usER,cvERSMU,propMixHigh,singleHCR,moveTAC,prodRegime,startYear,endYear,rho,arSigTransform,biasCor,correlCU,corrMat,mu_logCovar1,sig_logCovar1,sampCU_gamma,sigCU_gamma,tauCatch,obsSig,mixOUSig,singOUSig,obsMixCatchSig,obsSingCatchSig,obsAgeErr,lowCatchThresh,highCatchThresh,extinctThresh,adjustSig,adjustAge,adjustForecast
-IM.base_baseER,IM.base,baseER,expRate,2,coho,100,fixedER,stockRecruit,0.125,0,0.456,1,FALSE,FALSE,med,NA,NA,0,FALSE,FALSE,0,TRUE,-4.58,0.447,FALSE,0,0,0,0,0,0,0,0,0,NA,1.00E-04,1,1,1
+IM.base_baseER,IM.base,baseER,expRate,2,coho,30,fixedER,stockRecruit,0.125,0,0.456,1,FALSE,FALSE,med,NA,NA,0,FALSE,FALSE,0,TRUE,-4.58,0.447,FALSE,0,0,0,0,0,0,0,0,0,NA,1.00E-04,1,1,1

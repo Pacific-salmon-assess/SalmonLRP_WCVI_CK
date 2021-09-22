@@ -89,7 +89,7 @@ plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withSgen=NUL
     Dat$CU_Name[Dat$CU_Name == "North_Thompson"] <- "North Thompson"
     Dat$CU_Name[Dat$CU_Name == "South_Thompson"] <- "South Thompson"
     Dat$CU_Name[Dat$CU_Name == "Lower_Thompson"] <- "Lower Thompson"
-    
+
       MUs <- unique(Dat$MU)
       for(mm in 1:length(MUs)){
         Dat.MU <- Dat %>% filter(MU == MUs[mm])
@@ -169,6 +169,105 @@ plot_CU_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withSgen=NUL
   dev.off()
   
 }
+
+
+
+
+plot_CU_Escp_withStatus<-function(Dat, Dir, plotName, SgenFileName=NULL) {
+
+  
+  statusDat<- Dat %>% group_by(CU_Name) %>%
+    mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right"))  
+    
+  # Get Sgen estimates for IM model
+  ests<-read.csv(paste(Dir,"/DataOut/",SgenFileName,".csv", sep=""))
+  ests<-as_tibble(ests)
+  ests <- ests %>% filter(Param == "Sgen") %>% select(Estimate, CU_Name)
+  ests <- rename(ests, BenchmarkBase = Estimate)
+  
+  cap.ests<-read.csv(paste(Dir,"/DataOut/",SgenFileName,"_priorCap.csv",sep=""))  
+  cap.ests<-as_tibble(cap.ests)
+  cap.ests <- cap.ests %>% filter(Param == "Sgen") %>% select(Estimate, CU_Name)
+  cap.ests <- rename(cap.ests, BenchmarkCap = Estimate)
+  
+  statusDat<-left_join(x=statusDat, y= ests, by="CU_Name")
+  statusDat<-left_join(x=statusDat, y= cap.ests, by="CU_Name")
+  
+  # Rename to make prettier for plotting
+  statusDat$CU_Name[Dat$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
+  statusDat$CU_Name[Dat$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
+  statusDat$CU_Name[Dat$CU_Name == "North_Thompson"] <- "N. Thompson"
+  statusDat$CU_Name[Dat$CU_Name == "South_Thompson"] <- "S. Thompson"
+  statusDat$CU_Name[Dat$CU_Name == "Lower_Thompson"] <- "L. Thompson"
+  
+
+  statusBase <- statusDat %>% summarise(StatusBase=ifelse(Gen_Mean>BenchmarkBase, "Above", "Below"))
+  statusBase<-statusBase$StatusBase
+  
+  statusCap <- statusDat %>% summarise(StatusCap=ifelse(Gen_Mean>BenchmarkCap, "Above", "Below"))
+  statusCap<-statusCap$StatusCap
+  
+  statusDat<-statusDat %>% add_column(statusBase=statusBase, statusCap = statusCap)
+  
+  g<-ggplot(statusDat) +
+    geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
+    geom_point(aes(y=Gen_Mean, x=yr, colour=statusBase)) +
+    geom_hline(aes(yintercept=BenchmarkBase), colour="orange") +
+    geom_hline(aes(yintercept=BenchmarkCap), colour="orange", linetype=2) +
+    ylab("Escapement") + xlab("Year") +
+    scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
+    facet_wrap(~interaction(CU_Name), scales = "free_y") +
+    theme_classic()
+  
+  # Save plot
+  ggsave(paste(Dir,"/Figures/",plotName,".png",sep=""), plot = g,
+         width = 10, height = 5, units = "in") 
+  
+  
+}
+
+
+
+
+
+plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName) {
+  
+  
+  escpDat <- Dat %>% group_by(Subpop_Name, yr) %>% summarise(Escp=sum(Escp)) %>% 
+    mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right")) 
+  
+  statusDat <- escpDat %>%
+    add_column(Status=ifelse(escpDat$Gen_Mean > 1000, "Above", "Below"))
+ 
+  
+  # Change some subpop names to make it prettier for plotting
+  
+  statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower Middle Fraser"] <- "Lower Middle Fraser"
+  statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower North Thompson"] <- "Lower North Thomp."
+  statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle and Lower Shuswap Rivers"] <- "Mid. and L.Shuswap Rivers"
+  statusDat$Subpop_Name[statusDat$Subpop_Name == "Shuswap Lake Tributaries"] <- "Shuswap Lake Tribs."
+  statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle North Thompson"] <- "Middle North Thomp."
+  statusDat$Subpop_Name[statusDat$Subpop_Name == "Upper North Thompson"] <- "Upper North Thomp."
+  
+  
+  g<-ggplot(statusDat) +
+    geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
+    geom_point(aes(y=Gen_Mean, x=yr, colour=Status)) +
+    geom_hline(aes(yintercept=1000), colour="orange") +
+    ylab("Escapement") + xlab("Year") +
+    scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
+    facet_wrap(~interaction(Subpop_Name), scales = "free_y") +
+    theme_classic()
+
+  # Save plot
+  ggsave(paste(Dir,"/Figures/",plotName,".png",sep=""), plot = g,
+         width = 10, height = 5, units = "in") 
+    
+  
+}
+
+
+
 
 
 
