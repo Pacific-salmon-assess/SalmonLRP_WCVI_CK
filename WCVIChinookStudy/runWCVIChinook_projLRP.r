@@ -26,7 +26,8 @@
 #     (13) Run reconstruction for WCVI CK CUs
 #     (14) Plot age proportions in recruitment
 #     (15) Plot SMU time-series
-#     (16) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
+#     (16) Explore samSim outputs
+#     (17) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
 
 # ===============================================================================
 
@@ -307,6 +308,7 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0)
 
+
 scenarioName <- "ER0.05"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
@@ -389,6 +391,106 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.45)
 
 
+scenarioName <- "ER0even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0,
+                                evenPars=TRUE)
+scenarioName <- "ER0.05even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.05,
+                                evenPars=TRUE)
+scenarioName <- "ER0.10even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.10,
+                                evenPars=TRUE)
+scenarioName <- "ER0.15even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.15,
+                                evenPars=TRUE)
+scenarioName <- "ER0.20even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.20,
+                                evenPars=TRUE)
+scenarioName <- "ER0.25even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.25,
+                                evenPars=TRUE)
+scenarioName <- "ER0.30even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.30,
+                                evenPars=TRUE)
+scenarioName <- "ER0.35even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.35,
+                                evenPars=TRUE)
+scenarioName <- "ER0.40even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.40,
+                                evenPars=TRUE)
+scenarioName <- "ER0.45even"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.45,
+                                evenPars=TRUE)
 
 
 
@@ -805,10 +907,12 @@ for (i in 1:length(OMsToInclude)) {
 # For now, I have copied the SREP files to the SalmonLRP_RetroEval repository
 # If the watershed-area-model is updated, these files will need to be updated
 
-createMCMCout <- TRUE
+createMCMCout <- FALSE
 setwd(wcviCKDir)
 alphaScalar <- 1
 SREPScalar <- 1
+evenPars <- TRUE
+
 # Only need to run once to create mcmcOut.csv file with a given assumed
 # distribution of alpha and SREP
 Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
@@ -872,7 +976,7 @@ if(createMCMCout){
     #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
     rSREP <- exp(rnorm(nTrials*1.5, logmeanSREP,sigSREP))
 
-    rsig <-  rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+    rsig <-  read.csv(paste("samSimInputs/CUPars.csv")) %>%
       filter(stkName==Inlet_Names[i]) %>% dplyr::select(sigma,stk)
 
     meanlnalpha_nBC <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha_nBC)#1-(rsig$sigma^2)/2# (life-stage model)
@@ -947,6 +1051,27 @@ if(createMCMCout){
 
 }
 
+# sd((mcmcOut %>% filter(stkName=="Quatsino"))$beta)
+# 0.0001692311
+
+set.seed(1)
+nInlets <- length(Inlet_Names)
+rlnalpha_even <- data.frame(a=qnorm(runif(nTrials * nInlets), 1.5, 0.5))
+rbeta_even <- data.frame(a=qnorm(runif(nTrials * nInlets), 1/3155, 0.0001692344))
+rsigma <- rep(0.6821667,nTrials * nInlets)
+
+mcmc_even <- data.frame(stk = rep(1:5, 1, each=nTrials), alpha_ = rlnalpha_even,
+                        beta_ = rbeta_even,
+                        sigma = rsigma,
+                        SREP_ = 1/rbeta_even,
+                        stkName = rep(Inlet_Names, 1, each=nTrials),
+                        alpha_nBC_ = rlnalpha_even )
+colnames(mcmc_even) <- c("stk", "alpha", "beta", "sigma", "SREP", "stkName", "alpha_nBC")
+
+# write.csv(mcmc_even, paste(wcviCKDir, "SamSimInputs","Even_mcmc.csv", sep="/"),
+#           row.names=F)
+#
+# not sure if I need alpha_nBC for mcmc_even??
 
 #Look at Sgens by inlet
 # test <- mcmcOut#
@@ -1456,15 +1581,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05",
-  "ER0.10",
-  "ER0.15",
-  "ER0.2",
-  "ER0.25",
-  "baseER",
-  "ER0.35",
-  "ER0.4",
-  "ER0.45")
+  "ER0.05even",
+  "ER0.10even",
+  "ER0.15even",
+  "ER0.20even",
+  "ER0.25even",
+  "ER0.30even",
+  #"baseER",
+  "ER0.35even",
+  "ER0.40even",
+  "ER0.45even")
   # "alphaScalar0.75",
   # "baseERn10000",
   # "alphaScalar1.5")
@@ -1476,7 +1602,7 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERs"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
@@ -1805,8 +1931,24 @@ SMUPlot
 # ggsave("Figures/chinook-SMU-timeseries.png", plot=SMUPlot, width = 6,
 #        height = 4, units = "in")
 
+
 # ===================================================================
-# (16) Look at distribution of alphas used in samSim
+# (16) Explore samSim outputs
+# ==================================================================
+
+#Look at CU-specific timeseries
+# ER=0.45
+SR.45 <- read.csv("SamSimOutputs/simData/ER0.45even/ER0.45even_baseER_CU_SRDat.csv")
+# for a single iteration, 108, e.g.,
+dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
+ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
+
+# Look at above/below LBM for each year/CU/trial
+CUaboveLB.45 <- readRDS(file="SamSimOutputs/simData/ER0.45even/ER0.45even_baseER_CUaboveLB.RData")
+CUaboveLB.45[,,108]
+
+# ===================================================================
+# (17) Look at distribution of alphas used in samSim
 # ==================================================================
 scenarioToLook <- "cvER0.21n5000"
 d <- readr::read_rds(paste(wcviCKDir, "/SamSimOutputs/simData/", scenarioToLook,
