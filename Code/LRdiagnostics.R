@@ -157,8 +157,7 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   # compiled and is in the directory "TMB_Inputs". A significant Box-Tidwell 
   # statistic indicates a lack of linearity in the relationship between 
   # aggregate abundances and log-odds (Fox et al. 2016, p. 326-328).
-  
-  
+
   data <- list()
   data$N_Stks <- nCU
   digits <- count.dig(SMUlogisticData$SMU_Esc)
@@ -181,9 +180,9 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   param$B_0 <- -2
   param$B_1 <- 0.1
   param$B_2 <- 0.1
-  
-  dyn.load(dynlib(paste("Code/TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
-  #dyn.load(dynlib(paste("TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
+
+  #dyn.load(dynlib(paste("Code/TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
+  dyn.load(dynlib(paste("TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
   
   obj <- MakeADFun(data, param, DLL="Logistic_LRPs_BoxTidwell", silent=TRUE)
 
@@ -291,6 +290,7 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
           plot.title = element_text(size = 20)
     ) 
   p1+p2
+  
   ggsave(p2, file=paste(dir, plotname, ".png", sep=""))
   
   #-----------------------------------------------------------------------------
@@ -345,10 +345,16 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   # https://www.statology.org/assumptions-of-logistic-regression/
   
   # Frequency of outcomes (coded to accept proportional as well as 0/1 data)
-  
-  Freq <- c(sum(floor(SMUlogisticData$ppn))/length(SMUlogisticData$ppn),
-            sum(ceiling(SMUlogisticData$ppn))/length(SMUlogisticData$ppn))
-  
+ 
+  # Original Freq code: 
+ # Freq <- c(sum(floor(SMUlogisticData$ppn))/length(SMUlogisticData$ppn),
+ #            sum(ceiling(SMUlogisticData$ppn))/length(SMUlogisticData$ppn))
+ 
+  # Update by K.Holt:
+   Freq <- c(sum(ceiling(SMUlogisticData$ppn))/length(SMUlogisticData$ppn), 
+             1-sum(ceiling(SMUlogisticData$ppn))/length(SMUlogisticData$ppn))
+   
+
   minFreq <- min(Freq)
   minSampleSize <- 10/min(Freq)
   
@@ -516,13 +522,13 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
 #----------------------------------------------------------------------------
 ## Run code for SSChum using inputs from above
 
-LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
-                           nCU = nCU,
-                           All_Ests = All_Ests,
-                           p = p, Bern_logistic = Bern_logistic,
-                           dir = dir, plotname = plotname,
-                           caseStudy = "SCChum")
-save(LRdiagOut, file="SCChumStudy/DataOut/logisticFit_2018Output.rda")
+# LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
+#                            nCU = nCU,
+#                            All_Ests = All_Ests,
+#                            p = p, Bern_logistic = Bern_logistic,
+#                            dir = dir, plotname = plotname,
+#                            caseStudy = "SCChum")
+# save(LRdiagOut, file="SCChumStudy/DataOut/logisticFit_2018Output.rda")
 -------------------------------------------------------------------------------
 
 

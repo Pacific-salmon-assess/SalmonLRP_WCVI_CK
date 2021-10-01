@@ -399,10 +399,83 @@ OMsToInclude<-c("Test_randomTrue", "HM.Base", "IMCap.Base", "HMCap.Base")
 
 OMsToInclude<-c("Test_30Yrs_Thin", "Test_30Yrs_Thin_highER")
 
+
+for (p in 1:length(probThreshList)) {
+  
+  probThresh<-probThreshList[p]
+  
+  # Loop over OM Scenarios 
+  for (i in 1:length(OMsToInclude)) {
+    
+    # Read in samSim outputs for OM
+    filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
+    projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
+    # projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+    projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4, expRate==0.125)
+    
+    # Create bins for projected spawner abundances
+    binSize<-200 # Note: bin size is currently set here
+    minBreak<-0
+    maxBreak<-round(max(projLRPDat$sAg),digits=-2) + binSize
+    breaks<-seq(minBreak, maxBreak,by=binSize)  
+    
+    # Set bin labels as the mid-point
+    projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)),include.lowest = T)
+    
+    # Summarize nSims in each bin
+    tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+    
+    # Filter out bins with < 100 nSims
+    tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
+      add_column(nSims=tmp$nSims) %>% filter(nSims>=100)
+    
+    # For each bin, calculate probability that required proportion of CUs above benchmark
+    projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+    # For each bin, calculate the difference between the threshold probability and the calculated probability 
+    projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
+    
+    # Save projection summaries used to create plots
+    projLRPDat$OM.Name<-OMsToInclude[i]
+    if (i == 1) projLRPDat.plot<-projLRPDat
+    if (i > 1) projLRPDat.plot<-rbind(projLRPDat.plot,projLRPDat)
+    
+    # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
+    LRP<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
+    
+    # Create a table of LRP estimates to be saved for each OM model
+    if (i ==1 & p == 1) {
+      LRP_Ests<-data.frame(OMsToInclude[i], probThresh, propCUThresh, LRP, binSize)
+      names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+    } else {
+      tmp.df<-data.frame(OMsToInclude[i], probThresh, propCUThresh, LRP, binSize)
+      names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+      LRP_Ests<-rbind(LRP_Ests,tmp.df)
+    }
+    
+    # Plot projected LRP abundance relationship =============================================================== 
+    pdf(paste(cohoDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_ProjLRPCurve_prob",probThresh,".pdf", sep=""), 
+        width=6, height=6) 
+    
+    plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), ylim=c(0,1.0),cex=0.2,
+         xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
+    abline(h=probThresh, lty=2)
+    abline(v=LRP, col="orange", lwd=2)
+    
+    dev.off()
+    
+    # Option to plot histogram of nSims in each Agg Abundance Bin
+    #barplot(height = projLRPDat$nSims,names.arg = projLRPDat$bins)
+    
+  }
+  
+}
+
+
 # Save LRPs for all OM scenarios
 write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
 write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"), row.names=F)
+
 
 
 # ===================================================================================
@@ -901,6 +974,127 @@ g3 <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(widt
  v3<-ggplot(as.data.frame(post.all), aes(x=alpha, y=gamma)) + geom_point() +
    geom_point(data=as.data.frame(post.sub), aes(x=alpha, y=gamma), col="red")
 
+ 
+ 
+ 
+ # ================================================================================================
+ # (10) Make example plot to show calculation of projected LRPs
+ # ====================================================================================================
+ 
+ # Run example scenario:
+ scenarioName <- "examplePlot"
+ BMmodel <- "SR_IndivRicker_Surv"
+ TMB_Inputs <- TMB_Inputs_IM
+ 
+ run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=scenarioName,
+          useGenMean = F, genYrs = genYrs,  TMB_Inputs, outDir=cohoDir, runMCMC=T,
+          nMCMC=30000, nProj=30000, cvER = 0.456*0.5, recCorScalar=1,gammaSigScalar=NULL,agePpnConst=TRUE,
+          biasCorrectEst=T, biasCorrectProj=T)
+ 
+ 
+ # Specify threshold to use when calculating LRP
+ propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
+ probThreshList<-c(0.50, 0.66, 0.90, 0.99) # probability threshhold; the LRP is set as the aggregate abundance that has this 
+                                            # -- probability that the propCUThreshold is met
+ 
+ 
+ for (p in 1:length(probThreshList)) {
+   
+   probThresh<-probThreshList[p]
+     
+     # Read in samSim outputs for OM
+     filename<-paste("projLRPDat_","examplePlot",".csv",sep="")
+     projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
+     projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+     
+     # Create bins for projected spawner abundances
+     binSize<-200 # Note: bin size is currently set here
+     minBreak<-0
+     maxBreak<-round(max(projLRPDat$sAg),digits=-2) + binSize
+     breaks<-seq(minBreak, maxBreak,by=binSize)  
+     
+     # Set bin labels as the mid-point
+     projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)),include.lowest = T)
+     
+     # Summarize nSims in each bin
+     tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+     
+     # Filter out bins with < 100 nSims
+     tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
+       add_column(nSims=tmp$nSims) %>% filter(nSims>=100)
+     
+     # For each bin, calculate probability that required proportion of CUs above benchmark
+     projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+     # For each bin, calculate the difference between the threshold probability and the calculated probability 
+     projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
+     
+     # Save projection summaries used to create plots
+     projLRPDat$OM.Name<-"examplePlot"
+     projLRPDat.plot<-projLRPDat
+     
+     # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
+     LRP<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
+     
+     # Create a table of LRP estimates to be saved for each OM model
+     if (p == 1) {
+       LRP_Ests<-data.frame("examplePlot", probThresh, propCUThresh, LRP, binSize)
+       names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+     } else {
+       tmp.df<-data.frame("examplePlot", probThresh, propCUThresh, LRP, binSize)
+       names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+       LRP_Ests<-rbind(LRP_Ests,tmp.df)
+     }
+  } # end of p loop     
+
+      colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
+ 
+     # Plot projected LRP abundance relationship =============================================================== 
+     png(paste(cohoDir,"/Figures/", "methods-Example-ProjectedLRP.png", sep=""), width=480, height=400)
+     
+     plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), ylim=c(0,1.0),cex=0.2,
+          xlab="Aggregate Spawner Abundance", ylab="Pr (All CUs > Lower Benchmark)", cex.lab=1.5,
+          cex.axis=1.2)
+     
+     abline(h=probThreshList[1],lty=3)
+     lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[1]],2),c(0,probThreshList[1]), lty=1, lwd=2, col=colList[1])
+     
+     abline(h=probThreshList[2],lty=3)
+     lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[2]],2),c(0,probThreshList[2]), lty=1, lwd=2, col=colList[2])
+     
+     abline(h=probThreshList[3],lty=3)
+     lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[3]],2),c(0,probThreshList[3]), lty=1, lwd=2, col=colList[3])
+     
+     abline(h=probThreshList[4],lty=3)
+     lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[4]],2),c(0,probThreshList[4]), lty=1, lwd=2, col=colList[4])
+     
+     dev.off()
+     
+     
+     # plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,85000), ylim=c(0,1.0),cex=0.2,
+     #      xlab="Aggregate Abundance", ylab="Pr (All CUs > Lower Benchmark)")
+     # 
+     # lines(c(0,LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[1]]),rep(probThreshList[1],2), lty=3, col=colList[1])
+     # lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[1]],2),c(0,probThreshList[1]), lty=1, col=colList[1])
+     # 
+     # lines(c(0,LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[2]]),rep(probThreshList[2],2), lty=3, col=colList[2])
+     # lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[2]],2),c(0,probThreshList[2]), lty=1, col=colList[2])
+     # 
+     # lines(c(0,LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[3]]),rep(probThreshList[3],2), lty=3, col=colList[3])
+     # lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[3]],2),c(0,probThreshList[3]), lty=1, col=colList[3])
+     # 
+     # lines(c(0,LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[4]]),rep(probThreshList[4],2), lty=3, col=colList[4])
+     # lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[4]],2),c(0,probThreshList[4]), lty=1, col=colList[4])
+     # 
+     
+     
+     
+     
+     # Option to plot histogram of nSims in each Agg Abundance Bin
+     #barplot(height = projLRPDat$nSims,names.arg = projLRPDat$bins)
+
+  
+ 
+ 
  
  
  # ===================================================================

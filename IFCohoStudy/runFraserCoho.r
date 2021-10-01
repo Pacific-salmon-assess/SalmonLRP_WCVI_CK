@@ -59,13 +59,6 @@ dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap"))
 compile("TMB_Files/SR_IndivRicker_SurvCap.cpp")
 dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap"))
 
-# compile("TMB_Files/LRP_Logistic_Only.cpp")
-# dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
-
-# Only needed if running projection models =======
-#compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
-#dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
-
 # Only needed for leave-one-out logistic regression diagnostics
 compile("TMB_Files/LRP_BasicLogistic_Only_LowAggPrior.cpp")
 dyn.load(dynlib("TMB_Files/LRP_BasicLogistic_Only_LowAggPrior"))
@@ -76,8 +69,9 @@ dyn.load(dynlib("TMB_Files/LRP_Logistic_Only_LowAggPrior"))
 
 compile("TMB_Files/LRP_Logistic_Only.cpp")
 dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
+
 # ======================================================================
-# Read-in Coho data:  
+# (1) Read-in and format IF Coho data:  
 # =====================================================================
 setwd(cohoDir)
 
@@ -112,14 +106,12 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 
 
 # ==================================================================================
-# Call functions to plot data availability:
+# (2) Call functions to plot data:
 # ====================================================================================
+
 # plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
 # plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
-# 
-# # Note: these next 2 two escpt plots need to have formatting fixed
-# plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="IFC Esc", samePlot = T)
- #plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-escapeSeries", samePlot = F)
+
  plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries", samePlot = F, withSgen=TRUE, addGenMean=T,
                         SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
 
@@ -127,71 +119,51 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
                        SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
  
  plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="coho-Subpop-EscpSeries", samePlot = F, addGenMean=T)
-# plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="IFC Esc - by Subpop", samePlot = T)
 
 
+ plot_CU_Escp_withStatus(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries-wStatus", SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
+ 
+ 
+ plot_Subpop_Escp_withStatus(CoEscpDat_bySubpop, cohoDir, plotName="coho-Subpop-EscpSeries-wStatus")
+ 
+ 
 # ==================================================================================================================
-# Run retrospective analyses:
+# (3) Set-up TMB inputs for logistic regression fits
 # =====================================================================================================================
-
-#B_penalty_mu<-4489
-#B_penalty_sigma<-2048
-
-# TMB input parameters:
-TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
-                #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
-                extra_eval_iter=FALSE,biasCorrect=TRUE)
 
 TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       Tau_dist = 0.1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                      #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
                       extra_eval_iter=FALSE,biasCorrect=TRUE)
 
-# Prior means come from running "compareRickerModelTypes.r"
-# with bias correction, but only expansion by 1.40 for prior cap
-cap_priorMean_HM<-c(10.923210,  4.606973, 12.775798, 19.513601, 15.986513)
+# Prior means come from running "compareRickerModelTypes_onlySR.r", with bias correction
+ ## Note: using expansion by 1.40 for prior cap (not 1.5, like Arbeider et al., Korman et al)
+cap_priorMean_IM<-c(11.084298, 4.456175, 13.343691, 27.145187, 17.361800)
 
-
-TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-                   logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-                   gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-                   cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),
-                   #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
-                   extra_eval_iter=FALSE, biasCorrect=T)
-
-# Prior means come from running "compareRickerModelTypes.r"
-# with only 1.40 expansion of mean
-#cap_priorMean_IM<-c(11.617086, 6.222576, 14.357245, 23.451891, 17.510972)
-
-# Prior means come from running "compareRickerModelTypes_onlySR.r"
-# with only 1.40 expansion of mean
-cap_priorMean_IM<-c(11.093778, 4.404835, 13.115026, 26.147670, 17.075453)
-
-# with only 1.35 expansion of mean
-#cap_priorMean_IM<-c(10.697571, 4.247519, 12.646633, 25.213824, 16.465615)
-
-
+  
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),
-                               #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
                                extra_eval_iter=FALSE,biasCorrect=TRUE)
 
+# TMB input parameters:
+TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
+                      logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
+                      gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
+                      extra_eval_iter=FALSE,biasCorrect=TRUE)
 
-# Calculate penalty for sub-population approach
-#subPop_B_penalty_lwr<-1000 # set at abundance below which no one CU could be above subpop have at least half of subpops above 1000 fish
-#subPop_B_penalty_upr<-8000 # set at minimum abundance at which all 5 CUs could have half of subpops above 1000 fish 
-      # (i.e., MFr = 1 subpop>1000, FCany=1 subpop>1000, LThomp=1 subpop>1000, NThomp=2 subpop>3000, SThomp = 2 subpop> 1000)
-#B_penalty_mu<-mean(c(subPop_B_penalty_lwr,subPop_B_penalty_upr))
-#dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
-#B_penalty_sigma<-dum$par
+# Prior means come from running "compareRickerModelTypes_onlySR.r"
+#cap_priorMean_HM<-  ### Cannot estimate at present using compareRickerModelTypes_onlySR.r
 
-TMB_Inputs_Subpop <- list(Scale = 1000, 
-                          #B_penalty_mu=B_penalty_mu, B_penalty_sigma=B_penalty_sigma,
-                          extra_eval_iter=FALSE)
+
+# TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
+#                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
+#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+#                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),
+#                                extra_eval_iter=FALSE, biasCorrect=T)
+
+
+TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
 
 
 
@@ -208,101 +180,85 @@ TMB_Inputs_Subpop <- list(Scale = 1000,
 # }
 
 
-
-# Run annual restrospective analyses using CUs ===========================
+# ===============================================================================
+# (4) Run annual retrospective analyses
+# ====================================================================================
 
 # Note: if .cpp files are already compiled (.dll and .o files are present in SalmonLRP_RetroEval/Code/TMB_Files ), 
 # code below will run and produce figures, but will give this error message: 
 # "Error in .Call("FreeADFunObject", ptr, PACKAGE = DLL) : "FreeADFunObject" not available for .Call() for package "<TMB model name>""
 # Deleting the .dll and .o files in /TMB_Files folder and recompiling .cpp files gets rid of this error. 
 
-# Note: BroodYrLag = the number of years to subract from the current year to get to the most recent brood year
+# Note: BroodYrLag = the number of years to subtract from the current year to get to the most recent brood year
 
 # Loop over p values and run annual retrospective analyses for each level of p
   ps <- c(0.5, 0.66, 0.9, 0.99)
   for(pp in 1:length(ps)){
   
-     # Run with Bernoulli LRP model with individual model Ricker
+     ## Run with Bernoulli LRP model with individual model Ricker
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
            
-     # Run with Bernoulli LRP model with hierarchical Ricker
+     ## Run with Bernoulli LRP model with hierarchical Ricker
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
      
-     # # # Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
+     ## Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
+     ## Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
+     # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     #                BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+     #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
+     #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
-     # # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
-     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
-                    BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-
+     
+     ## Run using distribibutional benchmark for CUs based on 50% of subpopulations within a CU > 1000 fish   
+     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+                    BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                    useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
+                    bootstrapMode = F, plotLRP=T)
      
   }
 
 
+# =================================================================================================================
+# (5) Run all available combinations of number of CUs 
+# ================================================================================================================
 
-
-
-# Run annual retrospective analyses using subpopulations ===========================
-
-ps <- c(0.5, 0.66, 0.9, 0.99)
-for(pp in 1:length(ps)){
-
-runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
-               BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
-               bootstrapMode = F, plotLRP=T)
-
-}
-
-
-
-# Run all available combinations of number of CUs ============================================================
-
-# For CU approach ===========================================================
-
-nCUs<-c(5,4,3) 
+nCUs<-c(5,4,3)
 ps<-c(0.50, 0.66, 0.90,0.99)
 
 
 for (pp in 1:length(ps)){
 
-  
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
                genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                runLogisticDiag=F)
-  
   
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
                genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
                runLogisticDiag=F)
   
-  
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
                genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
                useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                runLogisticDiag=F)
   
-  
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
-               genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-               runLogisticDiag=F)
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
+  #              genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+  #              useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
+  #              runLogisticDiag=F)
     
-
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=2,
                genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only", integratedModel=F,
                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
@@ -311,37 +267,38 @@ for (pp in 1:length(ps)){
 }
 
 
-
-
 # =======================================================================
-# Make Plots for Retrospective Analysis: 
+# (6) Make Plots for Aggregate Status as a function of nCUS 
 # =======================================================================
 
-
-# Plot aggregate status by method and number of CUs
+probThresh<-0.5
 
 yearList<-2017:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.50, Dir=cohoDir,
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
 
 yearList<-2015:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=0.50, Dir=cohoDir,
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE)
+
 yearList<-2015:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=0.50, Dir=cohoDir,
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
+                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE)
+
+yearList<-2015:2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE)
 
 
-yearList<-2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=0.50, Dir=cohoDir,
-                     inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
+
+
 
 
 # ===================================================================================
-## Special logistic fit runs to create figure with two or more probabilities on a logistic fit
+# (7) Create figures with two or more probabilities on a logistic fit for specified years
 # ===================================================================================
 
-# Plot 1: Show all 4 p-values without error bars ======
+# Plot 1: Example plot for Methods Section. Show all 4 p-values without error bars on one plot as an example ======
 
 BMmodel <- "SR_HierRicker_Surv"
 TMB_Inputs<-TMB_Inputs_HM
@@ -379,7 +336,7 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
       geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
-      xlab("Aggregate Escapement") + ylab("Pr(All CUs > Lower Benchmark)") +
+      xlab("Aggregate Spawner Abundance") + ylab("Pr(All CUs > Lower Benchmark)") +
       coord_cartesian(ylim=c(0,1)) +
       theme_classic()
   }
@@ -387,7 +344,8 @@ for (pp in 1:length(plotMultiP)) {
   # Add LRP estimates for each p-value =============================
   example_LRP_plot <- example_LRP_plot +
     geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
-    geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) 
+    geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5)
+    #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) 
 
   
   # # Defunct code with error bars:
@@ -404,58 +362,78 @@ for (pp in 1:length(plotMultiP)) {
 example_LRP_plot <- example_LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","methods-Example-Logistic.png",sep=""), plot = example_LRP_plot,
+ggsave(paste(cohoDir, "/Figures/","methods-Example-LogisticLRP.png",sep=""), plot = example_LRP_plot,
        width = 4, height = 3, units = "in")  
 
 
 
+# Plot 2: Logistic IM fit in 2020 with all p-values ==================================================
 
-# ===================================================================================
-# Plot annual status with bars to show years in which LRP was breached 
-# ===================================================================================
+BMmodel <- "SR_IndivRicker_Surv"
+TMB_Inputs<-TMB_Inputs_IM
 
-# Make a list of all modelled combinations to be shown in plots
+year<-2020
+BroodYrLag<-4
+genYrs<-3
 
-modelFitList<-c("Bern.IndivRickerSurv_50",
-                "Bern.HierRickerSurv_50",
-                "Bern.IndivRickerSurvCap_50",
-                "Bern.HierRickerSurvCap_50",
-                "Bern.SPopAbundThreshST_50")
+plotMultiP <-c(0.50, 0.66, 0.90, 0.99)
+# Specify which years to use
+EscpDat<-CoEscpDat
+SRDat<-CoSRDat
+Dat <- SRDat %>%  filter(BroodYear <= (year - BroodYrLag))
+EscpDat.yy <- EscpDat %>% filter(yr <= (year - BroodYrLag))
 
-# Specify which thresholds should be tested in the data-based proportional thresholds
-ps_Prop<-c(1.0)
+Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+Dat$CU_ID <- group_by(Dat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+EscDat <- EscpDat.yy %>%  right_join(unique(Dat[,c("CU_ID", "CU_Name")])) # This line is creating problems when I make CU_ID in data being read in
 
-# Provide WSP assessment results
-WSP_estYr<-2014
-WSP_AboveLRP<-TRUE
+LRP_List<-list()
 
-LRP_estYr<-2015
-retroYears<-2000:LRP_estYr
-plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
-                  modelFitList=modelFitList, ps_Prop=ps_Prop, WSP_estYr, WSP_AboveLRP,
-                  outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
+colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
 
-LRP_estYr<-2016
-retroYears<-2000:LRP_estYr
-plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
-                  modelFitList=modelFitList, ps_Prop=ps_Prop, WSP_estYr, WSP_AboveLRP,
-                  outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
+for (pp in 1:length(plotMultiP)) {
+  
+  LRP_List[[pp]] <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = TRUE, 
+                                   useGenMean = FALSE, genYrs = genYrs, p = plotMultiP[pp],  TMB_Inputs)
+  
+  if (pp == 1) {
+    # Create plot using first p value
+    example_LRP_plot <- ggplot(data=LRP_List[[1]]$Preds, mapping=aes(x=xx,y=fit)) + 
+      geom_ribbon(aes(ymin = lwr, ymax = upr, x=xx), fill = "grey90") +
+      geom_line(mapping=aes(x=xx, y=fit), col="black", size=1) +
+      geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
+      geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
+      geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      xlab("Aggregate Spawner Abundance") + ylab("Pr(All CUs > Lower Benchmark)") +
+      coord_cartesian(ylim=c(0,1)) +
+      theme_classic()
+  }
+  
+  # Add LRP estimates for each p-value =============================
+  example_LRP_plot <- example_LRP_plot +
+    geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
+    geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5)
+  #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) 
+  
+  
+  # # Defunct code with error bars:
+  # annual_LRP_plot <- annual_LRP_plot +
+  #   geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp], size=1) +
+  #  # annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill="blue", alpha = .2)
+  #   geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$upr,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp], linetype = "dashed") +
+  #   geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$lwr,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],linetype = "dashed") +
+  #   #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$upr),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color="black",linetype = "dotted")
+  #   geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5)
+  
+}
 
-LRP_estYr<-2017
-retroYears<-2000:LRP_estYr
-plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
-                  modelFitList=modelFitList, ps_Prop=ps_Prop, WSP_estYr, WSP_AboveLRP,
-                  outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
+example_LRP_plot <- example_LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
-LRP_estYr<-2018
-retroYears<-2000:LRP_estYr
-plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
-                  modelFitList=modelFitList, ps_Prop=ps_Prop,
-                  outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
+
 
 
 # ============================================================================================
-# Create plot to compare LRP estimates among methods for a single year
+# (8) STILL TO BE TESTED: Create plot to compare LRP estimates among methods for a single year
 # ===========================================================================================
 
 modelFitList<-c("Bern.IndivRickerSurv",
@@ -472,7 +450,7 @@ plotLRPCompare(LRP_estYr, modelFitList, pList, outDir = cohoDir,
                fName = paste("compareLRPs_withBars",LRP_estYr,sep=""))
 
 # ============================================================================================
-# Create plot to compare retrospective time series of LRP estimates
+# (10) STILL TO BE TESTED: Create plot to compare retrospective time series of LRP estimates
 # ===========================================================================================
 
 EscpDat.yy <- CoEscpDat %>% filter(yr <= 2020) 
@@ -491,7 +469,7 @@ pList<-c(50, 66, 90, 99)
 plotAnnualRetro_Compare(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
   
 # ============================================================================================
-# Create plot to compare status as a function of nCUs for different LRP options
+# (11) STILL TO BE TESTED:Create plot to compare status as a function of nCUs for different LRP options
 # ===========================================================================================
   
 
@@ -517,7 +495,7 @@ plotAggStatus_byNCUs_Compare(estYear=2020, nCUList=c(5,4,3), Names=modelFitList,
 
 
 # ================================================================================
-#Summarize and save logistic model fit diagnostics 
+# (12) STILL TO BE TESTED: Summarize and save logistic model fit diagnostics 
 # ===============================================================================
 
 # Create vectors of diagnostic stats to fill for each model
