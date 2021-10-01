@@ -129,10 +129,27 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                                       sep="/"))
           }        
           if(!is.null(evenPars)){# This mcmc SR set assume even pars across CUs
-            if(evenPars){
+            if(evenPars==TRUE){
               mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Even_mcmc.csv",
                                         sep="/"))
             }
+            if(evenPars=="Same"){
+              mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Same_mcmc.csv",
+                                        sep="/"))
+            }
+            if(evenPars=="SameProd"){
+              mcmcOut <- read.csv(paste(outDir,"SamSimInputs/SameProd_mcmc.csv",
+                                        sep="/"))
+            }
+            if(evenPars=="SameBeta"){
+              mcmcOut <- read.csv(paste(outDir,"SamSimInputs/SameBeta_mcmc.csv",
+                                        sep="/"))
+            }
+            if(evenPars=="SameSREP"){
+              mcmcOut <- read.csv(paste(outDir,"SamSimInputs/SameSREP_mcmc.csv",
+                                        sep="/"))
+            }
+            
           }
   
         }# End of  if(is.null(aNarrow) {
@@ -191,7 +208,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
 
   # For Sensitivity analysis assuming even SR pars among CU (WCVI CK)
   if(!is.null(evenPars)){
-    if(evenPars){
+    if(evenPars==TRUE|evenPars=="Same"){
       CUpars$Sinit <- rep(3384,5)
     }
   }

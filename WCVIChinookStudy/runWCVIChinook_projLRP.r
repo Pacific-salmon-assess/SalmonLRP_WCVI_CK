@@ -390,8 +390,11 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.45)
 
+corMat <- matrix(0.7, nrow=5, ncol=5)
+diag(corMat) <- 1
 
-scenarioName <- "ER0even"
+
+scenarioName <- "ER0sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -400,8 +403,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0,
-                                evenPars=TRUE)
-scenarioName <- "ER0.05even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.05sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -410,8 +413,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.05,
-                                evenPars=TRUE)
-scenarioName <- "ER0.10even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.10sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -420,8 +423,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.10,
-                                evenPars=TRUE)
-scenarioName <- "ER0.15even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.15sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -430,8 +433,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.15,
-                                evenPars=TRUE)
-scenarioName <- "ER0.20even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.20sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -440,8 +443,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.20,
-                                evenPars=TRUE)
-scenarioName <- "ER0.25even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.25sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -450,8 +453,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.25,
-                                evenPars=TRUE)
-scenarioName <- "ER0.30even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.30sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -460,8 +463,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.30,
-                                evenPars=TRUE)
-scenarioName <- "ER0.35even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.35sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -470,8 +473,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.35,
-                                evenPars=TRUE)
-scenarioName <- "ER0.40even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.40sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -480,8 +483,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.40,
-                                evenPars=TRUE)
-scenarioName <- "ER0.45even"
+                                evenPars="SameSREP")
+scenarioName <- "ER0.45sameSREP_hCor"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -490,11 +493,12 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 nMCMC=NULL, nProj=10000, cvER = 0.085, cvERSMU=0.17,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.45,
-                                evenPars=TRUE)
+                                evenPars="SameSREP")
 
 
 
-#
+# Now re-enter correct corMat (if changed above)
+
 scenarioName <- "recCorSca0"
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
@@ -1581,16 +1585,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05even",
-  "ER0.10even",
-  "ER0.15even",
-  "ER0.20even",
-  "ER0.25even",
-  "ER0.30even",
+  "ER0.05Even_hCor",
+  "ER0.10Even_hCor",
+  "ER0.15Even_hCor",
+  "ER0.20Even_hCor",
+  "ER0.25Even_hCor",
+  "ER0.30Even_hCor",
   #"baseER",
-  "ER0.35even",
-  "ER0.40even",
-  "ER0.45even")
+  "ER0.35Even_hCor",
+  "ER0.40Even_hCor",
+  "ER0.45Even_hCor")
   # "alphaScalar0.75",
   # "baseERn10000",
   # "alphaScalar1.5")
@@ -1602,7 +1606,7 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven"#"ERs"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven_hCor"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
@@ -1738,7 +1742,7 @@ for (OM in 1:length(OMsToInclude)){
                                   OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
                      pull(LRP))[2]
         text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)
-        if(OM<7) text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
+        if(OM<7)  text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
 
         if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
                         line=1.8,at=0.5, cex=1) }
@@ -1935,17 +1939,170 @@ SMUPlot
 # ===================================================================
 # (16) Explore samSim outputs
 # ==================================================================
+library(abind)
+
+setwd(wcviCKDir)
+probThresh <- 0.5
 
 #Look at CU-specific timeseries
 # ER=0.45
-SR.45 <- read.csv("SamSimOutputs/simData/ER0.45even/ER0.45even_baseER_CU_SRDat.csv")
+SR.45 <- read.csv("SamSimOutputs/simData/ER0.45even_hCor/ER0.45even_hCor_baseER_CU_SRDat.csv")
 # for a single iteration, 108, e.g.,
 dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
 ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
 
-# Look at above/below LBM for each year/CU/trial
-CUaboveLB.45 <- readRDS(file="SamSimOutputs/simData/ER0.45even/ER0.45even_baseER_CUaboveLB.RData")
-CUaboveLB.45[,,108]
+OMsToIncludeName <- "CUAbove_SameProdhCor"
+
+OMsToInclude<-c(
+  "ER0.05sameProd_hCor",
+  "ER0.10sameProd_hCor",
+  "ER0.15sameProd_hCor",
+  "ER0.20sameProd_hCor",
+  "ER0.25sameProd_hCor",
+  "ER0.25sameProd_hCor",
+  "ER0.35sameProd_hCor",
+  "ER0.40sameProd_hCor",
+  "ER0.45sameProd_hCor")
+
+LRP <- NA
+
+for (OM in 1:length(OMsToInclude)){
+
+
+    # Look at above/below LBM for each year/CU/trial, where 1= success, above LBM
+    filename <- paste("SamSimOutputs/simData/", OMsToInclude[OM],"/", OMsToInclude[OM], "_baseER_CUaboveLB.RData",sep="")
+
+    CUaboveLB <- readRDS(file=filename)#"SamSimOutputs/simData/ER0.05even/ER0.05even_baseER_CUaboveLB.RData")
+    #CUaboveLB[,,108]
+    nYrs <- dim(CUaboveLB)[1]
+    nIter <- nyrs <- dim(CUaboveLB)[3]
+    CUaboveLB <- abind(CUaboveLB, matrix(1:nYrs, nrow = nYrs, ncol = nIter,
+                                           byrow = F), along=2)
+    colnames(CUaboveLB) <- c("CU1", "CU2", "CU3", "CU4", "CU5", "Year")
+    CUaboveLB <- melt(CUaboveLB)
+    colnames(CUaboveLB) <- c("year", "CU", "iteration", "AboveLB")
+    Agg <- read.csv(paste("SamSimOutputs/simData/", OMsToInclude[OM], "/",
+                          OMsToInclude[OM], "_baseER_lrpDat.csv", sep=""))
+    CUaboveLB <- left_join(CUaboveLB, Agg)
+
+
+    CUaboveLB <- CUaboveLB  %>% filter(year > 4*10)
+
+    # Just look at the first CU, as all CUs are the same in this analysis
+    # can run additional trials with CU == "CU2", etc.
+    CUaboveLB <- CUaboveLB %>% filter(CU == "CU1")
+    # Create bins for projected spawner abundances
+    minBreak<-0
+    maxBreak<-round(max(CUaboveLB$sAg),digits=-2)
+    binSize<-200 # Note: bin size is currently set here
+    breaks<-seq(minBreak, maxBreak,by=binSize)
+
+    # Set bin labels as the mid-point
+    CUaboveLB$bins<-cut(CUaboveLB$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+
+    # Summarize nSims in each bin
+    tmp <- CUaboveLB %>% group_by(bins) %>% summarise(nSims=(length(AboveLB)))
+
+    # Filter out bins with < 100 nSims
+    tmp2 <- CUaboveLB %>% group_by(bins) %>% summarise(nSimsProp1=(sum(AboveLB))) %>%
+      add_column(nSims=tmp$nSims) %>% filter(nSims>=10)
+
+    # For each bin, calculate probability that required proportion of CUs above benchmark
+    CUaboveLB <-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+    # For each bin, calculate the difference between the threshold probability and the calculated probability
+    tmp3 <-CUaboveLB %>% filter(nSims>100)# Remove bins where there are very few nSims among LRP options
+    min <- min(abs(probThresh-tmp3$prob))
+
+    CUaboveLB$diff <- abs(probThresh - CUaboveLB$prob)
+
+    #ggplot(CUaboveLB, aes(bins, prob))+geom_point()
+
+
+    if(OM==1) {
+      if(length(OMsToInclude)==1|length(OMsToInclude)==9) {
+        plot.width <- 5
+        plot.height <- 4
+      }
+      if(length(OMsToInclude)==3) {
+        plot.width <- 5
+        plot.height <- 1.5
+      }
+
+      png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToIncludeName,
+              "-ProjLRPCurve-Allp.png", sep=""), width=plot.width,
+        height=plot.height,
+        units="in", res=300)#500
+      layout(matrix(c(1:9), 3, 3, byrow = TRUE))
+
+     }# End of if(OM==1) {
+
+
+    par(mar=c(2.8,3,0.6,1))
+    xMax <- 50000
+    if(OM<7){
+      xaxt <- "n"#par(xaxt="n")
+    }
+    if(OM>=7){
+      xaxt <- "s"#par(xaxt="s")
+    }
+
+    plot(as.numeric(as.character(CUaboveLB$bins)),CUaboveLB$prob, pch=19,
+         xlim=c(0, xMax ),
+         ylim=c(0,1),
+         cex=0.3, cex.lab=1,#1.5,
+         xlab="", ylab="", xaxt=xaxt)
+
+
+
+    if(OM<7){
+      at1 <- seq(0, 50000, 10000)
+      axis(side =1,  at=at1, labels = FALSE)
+    }
+
+
+    panel.title <- c("5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%",
+                     "45%")
+    mtext(text=panel.title[OM], side=3, line=0, at=5000, cex=0.4)
+
+    # LRP_50 <- LRP_Ests$LRP[1]#(read.csv(paste(wcviCKDir,
+    # #              "/DataOut/ProjectedLRPs/ProjectedLRPs",
+    # #              OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
+    # # pull(LRP))[1]
+    #
+    # LRP_66 <- (read.csv(paste(wcviCKDir,
+    #                           "/DataOut/ProjectedLRPs/ProjectedLRPs",
+    #                           OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
+    #              pull(LRP))[2]
+    # text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)
+    # if(OM<7) text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
+
+    if(OM==4) {mtext("Probability of CU > lower benchmark", side=2,
+                     line=1.8,at=0.5, cex=1) }
+    if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=40000,
+                     cex=0.7) }
+
+
+
+
+  lrp.lwd <- 1
+  abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
+  i <- 1
+  if (i==1)    abline(v=LRP[i], col="orange", lwd=lrp.lwd)
+  if(OM<7) { if (i==2)
+    abline(v=LRP[i], col=viridis(4, alpha=0.3)[3], lwd=lrp.lwd) }
+  abline(h=0.66, lty=2)
+  abline(h=0.9, lty=2)
+  abline(h=0.99, lty=2)
+
+# if(i==3) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[2] )
+# if(i==4) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.2)[1] )
+
+  if(OM==length(OMsToInclude)) {
+    dev.off()
+  }
+
+
+} #End of 1:9 OM
 
 # ===================================================================
 # (17) Look at distribution of alphas used in samSim
