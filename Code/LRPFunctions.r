@@ -319,6 +319,7 @@ Run_LRP <- function(Dat, Mod, useBern_Logistic,
   data$N_Stks <- N_Stocks
   data$Bern_Logistic <- as.numeric(useBern_Logistic)
   
+  
   # Calculate Generation Mean of Aggregate Abundance
   Agg_Abund <- Dat %>% group_by(yr) %>% summarise(Agg_Esc = sum(Escp)) %>%
     mutate(Gen_Mean = rollapply(Agg_Esc, genYrs, gm_mean, fill = NA, align="right"))
