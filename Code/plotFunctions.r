@@ -475,7 +475,7 @@ plotAnnualRetro_Compare<-function(Dat, Names, L_Names = NA, pList, outDir, useGe
 #==============================================================
 
 plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0.95, useBern_Logistic = F){
-  
+
   # y label different depending on model
   if(useBern_Logistic){
     Ylab = "Pr(All CUs > Lower Benchmark)"
@@ -489,13 +489,14 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
       Xlab = "Aggregate Escapement"
   }
   
+  Preds<-Preds[is.na(Preds$fit)==FALSE,]
   
   # Create plot
   annual_LRP_plot <- ggplot(data=Preds, mapping=aes(x=xx,y=fit)) + 
     geom_ribbon(aes(ymin = lwr, ymax = upr, x=xx), fill = "grey85") +
-    geom_line(mapping=aes(x=xx, y=fit), col="red", size=1) +
-    geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
-    geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
+    geom_line(mapping=aes(x=xx, y=fit), col="red", size=1, na.rm=TRUE) +
+    geom_line(mapping=aes(x=xx, y=upr), col="grey85", na.rm=TRUE) +
+    geom_line(mapping=aes(x=xx, y=lwr), col="grey85", na.rm=TRUE) +
     geom_point(data=Data, aes(x = xx, y = yy)) +
     #geom_segment(aes(y=0.01, yend=0.01, x=2200, xend=230873), colour="dodgerblue") + #LW: add in likelihood penalty SD
     #geom_point(aes(y=0.01, x=mean(c(2200, 230873))), colour="dodgerblue") + #LW: add in likelihood penalty mean
@@ -504,8 +505,10 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
     #  ggtitle(paste("Retrospective Year", max(Dat.LRP$yr), sep=" ")) +
     theme_classic()
   
+  
+  
   # If LRP$lwr is <0, assume can't fit LRP
-  if(length(p) == 1 & LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
+  if(LRP$lwr > 0 & is.na(LRP$lwr) == FALSE) {
     annual_LRP_plot <- annual_LRP_plot + 
       geom_vline(xintercept=LRP$fit, color="orange", size = 1) +
       geom_hline(yintercept= p, linetype="dotted", color="black", size = 0.5) + 

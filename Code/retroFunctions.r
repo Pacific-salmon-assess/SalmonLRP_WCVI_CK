@@ -13,7 +13,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
                          BMmodel, LRPmodel=NULL, LRPfile=NULL, integratedModel=F, useGenMean=T, 
                          TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T,
                          runLogisticDiag=F) {
- 
+  
   yearList<-startYr:endYr
   
   # Put together Run info
@@ -83,9 +83,11 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           EscpDat.cu <- EscpDat.yy %>% group_by(CU_Name, CU_ID, Subpop_Name, yr)  %>% summarise(SubpopEscp=sum(Escp)) %>%
             mutate(Gen_Mean = rollapply(SubpopEscp, genYrs, gm_mean, fill = NA, align="right"))
           # Add a column indicating whether geometric mean escapement is > 1000 fish threshold for each subpopulation 
-          Above1000<-ifelse(EscpDat.cu$Gen_Mean >= 1000, 1, 0)
+          #Above1000<-ifelse(EscpDat.cu$Gen_Mean >= 1000, 1, 0)
+          Above1000<-ifelse(EscpDat.cu$SubpopEscp >= 1000, 1, 0)
           EscpDat.cu<-EscpDat.cu %>% add_column(Above1000)
-          # Calculate the number of subpopulations that are above 1000 fish threshold in each CU
+
+            # Calculate the number of subpopulations that are above 1000 fish threshold in each CU
           LBM_status_byCU <- EscpDat.cu %>% group_by(CU_Name, CU_ID, yr) %>% 
             summarise(Escp=sum(SubpopEscp), N = length(unique(Subpop_Name)),N_grThresh=sum(Above1000))
           
@@ -150,6 +152,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================
     
     } else if(integratedModel == T){
+      
       # Prep data frame to work with function
       
       Dat$yr_num <- group_by(Dat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
@@ -192,6 +195,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       outLRP.df <- full_join(outLRP.df, newLRP.df)
     }
     
+
     # Make output csv file that has 25% benchmarks and escapement for each year, for each retro year
     if (BMmodel %in% c( "Percentile" )) {
       new.perc.df <- LBM_status_byCU[, names(LBM_status_byCU) %in% c("CU_Name", "yr", "Escp", "CU", "benchmark_perc_25", "benchmark_perc_50", "use_perc", "AboveBenchmark") ]
@@ -211,6 +215,8 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
                    p = p, useBern_Logistic = useBern_Logistic)
     }
 
+    
+    
   
     # 
     # if (plotLRP == T & LRPmodel == "Proj") {
@@ -224,12 +230,12 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
     # }
     
 
+  
     ## Run logistic model diagnostics =======
     if (runLogisticDiag==TRUE & is.na(LRP_Mod$LRP$fit) == FALSE) {
   
       SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
                                                           Years=yr)
-      
       
       logisticDiagStats<-LRdiagnostics(SMUlogisticData, 
                  nCU=length(unique(EscpDat$CU_Name)), All_Ests = LRP_Mod$All_Ests,
