@@ -20,7 +20,7 @@ library(corrplot)
 
 ## Sensitivity of Projection-based LRPs to ERs
 
-
+<!-- See catarina's comments at the bottom -->
 The sensitivity of projection-based LRPs to exploitation rates is due to variability in productivity and to a lesser extent capacity (spawners at replacement) among inlets. In a sensitivity analysis where productivity and capacity were drawn from the same distribution for each of the 5 inlets (i.e., each inlet was a replicate of each other), we found that the productivity and capacity tended to be lower for random trials and inlets that dropped below the lower benchmark in at least one year. Random trials and inlets with abundances that remained above the lower benchmark over the time-series tended to be more productive and slightly larger (Fig. \@ref(fig:chinook-SRHistEven)). 
 ```{r chinook-SRHistEven, fig.cap="Distribution of (a) productivity (log alpha) and (b) spawners at replacement, SREP among MC trials, coloured by whether abundances in that trial remained above the lower benchmark or not, under a 45\\% exploitation. The distribution of productivity and capacity were assumed equal among inlets. ", fig.align="center"}
 
@@ -68,3 +68,33 @@ knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/
 ```
 
 Variability in productivity among inlets results in inlet-specific variability in sensitivity to exploitation rates. Inlets with relatively low productivity fall below lower benchmarks more frequently, resulting in divergences in status among inlets and a higher aggregate abundances required for all inlets to be above their lower benchmarks (higher LRP).
+
+<!-- comments from CAtarina
+Here are a few suggestions for the appendix on the sensitivity analysis for the projection absed LRP. 
+These might be things that you were already planning to do, but I thought it might be helpful to list them out. capacity
+
+Question: why did you choose to fix SRep and not b or Smax? I'm just wondering if the effect we see from letting SREP vary is from b or from the fact that Srep also depends on a. Or did you calculate sep based on mean alpha, letting only b vary?
+I think it might be more useful to show the results for Smax, if that doesn't require ou to run everything again.
+
+
+1. It wouuld be good to have an introduction section to this appendix listing why we thought this sensitivity analysis was necessary (sensitivity to exploitation rate observed in the base case was not intuitive). and Also listing the sensitivity scenarios we are about to see (if I understood it correctly):
+
+We tested the aggregate projection-based LRP method under three alternative scenarios:
+
+1. All inlets were assumed to have stock-recruitment parameters drawn from the same posterior distributions but a unique set of stock-recruitment parameters was drawn for each trial (i.e. each inlet was a replicate of each other in each trial).
+
+2. The productivity parameter for all inlets was fixed at the mean value of the posterior distribution across inlets and across trials. The capacity parameter was drawn from the posterior distribution and allowed to vary across trials, but not between inlets. 
+
+2. The capaity parameter for all inlets was fixed at the mean value of the posterior distribution across inlets and across trials. The productivity parameter was drawn from the posterior distribution and allowed to vary across trials, but not between inlets. 
+
+
+
+Graphs:
+
+histogram:
+add to the caption what each colour represent, it is reduntant with the figure legend but I think it helps. 
+
+probability graphs:
+The LRP labels need to be bigger. maybe include only the 50% one and make the font larger and bold. ALso what are the orange and green lines again? And What about the horizontal dashed lines? Maybe we just need to include the 50% one?
+
+-->
