@@ -1585,16 +1585,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05sameSREP_hCor",
-  "ER0.10sameSREP_hCor",
-  "ER0.15sameSREP_hCor",
-  "ER0.20sameSREP_hCor",
-  "ER0.25sameSREP_hCor",
-  "ER0.30sameSREP_hCor",
+  "ER0.05sameProd_hCor",
+  "ER0.10sameProd_hCor",
+  "ER0.15sameProd_hCor",
+  "ER0.20sameProd_hCor",
+  "ER0.25sameProd_hCor",
+  "ER0.25sameProd_hCor",
   #"baseER",
-  "ER0.35sameSREP_hCor",
-  "ER0.40sameSREP_hCor",
-  "ER0.45sameSREP_hCor")
+  "ER0.35sameProd_hCor",
+  "ER0.40sameProd_hCor",
+  "ER0.45sameProd_hCor")
   # "alphaScalar0.75",
   # "baseERn10000",
   # "alphaScalar1.5")
@@ -1606,7 +1606,7 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsSameSREP_hCor"#"ERs"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsSameProd_hCor"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
@@ -1952,7 +1952,7 @@ probThresh <- 0.5
 # dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
 # ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
 
-GroupName <- "sameProdhCor"
+GroupName <- "sameSREPhCor"
 OMsToIncludeName <- paste("CUAbove_", GroupName, sep="")
 
 
@@ -1966,24 +1966,24 @@ OMsToInclude<-c(
   # "ER0.35even_hCor",
   # "ER0.40even_hCor",
   # "ER0.45even_hCor")
-# "ER0.05sameSREP_hCor",
-# "ER0.10sameSREP_hCor",
-# "ER0.15sameSREP_hCor",
-# "ER0.20sameSREP_hCor",
-# "ER0.25sameSREP_hCor",
-# "ER0.25sameSREP_hCor",
-# "ER0.35sameSREP_hCor",
-# "ER0.40sameSREP_hCor",
-# "ER0.45sameSREP_hCor")
-"ER0.05sameProd_hCor",
-"ER0.10sameProd_hCor",
-"ER0.15sameProd_hCor",
-"ER0.20sameProd_hCor",
-"ER0.25sameProd_hCor",
-"ER0.25sameProd_hCor",
-"ER0.35sameProd_hCor",
-"ER0.40sameProd_hCor",
-"ER0.45sameProd_hCor")
+"ER0.05sameSREP_hCor",
+"ER0.10sameSREP_hCor",
+"ER0.15sameSREP_hCor",
+"ER0.20sameSREP_hCor",
+"ER0.25sameSREP_hCor",
+"ER0.25sameSREP_hCor",
+"ER0.35sameSREP_hCor",
+"ER0.40sameSREP_hCor",
+"ER0.45sameSREP_hCor")
+# "ER0.05sameProd_hCor",
+# "ER0.10sameProd_hCor",
+# "ER0.15sameProd_hCor",
+# "ER0.20sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.35sameProd_hCor",
+# "ER0.40sameProd_hCor",
+# "ER0.45sameProd_hCor")
 
 LRP <- NA
 
@@ -2060,14 +2060,22 @@ for (OM in 1:length(OMsToInclude)){
                        position="identity", bins=30, alpha=0.4) +
         # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
         #                 alpha=0.4) +
-        labs(title="Productivity (log alpha)")
-      ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
+        labs(title="(a) Productivity (log alpha)")+
+        xlim(0,3.5)
+
+      library(gridExtra)
+      arrange
+      # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
 
       gSREP <- ggplot(parsDF, aes(x = SREP)) +
         geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
                        position="identity", bins=30, alpha=0.4) +
-        labs(title="SREP")
-      ggsave(filename = paste("Figures/", GroupName, "_SREPHist.png", sep="") , plot=gSREP)
+        labs(title="(b) SREP") +
+        xlim(0,50000)
+      # ggsave(filename = paste("Figures/", GroupName, "_SREPHist.png", sep="") , plot=gSREP)
+      gSRpars <- grid.arrange(galpha, gSREP)
+      ggsave(filename = paste("Figures/", GroupName, "_SRHist.png", sep="") , plot=gSRpars)
+
 
     }# End of if OM==9
 
