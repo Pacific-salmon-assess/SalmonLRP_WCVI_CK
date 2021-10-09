@@ -1585,16 +1585,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05Even_hCor",
-  "ER0.10Even_hCor",
-  "ER0.15Even_hCor",
-  "ER0.20Even_hCor",
-  "ER0.25Even_hCor",
-  "ER0.30Even_hCor",
+  "ER0.05sameProd_hCor",
+  "ER0.10sameProd_hCor",
+  "ER0.15sameProd_hCor",
+  "ER0.20sameProd_hCor",
+  "ER0.25sameProd_hCor",
+  "ER0.25sameProd_hCor",
   #"baseER",
-  "ER0.35Even_hCor",
-  "ER0.40Even_hCor",
-  "ER0.45Even_hCor")
+  "ER0.35sameProd_hCor",
+  "ER0.40sameProd_hCor",
+  "ER0.45sameProd_hCor")
   # "alphaScalar0.75",
   # "baseERn10000",
   # "alphaScalar1.5")
@@ -1606,7 +1606,7 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven_hCor"#"ERs"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsSameProd_hCor"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
@@ -1743,6 +1743,7 @@ for (OM in 1:length(OMsToInclude)){
                      pull(LRP))[2]
         text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)
         if(OM<7)  text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
+        # text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
 
         if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
                         line=1.8,at=0.5, cex=1) }
@@ -1946,23 +1947,43 @@ probThresh <- 0.5
 
 #Look at CU-specific timeseries
 # ER=0.45
-SR.45 <- read.csv("SamSimOutputs/simData/ER0.45even_hCor/ER0.45even_hCor_baseER_CU_SRDat.csv")
-# for a single iteration, 108, e.g.,
-dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
-ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
+# SR.45 <- read.csv("SamSimOutputs/simData/ER0.45even_hCor/ER0.45even_hCor_baseER_CU_SRDat.csv")
+# # for a single iteration, 108, e.g.,
+# dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
+# ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
 
-OMsToIncludeName <- "CUAbove_SameProdhCor"
+GroupName <- "sameSREPhCor"
+OMsToIncludeName <- paste("CUAbove_", GroupName, sep="")
+
 
 OMsToInclude<-c(
-  "ER0.05sameProd_hCor",
-  "ER0.10sameProd_hCor",
-  "ER0.15sameProd_hCor",
-  "ER0.20sameProd_hCor",
-  "ER0.25sameProd_hCor",
-  "ER0.25sameProd_hCor",
-  "ER0.35sameProd_hCor",
-  "ER0.40sameProd_hCor",
-  "ER0.45sameProd_hCor")
+  # "ER0.05even_hCor",
+  # "ER0.10even_hCor",
+  # "ER0.15even_hCor",
+  # "ER0.20even_hCor",
+  # "ER0.25even_hCor",
+  # "ER0.25even_hCor",
+  # "ER0.35even_hCor",
+  # "ER0.40even_hCor",
+  # "ER0.45even_hCor")
+"ER0.05sameSREP_hCor",
+"ER0.10sameSREP_hCor",
+"ER0.15sameSREP_hCor",
+"ER0.20sameSREP_hCor",
+"ER0.25sameSREP_hCor",
+"ER0.25sameSREP_hCor",
+"ER0.35sameSREP_hCor",
+"ER0.40sameSREP_hCor",
+"ER0.45sameSREP_hCor")
+# "ER0.05sameProd_hCor",
+# "ER0.10sameProd_hCor",
+# "ER0.15sameProd_hCor",
+# "ER0.20sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.35sameProd_hCor",
+# "ER0.40sameProd_hCor",
+# "ER0.45sameProd_hCor")
 
 LRP <- NA
 
@@ -1991,6 +2012,11 @@ for (OM in 1:length(OMsToInclude)){
     # Just look at the first CU, as all CUs are the same in this analysis
     # can run additional trials with CU == "CU2", etc.
     CUaboveLB <- CUaboveLB %>% filter(CU == "CU1")
+
+    # Which iterations contains years when CU1 are below LB? What was prod/cap
+    # of those iterations?
+    itBelowBM <- CUaboveLB %>% filter(AboveLB == 0) %>% pull(iteration)
+
     # Create bins for projected spawner abundances
     minBreak<-0
     maxBreak<-round(max(CUaboveLB$sAg),digits=-2)
@@ -2017,6 +2043,41 @@ for (OM in 1:length(OMsToInclude)){
 
     #ggplot(CUaboveLB, aes(bins, prob))+geom_point()
 
+    # for OM = 9 (45% ER), plot distribution of alphas and betas
+    # First get SR pars for each iteration
+
+    if(OM==9){
+      filename2 <- paste("SamSimOutputs/simData/", OMsToInclude[OM],"/", OMsToInclude[OM], "_baseER_cuDat.RData",sep="")
+      CUdat <- readRDS(file=filename2)
+      LowerBenchmark <- rep("above",length(CUdat$medAlpha[,1]))
+      LowerBenchmark[unique(itBelowBM)] <- "below"
+      parsDF <- data.frame(LowerBenchmark=factor(LowerBenchmark),
+                           alpha=CUdat$medAlpha[,1], beta=CUdat$medBeta[,1],
+                           SREP=CUdat$medAlpha[,1]/CUdat$medBeta[,1])
+      parsDF <- parsDF %>% filter(SREP>0) %>% filter(SREP<50000)
+      galpha <- ggplot(parsDF, aes(x = alpha)) +
+        geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+                       position="identity", bins=30, alpha=0.4) +
+        # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+        #                 alpha=0.4) +
+        labs(title="(a) Productivity (log alpha)")+
+        xlim(0,3.5)
+
+      library(gridExtra)
+      arrange
+      # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
+
+      gSREP <- ggplot(parsDF, aes(x = SREP)) +
+        geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+                       position="identity", bins=30, alpha=0.4) +
+        labs(title="(b) SREP") +
+        xlim(0,50000)
+      # ggsave(filename = paste("Figures/", GroupName, "_SREPHist.png", sep="") , plot=gSREP)
+      gSRpars <- grid.arrange(galpha, gSREP)
+      ggsave(filename = paste("Figures/", GroupName, "_SRHist.png", sep="") , plot=gSRpars)
+
+
+    }# End of if OM==9
 
     if(OM==1) {
       if(length(OMsToInclude)==1|length(OMsToInclude)==9) {
