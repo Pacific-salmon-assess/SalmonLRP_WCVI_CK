@@ -296,8 +296,6 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
     nCUs<-nCUList[nn]
     CU_combn<-combn(CU_Names,nCUs)
     
-    browser()
-    
     for (ii in 1:ncol(CU_combn)) {
       
       # Select CUs for this replicate
