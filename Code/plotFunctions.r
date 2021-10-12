@@ -408,11 +408,12 @@ plotAnnualRetro<-function(Dat, Name ,outDir, useGenMean = F, genYrs = 3) {
 
 
 #=================================================================================
-# Compare multiple LRPs on one plot
+# Compare multiple retrospective LRPs from different probability thresholds on one plot
+# --- separate plot for each method 
 #=============================================================================
 
 
-plotAnnualRetro_Compare<-function(Dat, Names, L_Names = NA, pList, outDir, useGenMean, genYrs) {
+plotAnnualRetro_CompareProbs<-function(Dat, Names, L_Names = NA, pList, outDir, useGenMean, genYrs) {
   
   if(is.na(L_Names[1])){
     L_Names <- Names
@@ -469,6 +470,82 @@ plotAnnualRetro_Compare<-function(Dat, Names, L_Names = NA, pList, outDir, useGe
     ggsave(paste(outDir,"/Figures/LRP_compareRetro.pdf",sep=""), plot = pMulti) 
   
 }
+
+
+
+
+
+#=================================================================================
+# Compare multiple retrospective LRPs from different methods on one plot
+# --- separate plot for each probability threshold
+#=============================================================================
+
+
+plotAnnualRetro_CompareMethods<-function(Dat, Names, L_Names = NA, pList, outDir, useGenMean, genYrs) {
+  
+  if(is.na(L_Names[1])){
+    L_Names <- Names
+  }
+  
+  # Calculate aggregate escapement (note: CUs with no LBM but with escapement data will be included)
+  Dat.AggEscp <-  Dat %>% group_by(yr) %>%  summarise(Agg_Escp = sum(Escp))
+  
+  if(useGenMean == T){
+    Dat.AggEscp$Agg_Escp <- rollapply(Dat.AggEscp$Agg_Escp, genYrs, gm_mean, fill = NA, align="right")
+    Ylab <- "Abundance"
+  } else {
+    Ylab <- "Agg. Escapement"
+  }
+  
+  # Extract retrospective LRP estimates
+  for (i in 1:length(Names)) {
+    for (pp in 1:length(pList)) {
+      if (i ==1 & pp ==1) {
+        LRPs <- read.csv(paste(outDir,"/DataOut/AnnualRetrospective/", Names[i],"_", pList[pp], "/annualRetro_LRPs.csv", sep=""))
+        LRPs$Model <- L_Names[1]
+        LRPs$pVal<-pList[pp]
+      } else {
+        LRP_New <- read.csv(paste(outDir,"/DataOut/AnnualRetrospective/", Names[i],"_", pList[pp], "/annualRetro_LRPs.csv", sep=""))
+        LRP_New$Model <- L_Names[i]
+        LRP_New$pVal<-pList[pp]
+        LRPs <- rbind(LRPs, LRP_New)
+      }
+    } # end of p loop 
+  } # end of Names loop
+  
+  LRPs$pVal<-as.factor(LRPs$pVal)
+  
+  
+  # Embedded function to plot one model type:
+  plotByProb<-function(i, Dat, pList) {
+    LRPs<-Dat %>% filter(pVal == pList[i])
+    # Create plot
+    annual_LRP_plot <- ggplot() +
+      geom_line(data=Dat.AggEscp, mapping=aes(x=yr,y=Agg_Escp), size = 1.2) +
+      #geom_ribbon(data = LRPs, aes(x=retroYear, y=LRP, colour = Mod, ymin = LRP_lwr, ymax = LRP_upr, fill = Mod), alpha = 0.3) +
+      geom_ribbon(data = LRPs, aes(x=retroYear, y=LRP, ymin = LRP_lwr, ymax = LRP_upr, fill = Model), alpha = 0.3) +
+      geom_line(data = LRPs,aes(x=retroYear, y=LRP, colour = Model), size = 1.2) +
+      xlab("Year") + ylab(Ylab) +
+      theme_classic() +
+      #ggtitle(paste("Probability = ", pList[i], "%", Sep="")) +
+      theme(legend.position = c(0.2, 0.2))
+   
+    annual_LRP_plot
+  }
+  
+  # Make multi-panel plot
+ # pLRPs<-lapply(1:length(L_Names), plotByModel, Dat = LRPs, L_Names)
+   pLRPs<-lapply(1:length(pList), plotByProb, Dat = LRPs, pList=pList)
+   
+   pMulti<-do.call(grid.arrange,  pLRPs)
+  
+  # Save multi=panel plot
+  ggsave(paste(outDir,"/Figures/coho_LRP_compareRetro.png",sep=""), plot = pMulti, 
+         units="in", width=5.5, height=4.4) 
+  
+}
+
+
 
 #==================================================================
 # Plot logistic model from 
@@ -1090,7 +1167,7 @@ plotStatusBarsChum_byYear<-function(Status_DF, AggEscp, fName) {
 
 
 
-plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, inputPrefix, plotAveLine) {
+plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, inputPrefix, plotAveLine, ymax) {
   
   # Read in data for all NCU levels and combine
   for (cc in 1:length(nCUList)) {
@@ -1104,7 +1181,7 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
  
   }
   
-  makeYrPlot<-function (year, Dat, aveLine) {
+  makeYrPlot<-function (year, Dat, aveLine, ymax) {
     
     Dat<-Dat %>% filter(retroYear==year, BMmodel == BMmodel)
 
@@ -1124,34 +1201,51 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
     errorFlag<-rep(FALSE,length(nCUs.jit))
     errorFlag[Dat$LRP_lwr < 0] <- TRUE
     errorFlag[is.na(Dat$LRP_lwr) == TRUE] <- TRUE
+    errorFlag[is.na(Dat$LRP) == TRUE] <- TRUE
     
     # calculate nCU-specific mean and SE
     Dat2 <- Dat[errorFlag == FALSE,]
     Mean<-Dat2 %>% group_by(nCUs) %>% summarize(meanStatus=gm_mean(status))
-    SE<- Dat2 %>% group_by(nCUs) %>% summarize(meanStatus=stdErr(status))
+    #SE<- Dat2 %>% group_by(nCUs) %>% summarize(meanStatus=stdErr(status))
     
-    g<-ggplot(Dat, aes(x=nCUs.jit, y=status)) +
-        scale_x_reverse(breaks=unique(Dat$nCUs)) +
-        geom_errorbar(aes(x=nCUs.jit, ymax = Gen_Mean/LRP_lwr, ymin = Gen_Mean/LRP_upr), width = 0, colour="grey") +
+    Dat2$status_lwr<-Dat2$Gen_Mean/Dat2$LRP_upr
+    Dat2$status_upr<-Dat2$Gen_Mean/Dat2$LRP_lwr
+    
+    ymaxFlag<-rep(FALSE,nrow(Dat2))
+    ymaxFlag[Dat2$status_upr > ymax] <- TRUE
+    Dat2$yTrunc<-ymaxFlag
+    Dat2$status_upr[Dat2$status_upr > ymax] <- ymax
+    
+   
+    g<-ggplot(Dat2, aes(x=nCUs.jit, y=status)) +
+        scale_x_reverse(breaks=unique(Dat2$nCUs)) +
+        geom_errorbar(aes(x=nCUs.jit, ymax = status_upr, ymin = status_lwr), width = 0, colour="grey") +
         geom_point() +   
         labs(title=year, x = "Number of CUs", y = "Aggregate Status") +
         theme_classic() +
         theme(plot.title = element_text(hjust = 0.5)) +
-        ylim(0,4.5) + 
-        geom_point(data = Dat[errorFlag==TRUE,],aes(x=nCUs.jit, y=status),shape=4, size=3) # add additional points for cases that didn't converge
-  
+        ylim(0,ymax) + 
+        # add additional points for cases that didn't converge
+        geom_point(data = Dat[errorFlag==TRUE,],aes(x=nCUs.jit, y=rep(AllCU$status,length(Dat[errorFlag==TRUE,"nCUs.jit"]))),shape=4, size=2)
+    
+    if (length(Dat2$yTrunc[Dat2$yTrunc==TRUE]) > 0) {
+        # add additional points to show when ylim truncated
+        g<-g+geom_point(data=Dat2[Dat2$yTrunc==TRUE,], aes(x=nCUs.jit, y = rep(ymax,length(nCUs.jit))), shape=17, size=2)
+    }
+    
     if (aveLine == TRUE) {
 
-      g <- g + geom_segment(data = Mean %>% filter(nCUs==3), aes(x=2.6, xend=3.4, y=meanStatus,yend=meanStatus),colour="red", linetype="dashed") +
-        geom_segment(data = Mean %>% filter(nCUs==4), aes(x=4.4, xend=3.7, y=meanStatus,yend=meanStatus),colour="red", linetype="dashed")
+      g <- g + geom_segment(data = Mean %>% filter(nCUs==3), aes(x=2.6, xend=3.4, y=AllCU$status,yend=AllCU$status),colour="red", linetype="dashed") +
+        geom_segment(data = Mean %>% filter(nCUs==4), aes(x=4.4, xend=3.7, y=AllCU$status,yend=AllCU$status),colour="red", linetype="dashed")
      
     }
     
 }
   
   LRP.mod<-LRPmodel
-
-  ps <- lapply(yearList, makeYrPlot, Dat = nCUDat %>% filter(LRPmodel == LRP.mod), aveLine=plotAveLine)
+  
+  ps <- lapply(yearList, makeYrPlot, Dat = nCUDat %>% filter(LRPmodel == LRP.mod), 
+               aveLine=plotAveLine, ymax=ymax)
 
   outputDir<-paste(Dir,"/Figures/nCUCombinations",sep="")
   
@@ -1160,7 +1254,7 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
   } 
   
    
-   plotName <- paste("StatusByNCUs_",inputPrefix, sep="")
+   plotName <- paste("coho_StatusByNCUs_",inputPrefix, sep="")
   
    png(paste(outputDir,"/", plotName, ".png", sep=""))
    

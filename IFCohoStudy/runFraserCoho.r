@@ -11,10 +11,14 @@
 # (1) Read-in and format IF Coho data
 # (2) Call functions to plot data
 # (3) Set-up TMB inputs for logistic regression fits
-# (4) Run annual retrospective analyses
-#
-#
-#
+# (4) RETROSPECTIVE ANALYSIS: Run annual retrospective analyses
+#   (4.1) Print saved logistic model fit diagnostics for any of the above runs
+#   (4.2) Create plot to compare retrospective time series of LRP estimates
+# (5) EFFECT OF MISSING CUS: Run all available combinations of number of CUs
+#   (5.1) Make Plots for Aggregate Status as a function of nCUS 
+# (6) Create figures with two or more probabilities on a logistic fit for a specified year
+
+# (8) Create plot to compare retrospective time series of LRP estimates
 
 # ===================================================================================================
 
@@ -195,7 +199,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
 
 
 # ===============================================================================
-# (4) Run annual retrospective analyses
+# (4) RETROSPECTIVE ANALYSIS: Run annual retrospective analyses
 # ====================================================================================
 
 # Note: if .cpp files are already compiled (.dll and .o files are present in SalmonLRP_RetroEval/Code/TMB_Files ), 
@@ -246,7 +250,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
 
 
 # =============================================================================================
-# (4b) Show saved logistic model fit diagnostics for any of the above runs
+# (4.1) Show saved logistic model fit diagnostics for any of the above runs
 # =============================================================================================
 
 load("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/AnnualRetrospective/Bern.IndivRickerSurv_50/logisticFitDiagStats_2020.rda")
@@ -263,8 +267,105 @@ max(abs(logisticDiagStats$DevResid))
 logisticDiagStats$p1
 #  etc ...
 
+
+
+
+
+# ============================================================================================
+# (4.2) Create plot to compare retrospective time series of LRP estimates
+# ===========================================================================================
+
+EscpDat.yy <- CoEscpDat %>% filter(yr <= 2020) 
+
+modelFitList<-c("Bern.IndivRickerSurv",
+                "Bern.IndivRickerSurvCap",
+                "Bern.SPopAbundThreshST")
+
+L_Names<-c("Sgen:Base", "Sgen:HiSRep", "Distributional")  
+
+#pList<-c(50, 66, 90, 99)
+
+pList<-c(50)
+
+#plotAnnualRetro_CompareProbs(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
+
+plotAnnualRetro_CompareMethods(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
+
+
+
+
+# =================================================================================================================
+# (5) EFFECT OF MISSING CUs: Run all available combinations of number of CUs 
+# ================================================================================================================
+
+nCUs<-c(5,4,3)
+ps<-c(0.50, 0.66, 0.90,0.99)
+
+
+for (pp in 1:length(ps)){
+
+  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
+               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
+               runLogisticDiag=F)
+  
+  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
+               genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
+               runLogisticDiag=F)
+  
+  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
+               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
+               runLogisticDiag=F)
+  
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
+  #              genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+  #              useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
+  #              runLogisticDiag=F)
+    
+  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4,
+               genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only", integratedModel=F,
+               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
+               runLogisticDiag=F)
+  
+}
+
+
+
+# =======================================================================
+# (5.1) Make Plots for Aggregate Status as a function of nCUS 
+# =======================================================================
+
+probThresh<-0.5
+
+yearList<-2017:2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=probThresh, Dir=cohoDir,
+                     inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE, ymax=6)
+
+yearList<-2015:2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=probThresh, Dir=cohoDir,
+                     inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE, ymax=5)
+
+yearList<-2015:2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
+                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE)
+
+yearList<-2015:2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,
+                     inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE,ymax=8)
+
+## Temp: test
+yearList<-2020
+plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=probThresh, Dir=cohoDir,
+                     inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
+
+
+
+
+
 # =============================================================================================
-# (5) Create figures with two or more probabilities on a logistic fit for specified years
+# (6) Create figures with two or more probabilities on a logistic fit for specified years
 # =============================================================================================
 
 # Plot 1: Example plot for Methods Section. Show all 4 p-values without error bars on one plot as an example ======
@@ -375,9 +476,9 @@ for (pp in 1:length(plotMultiP)) {
     LRP_plot <- LRP_plot +
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5)
-      #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) 
+    #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) 
   }
- 
+  
 }
 
 LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
@@ -440,7 +541,7 @@ for (pp in 1:length(plotMultiP)) {
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5)
     #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) 
   }
- 
+  
 }
 
 LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
@@ -494,11 +595,11 @@ LRP_List<-list()
 colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
 
 for (pp in 1:length(plotMultiP)) {
-
-  LRP_List[[pp]] <- Run_LRP(Dat=LBM_status_byCU, Mod = "LRP_Logistic_Only", useBern_Logistic = TRUE, 
-          useGenMean = FALSE, genYrs = genYrs, p = plotMultiP[pp],  TMB_Inputs)
   
-
+  LRP_List[[pp]] <- Run_LRP(Dat=LBM_status_byCU, Mod = "LRP_Logistic_Only", useBern_Logistic = TRUE, 
+                            useGenMean = FALSE, genYrs = genYrs, p = plotMultiP[pp],  TMB_Inputs)
+  
+  
   if (pp == 1) {
     # Create plot using first p value
     LRP_plot <- ggplot(data=LRP_List[[1]]$Preds, mapping=aes(x=xx,y=fit)) + 
@@ -536,7 +637,7 @@ ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), p
 
 
 # =================================================================================================================
-# (5b) Create table of 2020 estimates
+# (6b) NOT YET WORKING: Create table of 2020 estimates
 # ================================================================================================================
 
 plotMultiP <- c(0.50,0.66,0.90,0.99) 
@@ -548,112 +649,11 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-# =================================================================================================================
-# (6) Run all available combinations of number of CUs 
-# ================================================================================================================
-
-nCUs<-c(5,4,3)
-ps<-c(0.50, 0.66, 0.90,0.99)
-
-
-for (pp in 1:length(ps)){
-
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
-               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
-               runLogisticDiag=F)
-  
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
-               genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
-               runLogisticDiag=F)
-  
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
-               genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-               runLogisticDiag=F)
-  
-  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
-  #              genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-  #              useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-  #              runLogisticDiag=F)
-    
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4,
-               genYrs=3, p = ps[pp], BMmodel="ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only", integratedModel=F,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
-               runLogisticDiag=F)
-  
-}
-
-
-
-
-
-# =======================================================================
-# (7) Make Plots for Aggregate Status as a function of nCUS 
-# =======================================================================
-
-probThresh<-0.5
-
-yearList<-2017:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
-
-yearList<-2015:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE)
-
-yearList<-2015:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE)
-
-yearList<-2015:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE)
-
-
-
 
 
 
 # ============================================================================================
-# (8) STILL TO BE TESTED: Create plot to compare LRP estimates among methods for a single year
-# ===========================================================================================
-
-modelFitList<-c("Bern.IndivRickerSurv",
-                "Bern.HierRickerSurv",
-                "Bern.IndivRickerSurvCap",
-                "Bern.HierRickerSurvCap",
-                "Bern.SPopAbundThreshST")
-
-pList<-c(50, 66, 90, 99)
-
-LRP_estYr<-2020
-
-plotLRPCompare(LRP_estYr, modelFitList, pList, outDir = cohoDir, 
-               fName = paste("compareLRPs_withBars",LRP_estYr,sep=""))
-
-# ============================================================================================
-# (10) STILL TO BE TESTED: Create plot to compare retrospective time series of LRP estimates
-# ===========================================================================================
-
-EscpDat.yy <- CoEscpDat %>% filter(yr <= 2020) 
-
-modelFitList<-c("Bern.IndivRickerSurv",
-                "Bern.IndivRickerSurvCap",
-                "Bern.SPopAbundThreshST")
-
-L_Names<-c("Sgen: IM", "Sgen: IMCap", "Distributional")  
-
-pList<-c(50, 66, 90, 99)
-
-
-plotAnnualRetro_Compare(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
-  
-
-
-# ============================================================================================
-# (11) STILL TO BE TESTED:Create plot to compare status as a function of nCUs for different LRP options
+# (7) STILL TO BE TESTED:Create plot to compare status as a function of nCUs for different LRP options
 # ===========================================================================================
   
 
@@ -679,7 +679,7 @@ plotAggStatus_byNCUs_Compare(estYear=2020, nCUList=c(5,4,3), Names=modelFitList,
 
 
 # ================================================================================
-# (12) STILL TO BE TESTED: Summarize and save logistic model fit diagnostics 
+# (8) STILL TO BE TESTED: Summarize and save logistic model fit diagnostics 
 # ===============================================================================
 
 # Create vectors of diagnostic stats to fill for each model
