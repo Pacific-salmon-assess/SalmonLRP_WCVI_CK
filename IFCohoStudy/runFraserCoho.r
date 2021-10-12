@@ -18,7 +18,6 @@
 #   (5.1) Make Plots for Aggregate Status as a function of nCUS 
 # (6) Create figures with two or more probabilities on a logistic fit for a specified year
 
-# (8) Create plot to compare retrospective time series of LRP estimates
 
 # ===================================================================================================
 
@@ -250,29 +249,140 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
 
 
 # =============================================================================================
-# (4.1) Show saved logistic model fit diagnostics for any of the above runs
+# (4.1) Print and save logistic model fit diagnostics for any of the above runs
 # =============================================================================================
 
-load("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/AnnualRetrospective/Bern.IndivRickerSurv_50/logisticFitDiagStats_2020.rda")
+# To look at individual model results:
+#load("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/AnnualRetrospective/Bern.IndivRickerSurv_50/logisticFitDiagStats_2020.rda")
+#load("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/AnnualRetrospective/Bern.IndivRickerSurvCap_50/logisticFitDiagStats_2020.rda")
+#load("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/AnnualRetrospective/Bern.SPopAbundThreshST_50/logisticFitDiagStats_2020.rda")
 
-load("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/AnnualRetrospective/Bern.IndivRickerSurvCap_50/logisticFitDiagStats_2020.rda")
-
-load("C:/github/SalmonLRP_RetroEval/IFCohoStudy/DataOut/AnnualRetrospective/Bern.SPopAbundThreshST_50/logisticFitDiagStats_2020.rda")
-
-
-names(logisticDiagStats)
-logisticDiagStats$pBoxTidwell
-logisticDiagStats$DevResid
-max(abs(logisticDiagStats$DevResid))
-logisticDiagStats$p1
+# names(logisticDiagStats)
+# logisticDiagStats$pBoxTidwell
+# logisticDiagStats$DevResid
+# max(abs(logisticDiagStats$DevResid))
+# logisticDiagStats$p1
 #  etc ...
 
 
+# To save over all models and probabilities:
 
+compile("TMB_Files/LRP_Logistic_Only_Bernoulli.cpp")
+dyn.load(dynlib("TMB_Files/LRP_Logistic_Only_Bernoulli"))
+
+
+year <- 2020
+useBern_Logistic <- TRUE
+ps <- c(0.5, 0.66, 0.9, 0.99)
+
+# Create vectors of diagnostic stats to fill for each model
+modelName<-NA
+pBoxTidwell<-NA
+maxDevResid<-NA
+AR1.dev<-NA
+minSampSize<-NA
+sampSize<-NA
+p_WaldB0<-NA
+p_WaldB1<-NA
+quasiR2<-NA
+pGoodnessOfFit<-NA
+hitRatio<-NA
+hitRatio_LOO<-NA
+
+for (pp in 1:length(ps)) {
+
+  p<-ps[pp]
+  
+  # Model 1 =====================
+  mm<-1
+  modelName[mm]<-"IM"
+  # Specify model fit to evaluate 
+  BMmodel<-"SR_IndivRicker_Surv"
+  RunName <- paste("Bern.IndivRickerSurv_",p*100, sep="")
+  TMB_Inputs<-TMB_Inputs_IM
+  outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
+  
+  # Extract logistic regression data from .rda file
+  load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
+  pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
+  minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
+  sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
+  p_WaldB0[mm]<-round(logisticDiagStats$signTable[logisticDiagStats$signTable$Param=="B_0","P.value"],3)
+  p_WaldB1[mm]<-round(logisticDiagStats$signTable[logisticDiagStats$signTable$Param=="B_1","P.value"],3)
+  quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
+  pGoodnessOfFit[mm]<-round(logisticDiagStats$pDRT,3)
+  hitRatio[mm]<-round(logisticDiagStats$hitRatio,2)
+  # Run leave-one-out logistic model diagnostic:
+  hitRatio_LOO[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
+                                                RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+  
+  # Model 2 =====================
+  mm<-2
+  modelName[mm]<-"IM_Cap"
+  # Specify model fit to evaluate
+  BMmodel<-"SR_IndivRicker_SurvCap"
+  RunName <- paste("Bern.IndivRickerSurvCap_",p*100, sep="")
+  TMB_Inputs<-TMB_Inputs_IM_priorCap
+  outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
+  
+  # Extract logistic regression data from .rda file
+  load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
+  pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
+  minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
+  sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
+  p_WaldB0[mm]<-round(logisticDiagStats$signTable[logisticDiagStats$signTable$Param=="B_0","P.value"],3)
+  p_WaldB1[mm]<-round(logisticDiagStats$signTable[logisticDiagStats$signTable$Param=="B_1","P.value"],3)
+  quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
+  pGoodnessOfFit[mm]<-round(logisticDiagStats$pDRT,3)
+  hitRatio[mm]<-round(logisticDiagStats$hitRatio,2)
+  # Run leave-one-out logistic model diagnostic:
+  hitRatio_LOO[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
+                                                RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+  
+  
+  # # Model 3 =====================
+  mm<-3
+  modelName[mm]<-"SubPop"
+  # Specify model fit to evaluate
+  RunName <- paste("Bern.SPopAbundThreshST_",p*100, sep="")
+  TMB_Inputs<-TMB_Inputs_Subpop
+  outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
+  
+  # Extract logistic regression data from .rda file
+  load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
+  pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
+  minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
+  sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
+  p_WaldB0[mm]<-round(logisticDiagStats$signTable[logisticDiagStats$signTable$Param=="B_0","P.value"],3)
+  p_WaldB1[mm]<-round(logisticDiagStats$signTable[logisticDiagStats$signTable$Param=="B_1","P.value"],3)
+  quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
+  pGoodnessOfFit[mm]<-round(logisticDiagStats$pDRT,3)
+  hitRatio[mm]<-round(logisticDiagStats$hitRatio,2)
+  # Run leave-one-out logistic model diagnostic:
+  hitRatio_LOO[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
+                                                RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
+  
+  
+  # Summarize model fit diagnostics
+  
+  diagStats_byModel<-data.frame(model = modelName, pBoxTidwell, maxDevResid, AR1.dev, minSampSize, sampSize,
+                                p_WaldB0, p_WaldB1, quasiR2, pGoodnessOfFit,                 
+                                hitRatio, hitRatio_LOO)
+  
+  write.csv(diagStats_byModel,file=paste(cohoDir,"/DataOut/LogisticDiagStatsByModel_p=",p,"_",year,".csv",sep=""))
+  
+  
+}
 
 
 # ============================================================================================
-# (4.2) Create plot to compare retrospective time series of LRP estimates
+# (4.2) Create plot to compare retrospective time series of LRP estimates from different methods
 # ===========================================================================================
 
 EscpDat.yy <- CoEscpDat %>% filter(yr <= 2020) 
@@ -287,8 +397,10 @@ L_Names<-c("Sgen:Base", "Sgen:HiSRep", "Distributional")
 
 pList<-c(50)
 
+# Compare among probability thresholds:
 #plotAnnualRetro_CompareProbs(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
 
+# Compare among methods:
 plotAnnualRetro_CompareMethods(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
 
 
@@ -676,138 +788,4 @@ plotAggStatus_byNCUs_Compare(estYear=2020, nCUList=c(5,4,3), Names=modelFitList,
 
 
 
-
-
-# ================================================================================
-# (8) STILL TO BE TESTED: Summarize and save logistic model fit diagnostics 
-# ===============================================================================
-
-# Create vectors of diagnostic stats to fill for each model
-modelName<-NA
-PearChiSq<-NA
-DevChiSq<-NA
-quasiR2<-NA
-Wald<-NA
-hitRatio<-NA
-
-
-year <- 2018
-p<-0.50
-useBern_Logistic <- TRUE
-
-# Model 1 =====================
-mm<-1
-modelName[mm]<-"IM"
-# Specify model fit to evaluate 
-BMmodel<-"SR_IndivRicker_Surv_LowAggPrior"
-RunName <- paste("Bern.IndivRickerSurv_",p*100, sep="")
-TMB_Inputs<-TMB_Inputs_IM
-outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
-
-# Extract logistic regression data from .rda file
-load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
-PearChiSq[mm]<-round(logisticDiagStats$p.PearChiSq,2)
-DevChiSq[mm]<-round(logisticDiagStats$p.DevChiSq,2)
-quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
-Wald[mm]<-round(logisticDiagStats$p.Wald,2)
-
-# Run leave-one-out logistic model diagnostic:
-hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-                    RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
-
-
-
-# Model 2 =====================
-mm<-2
-modelName[mm]<-"HM"
-# Specify model fit to evaluate 
-BMmodel<-"SR_HierRicker_Surv_LowAggPrior"
-RunName <- paste("Bern.HierRickerSurv_",p*100, sep="")
-TMB_Inputs<-TMB_Inputs_HM
-outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
-
-# Extract logistic regression data from .rda file
-load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
-PearChiSq[mm]<-round(logisticDiagStats$p.PearChiSq,2)
-DevChiSq[mm]<-round(logisticDiagStats$p.DevChiSq,2)
-quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
-Wald[mm]<-round(logisticDiagStats$p.Wald,2)
-
-# Run leave-one-out logistic model diagnostic:
-hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-                                          RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
-
-# 
-# # Model 3 =====================
-# mm<-3
-# modelName[mm]<-"IM_Cap"
-# # Specify model fit to evaluate 
-# BMmodel<-"SR_IndivRicker_SurvCap_LowAggPrior"
-# RunName <- paste("Bern.IndivRickerSurvCap_",p*100, sep="")
-# TMB_Inputs<-TMB_Inputs_IM_priorCap
-# outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
-# 
-# # Extract logistic regression data from .rda file
-# load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
-# PearChiSq[mm]<-round(logisticDiagStats$p.PearChiSq,2)
-# DevChiSq[mm]<-round(logisticDiagStats$p.DevChiSq,2)
-# quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
-# Wald[mm]<-round(logisticDiagStats$p.Wald,2)
-# 
-# # Run leave-one-out logistic model diagnostic:
-# hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-#                                           RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
-# 
-# 
-# 
-# # Model 4 =====================
-# mm<-4
-# modelName[mm]<-"HM_Cap"
-# # Specify model fit to evaluate 
-# BMmodel<-"SR_HierRicker_SurvCap_LowAggPrior"
-# RunName <- paste("Bern.HierRickerSurvCap_",p*100, sep="")
-# TMB_Inputs<-TMB_Inputs_HM_priorCap
-# outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
-# 
-# # Extract logistic regression data from .rda file
-# load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
-# PearChiSq[mm]<-round(logisticDiagStats$p.PearChiSq,2)
-# DevChiSq[mm]<-round(logisticDiagStats$p.DevChiSq,2)
-# quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
-# Wald[mm]<-round(logisticDiagStats$p.Wald,2)
-# 
-# # Run leave-one-out logistic model diagnostic:
-# hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-#                                           RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
-# 
-
-
-
-# # Model 5 =====================
-# mm<-5
-# modelName[mm]<-"SubPop"
-# # Specify model fit to evaluate 
-# #BMmodel<-"SR_HierRicker_SurvCap_LowAggPrior"
-# RunName <- paste("Bern.SPopAbundThreshST_",p*100, sep="")
-# TMB_Inputs<-TMB_Inputs_Subpop
-# outputDir <- paste(cohoDir,"DataOut/AnnualRetrospective", RunName, sep="/")
-# 
-# # Extract logistic regression data from .rda file
-# load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
-# PearChiSq[mm]<-round(logisticDiagStats$p.PearChiSq,2)
-# DevChiSq[mm]<-round(logisticDiagStats$p.DevChiSq,2)
-# quasiR2[mm]<-round(logisticDiagStats$quasiR2,2)
-# Wald[mm]<-round(logisticDiagStats$p.Wald,2)
-# 
-# # Run leave-one-out logistic model diagnostic:
-# hitRatio[mm]<-LOO_LRdiagnostics_cohoModel(year=year, p = p, useBern_Logistic=useBern_Logistic,
-#                                           RunName=RunName, outputDir = outputDir, TMB_Inputs=TMB_Inputs)
-
-
-# Summarize model fit diagnostics
-
-diagStats_byModel<-data.frame(model = modelName, PearChiSq=PearChiSq, DevChiSq=DevChiSq,
-                              quasiR2=quasiR2, Wald=Wald, LOOhitRatio=hitRatio)
-
-write.csv(diagStats_byModel,file=paste(cohoDir,"/DataOut/LogisticDiagStatsByModel_p=",p,"_",year,".csv",sep=""))
 
