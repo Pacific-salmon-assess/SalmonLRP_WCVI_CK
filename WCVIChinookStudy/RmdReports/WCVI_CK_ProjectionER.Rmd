@@ -1,15 +1,13 @@
 ---
 title: "Sensitivity of Projection-based LRPs to ERs"
 author: "Carrie Holt"
-date: "10/7/2021"
+date: "10/12/2021"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 knitr::opts_knit$set(root.dir = normalizePath(".."))  
-
-
 
 
 library(tidyverse)
@@ -20,18 +18,29 @@ library(corrplot)
 
 ## Sensitivity of Projection-based LRPs to ERs
 
-<!-- See catarina's comments at the bottom -->
-The sensitivity of projection-based LRPs to exploitation rates is due to variability in productivity and to a lesser extent capacity (spawners at replacement) among inlets. In a sensitivity analysis where productivity and capacity were drawn from the same distribution for each of the 5 inlets (i.e., each inlet was a replicate of each other), we found that the productivity and capacity tended to be lower for random trials and inlets that dropped below the lower benchmark in at least one year. Random trials and inlets with abundances that remained above the lower benchmark over the time-series tended to be more productive and slightly larger (Fig. \@ref(fig:chinook-SRHistEven)). 
-```{r chinook-SRHistEven, fig.cap="Distribution of (a) productivity (log alpha) and (b) spawners at replacement, SREP among MC trials, coloured by whether abundances in that trial remained above the lower benchmark or not, under a 45\\% exploitation. The distribution of productivity and capacity were assumed equal among inlets. ", fig.align="center"}
+To explain the initially counter-intuitive result of sensitivity of projection based LRPs to exploitation rates, we ran an additional analysis where the spawner-recruitment parameters, productivity (log($alpha$)) and spawners at replacement, $S_{REP}$ (log($alpha$)/$beta$) were either varied or kept constant over inlets and Monte Carlo trials. 
+
+Specifically, we evaluated the sensitivity of aggregate projection-based LRPs to exploitation rates under three alternative scenarios:
+
+1. All inlets were assumed to have stock-recruitment parameters drawn from the same distributions (the mean and standard deviation for productivity and $S_{REP}$ as estimated for Quatsino, Westcoast Vancouver Island) but a unique set of stock-recruitment parameters was drawn for each inlet and trial (i.e. each inlet was a replicate of each other with random variability). We choose to draw $S_{REP}$ from a random distributions instead of Ricker $beta$ or $S_{MAX}$ (1/$beta$) because the $S_{REP}$ parameter was drawn randomly in projections for this case study from the watershed-area model. However, in preliminary sensitivity analyses, we sampled from a random distribution of $beta$ values and found similar results. We assumed strong positive covariation in recruitment residuals among inlets with pair-wise correlations equal to 0.7. <!--CH: plot distributions of prod and SREP-->
+
+2. The productivity parameter was fixed at the mean value of the assumed distribution for all inlets and trials. $S_{REP}$ was drawn from its distribution and allowed to vary across inlets and trials. <!-- across trials AND inlets-->
+
+3. $S_{REP}$ was fixed at the mean value of the distribution across inlets and across trials. The productivity parameter was drawn from the distribution and allowed to vary across inlets and trials. <!-- across trials AND inlets-->
+
+
+
+We found that the sensitivity of projection-based LRPs to exploitation rates was due to variability in productivity and to a lesser extent $S_{REP}$ among inlets. Productivity and $S_{REP}$ tended to be lower for random trials and inlets that dropped below the lower benchmark in at least one year. Random trials and inlets with abundances that remained above the lower benchmark over the time-series tended to be more productive and slightly larger (Fig. \@ref(fig:chinook-SRHistEven)). 
+```{r chinook-SRHistEven, fig.cap="Distribution of (a) productivity (log alpha) and (b) spawners at replacement, SREP among MC trials, coloured by whether abundances in that trial remained above the lower benchmark (red) or not (blue), under a 45\\% exploitation. Productivity and SREP varied among inlets and trials and were drawn from common distributions. ", fig.align="center"}
 
 #knitr::include_graphics("Figures/evenhCor-SRHist.png")
 knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/evenhCor-SRHist.png")
 
 ```
 
-Trials and inlets with low productivity tended to have relatively high Sgen (lower benchmark) values, and a higher frequency of dropping below the lower benchmark. THis variability in productivity among inlets was associated with projection-based LRPs that were sensitive to exploitation rates (Fig. \@ref(fig: chinook-ProjLRPS_Even)).
+Inlets and Monte Carlo trials with low productivity tended to have relatively high $S_{gen}$ (lower benchmark) values (as described in Holt and Folkes 2015), and therefore a higher frequency of dropping below the lower benchmark. This variability in productivity among inlets was associated with projection-based LRPs that were sensitive to exploitation rates (Fig. \@ref(fig: chinook-ProjLRPS_Even)).
 
-```{r  chinook-ProjLRPS_Even, fig.cap="Probability of all inlets being above their lower benchmark along a gradient in aggregate abundances within bins of 200 fish, derived from projections over 30 years and 10,000 MC Trials, under a range of average exploitation rates from 5-45\\%, assuming the same distribution of productivity and SREP for each inlets but each trial has its own random draw.", fig.align="center"}
+```{r  chinook-ProjLRPS_Even, fig.cap="Probability of all inlets being above their lower benchmark along a gradient in aggregate abundances within bins of 200 fish, derived from projections over 30 years and 10,000 MC Trials, under a range of average exploitation rates from 5-45\\% (across 9 panels), assuming productivity and SREP varied across inlets and trials, and are drawn from common distributions. Horizontal dashed lines at 50\\% and 66\\% represent equal and likely probabilities of all inlets being above lower benchmarks. Orange and pale green vertical lines are the LRPs associated with 50\\% and 66\\% probability of all inlets being above their lower benchmarks, respectively. LRPs at 66\\% probability are not shown for exploitation rates >30\\% because of large uncertainty in projections at high aggregate abundances.", fig.align="center"}
 
 # knitr::include_graphics("Figures/ProjectedLRPs/ERsEven_hCor-ProjLRPCurve-ALLp.png")
 knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/ProjectedLRPs/ERsEven_hCor-ProjLRPCurve-ALLp.png")
@@ -39,62 +48,33 @@ knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/
 ```
 When productivity was fixed at the mean value among random trials and inlets, the distribution of spawner-recruitment parameters were the same or similar for trials where abundances dropped below the lower benchmark or remained above it, and the LRP was insensitive to exploitation rate (Fig. \@ref(fig: chinook-ProjLRPS_SameProd) and \@ref(fig: chinook-SRHistSameProd)).
 
-```{r chinook-SRHistSameProd, fig.cap="Distribution of (a) productivity (log alpha) and (b) spawners at replacement, SREP among MC trials, coloured by whether abundances in that trial remained above the lower benchmark or not, under a 45\\% exploitation and constant productivity among trials. The distribution of productivity and capacity were assumed equal among inlets, but each trial has a separate random draw. ", fig.align="center"}
+```{r chinook-SRHistSameProd, fig.cap="Distribution of (a) productivity (log alpha) and (b) spawners at replacement, SREP among MC trials, coloured by whether abundances in that trial remained above the lower benchmark (red) or not (blue), under a 45\\% exploitation and constant productivity among inlets and trials. SREP was drawn from a common distribution across inlets and trials. ", fig.align="center"}
 knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/sameProdhCor_SRHist.png")
 
 ```
 
-```{r  chinook-ProjLRPS_SameProd, fig.cap="Probability of all inlets being above their lower benchmark along a gradient in aggregate abundances within bins of 200 fish, derived from projections over 30 years and 10,000 MC Trials, under a range of average exploitation rates from 5-45\\%, assuming the same disribution of productiivty and SREP for each inlets, but each trial has a separate random draw.", fig.align="center"}
+```{r  chinook-ProjLRPS_SameProd, fig.cap="Probability of all inlets being above their lower benchmark along a gradient in aggregate abundances within bins of 200 fish, derived from projections over 30 years and 10,000 MC Trials, under a range of average exploitation rates from 5-45\\% (across 9 panels), assuming the same productivity for each inlet and trial and an SREP that varied across inlets and trials, drawn from a common disribution. Horizontal dashed lines at 50\\% and 66\\% represent equal and likely probabilities of all inlets being above lower benchmarks. Orange and pale green vertical lines are the LRPs associated with 50\\% and 66\\% probability of all inlets being above their lower benchmarks, but are indistinguishably here. ", fig.align="center"}
 
 # knitr::include_graphics("Figures/ProjectedLRPs/ERsSameProd_hCor-ProjLRPCurve-ALLp.png")
 knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/ProjectedLRPs/ERsSameProd_hCor-ProjLRPCurve-ALLp.png")
 
 ```
 
-When SREP was fixed at the mean value among random trials, productivities were higher for inlets and trials that remained above the benchmarks though the overlap with the inlets and trails was slightly greater than when both productivity and SREP varied among inlets and trials. The LRP varied with exploitation rates but to a less extent than when both productivity and SREP varied (Fig. \@ref(fig: chinook-ProjLRPS_SameSREP) and \@ref(fig: chinook-SRHistSameSREP)).
+When $S_{REP}$ was fixed at the mean value among inlets and random trials, productivity was higher for inlets and trials that remained above the benchmarks though the overlap with the inlets and trails was slightly greater than when both productivity and $S_{REP}$ varied among inlets and trials. The LRP varied with exploitation rates but to a lesser extent than when both productivity and $S_{REP}$ varied (Fig. \@ref(fig: chinook-ProjLRPS_SameSREP) and \@ref(fig: chinook-SRHistSameSREP)).
 
 
-```{r chinook-SRHistSameSREP, fig.cap="Distribution of (a) productivity (log alpha) and (b) spawners at replacement, SREP among MC trials, coloured by whether abundances in that trial remained above the lower benchmark or not, under a 45\\% exploitation. The distribution of productivity and capacity were assumed equal among inlets. ", fig.align="center"}
+```{r chinook-SRHistSameSREP, fig.cap="Distribution of (a) productivity (log alpha) and (b) spawners at replacement, SREP among MC trials, coloured by whether abundances in that trial remained above the lower benchmark (red) or not (blue), under a 45\\% exploitation and constant SREP among inlets and trials. Productivity was drawn from a common distribution across inlets and trials. ", fig.align="center"}
 # knitr::include_graphics("Figures/sameSREPhCor_SRHist.png")
 knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/sameSREPhCor_SRHist.png")
 
 ```
 
 
-```{r  chinook-ProjLRPS_SameSREP, fig.cap="Probability of all inlets being above their lower benchmark along a gradient in aggregate abundances within bins of 200 fish, derived from projections over 30 years and 10,000 MC Trials, under a range of average exploitation rates from 5-45\\%, assuming the same disribution of productiivty and SREP for each inlets, but each trial has a separate random draw.", fig.align="center"}
+```{r  chinook-ProjLRPS_SameSREP, fig.cap="Probability of all inlets being above their lower benchmark along a gradient in aggregate abundances within bins of 200 fish, derived from projections over 30 years and 10,000 MC Trials, under a range of average exploitation rates from 5-45\\% (across 9 panels), assuming the same SREP for each inlet and trial, and productivity that varied across inlets and trials, drawn from a common disribution. Horizontal dashed lines at 50\\% and 66\\% represent equal and likely probabilities of all inlets being above lower benchmarks. Orange and pale green vertical lines are the LRPs associated with 50\\% and 66\\% probability of all inlets being above their lower benchmarks, respectively. ", fig.align="center"}
 
 # knitr::include_graphics("Figures/ProjectedLRPs/ERsSameSREP_hCor-ProjLRPCurve-ALLp.png")
 knitr::include_graphics("C:/github/SalmonLRP_RetroEval/WCVIChinookStudy/Figures/ProjectedLRPs/ERsSameSREP_hCor-ProjLRPCurve-ALLp.png")
 ```
 
-Variability in productivity among inlets results in inlet-specific variability in sensitivity to exploitation rates. Inlets with relatively low productivity fall below lower benchmarks more frequently, resulting in divergences in status among inlets and a higher aggregate abundances required for all inlets to be above their lower benchmarks (higher LRP).
+Variability in productivity among inlets results in inlet-specific variability in sensitivity to exploitation rates. Inlets with relatively low productivity fall below lower benchmarks more frequently, and this effect is accentuated when exploitation rates are high resulting in divergences in status among inlets and a higher aggregate abundances required for all inlets to be above their lower benchmarks (i.e., higher LRP).
 
-<!-- comments from CAtarina
-Here are a few suggestions for the appendix on the sensitivity analysis for the projection absed LRP. 
-These might be things that you were already planning to do, but I thought it might be helpful to list them out. capacity
-
-Question: why did you choose to fix SRep and not b or Smax? I'm just wondering if the effect we see from letting SREP vary is from b or from the fact that Srep also depends on a. Or did you calculate sep based on mean alpha, letting only b vary?
-I think it might be more useful to show the results for Smax, if that doesn't require ou to run everything again.
-
-
-1. It wouuld be good to have an introduction section to this appendix listing why we thought this sensitivity analysis was necessary (sensitivity to exploitation rate observed in the base case was not intuitive). and Also listing the sensitivity scenarios we are about to see (if I understood it correctly):
-
-We tested the aggregate projection-based LRP method under three alternative scenarios:
-
-1. All inlets were assumed to have stock-recruitment parameters drawn from the same posterior distributions but a unique set of stock-recruitment parameters was drawn for each trial (i.e. each inlet was a replicate of each other in each trial).
-
-2. The productivity parameter for all inlets was fixed at the mean value of the posterior distribution across inlets and across trials. The capacity parameter was drawn from the posterior distribution and allowed to vary across trials, but not between inlets. 
-
-2. The capaity parameter for all inlets was fixed at the mean value of the posterior distribution across inlets and across trials. The productivity parameter was drawn from the posterior distribution and allowed to vary across trials, but not between inlets. 
-
-
-
-Graphs:
-
-histogram:
-add to the caption what each colour represent, it is reduntant with the figure legend but I think it helps. 
-
-probability graphs:
-The LRP labels need to be bigger. maybe include only the 50% one and make the font larger and bold. ALso what are the orange and green lines again? And What about the horizontal dashed lines? Maybe we just need to include the 50% one?
-
--->

@@ -1585,16 +1585,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05sameProd_hCor",
-  "ER0.10sameProd_hCor",
-  "ER0.15sameProd_hCor",
-  "ER0.20sameProd_hCor",
-  "ER0.25sameProd_hCor",
-  "ER0.25sameProd_hCor",
+  "ER0.05even_hCor",
+  "ER0.10even_hCor",
+  "ER0.15even_hCor",
+  "ER0.20even_hCor",
+  "ER0.25even_hCor",
+  "ER0.30even_hCor",
   #"baseER",
-  "ER0.35sameProd_hCor",
-  "ER0.40sameProd_hCor",
-  "ER0.45sameProd_hCor")
+  "ER0.35even_hCor",
+  "ER0.40even_hCor",
+  "ER0.45even_hCor")
   # "alphaScalar0.75",
   # "baseERn10000",
   # "alphaScalar1.5")
@@ -1606,7 +1606,7 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsSameProd_hCor"#"ERs"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven-hCor"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
@@ -1741,9 +1741,9 @@ for (OM in 1:length(OMsToInclude)){
                                   "/DataOut/ProjectedLRPs/ProjectedLRPs",
                                   OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
                      pull(LRP))[2]
-        text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)
-        if(OM<7)  text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
-        # text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)
+        text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.6)
+        if(OM<7)  text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.6)
+        #text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.6)
 
         if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
                         line=1.8,at=0.5, cex=1) }
@@ -1787,10 +1787,10 @@ for (OM in 1:length(OMsToInclude)){
     abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
     if(OMsToInclude[OM]!="alphaScalar1.5") { if (i==1)
       abline(v=LRP[i], col="orange", lwd=lrp.lwd) }
-    if(OMsToInclude[OM]!="alphaScalar0.75"&OM<7) { if (i==2)
+    if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==2)
       abline(v=LRP[i], col=viridis(4, alpha=0.3)[3], lwd=lrp.lwd) }
-    abline(h=0.9, lty=2)
-    abline(h=0.99, lty=2)
+    # abline(h=0.9, lty=2)
+    # abline(h=0.99, lty=2)
 
     # if(i==3) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.3)[2] )
     # if(i==4) abline(v=LRP[i], lwd=4, col=viridis(4, alpha=0.2)[1] )
@@ -2074,7 +2074,7 @@ for (OM in 1:length(OMsToInclude)){
         xlim(0,50000)
       # ggsave(filename = paste("Figures/", GroupName, "_SREPHist.png", sep="") , plot=gSREP)
       gSRpars <- grid.arrange(galpha, gSREP)
-      ggsave(filename = paste("Figures/", GroupName, "_SRHist.png", sep="") , plot=gSRpars)
+      ggsave(filename = paste("Figures/", GroupName, "-SRHist.png", sep="") , plot=gSRpars)
 
 
     }# End of if OM==9
