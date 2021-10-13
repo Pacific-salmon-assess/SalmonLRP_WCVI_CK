@@ -57,6 +57,8 @@ knitr-cache
 !/Code/TMB_Files/Logistic_LRPs_BoxTidwell.o
 !/SCChumStudy/DataOut/logisticFit_2018Output.rda
 !/SCChumStudy/DataOut/logisticFit_2018Outputv2.rda
+!/SCChumStudy/DataOut/SCChumTest.png
+!/SCChumStudy/DataOut/SCChumTestacf.png
 !/WCVIChinook/Figures/sameSREPhCor-SRHist.png
 !/WCVIChinook/Figures/sameProdhCor-SRHist.png
 !/WCVIChinook/Figures/evenhCor-SRHist.png
