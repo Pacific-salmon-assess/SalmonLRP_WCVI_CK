@@ -305,10 +305,10 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   
   # See ggplot.cor function in "helperFunctions.r"
   p3 <- ggplot.corr(data=PearResid, title="Pearsons's residuals") 
-  p4 <- ggplot.corr(data=DevResid, title="Deviance residuals") 
+  p4 <- ggplot.corr(data=DevResid, title="Deviance Residuals") 
  
   p3+p4
-  ggsave(p4, file=paste(dir, plotname, "acf.png", sep=""))
+  ggsave(p4, file=paste(dir, plotname, "acf.png", sep=""), width=4.5, height=3.5, units="in")
   
   
   #-----------------------------------------------------------------------------

@@ -326,39 +326,37 @@ plot_Subpop_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withThre
 }
 
 
-# Plot available CU estimates over time, by MU
-plot_CU_EscpRatio_Over_Time <-function(Dat, Dir, plotName,baseYr) {
+plot_CU_Escp_withMultiStatus<-function(statusEsts,outDir,plotName) {
   
-  theme_update(plot.title = element_text(hjust = 0.5))
+  # Rename to make prettier for plotting
+  statusEsts$CU_Name[statusEsts$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
+  statusEsts$CU_Name[statusEsts$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
+  statusEsts$CU_Name[statusEsts$CU_Name == "North_Thompson"] <- "N. Thompson"
+  statusEsts$CU_Name[statusEsts$CU_Name == "South_Thompson"] <- "S. Thompson"
+  statusEsts$CU_Name[statusEsts$CU_Name == "Lower_Thompson"] <- "L. Thompson"
   
-  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""))
+ # LRPStatus <- statusEsts %>% summarise(LRPStatus=ifelse(rapidStatus=="Red", "Below", "Above"))
+#  status<-as.data.frame(LRPStatus)$LRPStatus
   
-  MUs <- unique(Dat$MU)
+  status<-ifelse(statusEsts$rapidStatus == "Red", "Below", "Above")
   
-  p <- list()
+  statusEsts<-statusEsts %>% add_column(LRPStatus=status)
   
-  for(mm in 1:length(MUs)){
-    Dat.MU <- Dat %>% filter(MU == MUs[mm])
-    
-    escpDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU, yr) %>% summarise(value=sum(Escp))
-    
-    tmpDat<-escpDat %>% group_by(CU) %>% summarise(valueBaseYr= value[yr==baseYr])
-    
-    tmpDat<-left_join(escpDat,tmpDat)
-    
-    ratioDat <- tmpDat  %>% group_by(CU, yr) %>% summarise(ratio = value/valueBaseYr)
-    
-    p[[mm]]<-ggplot(data=ratioDat,aes(x=yr,y=ratio)) + 
-      geom_line(aes(colour=CU),size=1.1 ) + 
-      labs(title=MUs[mm], x = "Year", y = "Escapement Ratio") + 
-      theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
-      theme_classic()
-  }
+  g<-ggplot(statusEsts) +
+    geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
+    geom_point(aes(y=Gen_Mean, x=yr, colour=LRPStatus)) +
+    geom_hline(aes(yintercept=Sgen), colour="orange") +
+    ylab("Escapement") + xlab("Year") +
+    scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
+    facet_wrap(~interaction(CU_Name), scales = "free_y") +
+    theme_classic()
   
-  do.call(grid.arrange,p)
+
+  # Save plot
+  ggsave(paste(outDir,"/Figures/",plotName,".png",sep=""), plot = g,
+         width = 10, height = 5, units = "in") 
   
-  
-  dev.off()
+
   
 }
 
@@ -1253,8 +1251,11 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
     dir.create(outputDir)
   } 
   
-   
-   plotName <- paste("coho_StatusByNCUs_",inputPrefix, sep="")
+ 
+  outName1<-str_split(inputPrefix, "[.]")[[1]][2]
+  outName2<-paste(str_split(outName1, "_")[[1]][1],str_split(outName1, "_")[[1]][2],sep="-") 
+  
+   plotName <- paste("coho-StatusByNCUs-",outName2, sep="")
   
    png(paste(outputDir,"/", plotName, ".png", sep=""))
    
@@ -1548,5 +1549,38 @@ plotPostHist<-function(x, post, parName, CUNames) {
                   x=quantile(margPost,0.05)[[1]]*1.25), vjust=-1,col='blue',size=5)
   
     #annotate("text", x=x.text, y=13000, label= "boat")
+  
+}
+
+
+
+plotAgeProp_byCU<-function(CUages, outDir, plotName) {
+
+  
+  
+  CUages$CU_Names[CUages$CU_Names=="Fraser_Canyon"]<-"Fraser Canyon"
+  CUages$CU_Names[CUages$CU_Names=="Lower_Thompson"]<-"Lower Thompson"
+  CUages$CU_Names[CUages$CU_Names=="Middle_Fraser"]<-"Middle Fraser"
+  CUages$CU_Names[CUages$CU_Names=="North_Thompson"]<-"North Thompson"
+  CUages$CU_Names[CUages$CU_Names=="South_Thompson"]<-"South Thompson"
+
+  
+  
+  #cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+  
+  colList<-c("#999999","#E69F00", "#56B4E9", "#009E73", "#D55E00")
+  
+  
+  g<-ggplot(CUages,aes(x=Year, y=age3, col=CU_Names)) + geom_line(size=1.1) +
+    theme_classic() +
+    xlab("Year") + ylab("Proportion Age 3") + labs(color='Conservation Unit')  +
+    theme(legend.position = c(0.2, 0.25)) +
+    scale_color_manual(values=colList) +
+    theme(axis.text=element_text(size=11),
+          axis.title=element_text(size=12,face="bold"))
+  
+  ggsave(paste(outDir,"/",plotName,".png",sep=""), plot = g,
+         width = 5.25, height = 4.25, units = "in") 
+  
   
 }

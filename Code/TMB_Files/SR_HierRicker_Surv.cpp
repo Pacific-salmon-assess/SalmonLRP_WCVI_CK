@@ -45,33 +45,38 @@ px[0] = DW * py[0];                 // Reverse mode chain rule
 template<class Type>
 Type objective_function<Type>::operator() ()
 {
+  // Indicator variables (set to 1=True or 0=False)
   DATA_INTEGER(BiasCorrect);
+  DATA_INTEGER(Bern_Logistic);
+  // Data
   DATA_VECTOR(S);
   DATA_VECTOR(P_3);
   DATA_VECTOR(logR);
   DATA_IVECTOR(stk);
-  DATA_IVECTOR(stk_predS);
   DATA_IVECTOR(yr);
   DATA_VECTOR(logSurv_3);
   DATA_VECTOR(logSurv_4);
   DATA_INTEGER(N_Stks);
   DATA_VECTOR(muLSurv);
+  // Assumed prior distribution parameters
   DATA_SCALAR(logMuA_mean);
   DATA_SCALAR(logMuA_sig);
   DATA_SCALAR(Tau_dist);
   DATA_SCALAR(Tau_A_dist);
   DATA_SCALAR(gamma_mean);
   DATA_SCALAR(gamma_sig);
-  DATA_INTEGER(Bern_Logistic);
+  DATA_SCALAR(Sgen_sig);
+  // Vectors to predict CU-level spawners
+  DATA_VECTOR(Pred_Spwn);
+  DATA_IVECTOR(stk_predS);
+  // Vectors for logit model fit
   DATA_VECTOR(LM_S);
   DATA_VECTOR(LM_Agg_Abund);
   DATA_IVECTOR(LM_yr);
   DATA_IVECTOR(LM_stk);
   DATA_VECTOR(Pred_Abund);
-  DATA_VECTOR(Pred_Spwn);
-  DATA_SCALAR(p);
-  DATA_SCALAR(Sgen_sig);
   
+  DATA_SCALAR(p);
   
   PARAMETER_VECTOR(logA);
   PARAMETER_VECTOR(logB);

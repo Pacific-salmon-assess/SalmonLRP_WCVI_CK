@@ -155,9 +155,9 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 
 # Prior means come from running "compareRickerModelTypes_onlySR.r", with bias correction
  ## Note: using expansion by 1.40 for prior cap (not 1.5, like Arbeider et al., Korman et al)
-cap_priorMean_IM<-c(11.084298, 4.456175, 13.343691, 27.145187, 17.361800)
+cap_priorMean_IM<-c(11.700688, 4.244922, 13.658432, 20.202888, 17.217637)
 
-  
+
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),
@@ -169,15 +169,17 @@ TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
                       extra_eval_iter=FALSE,biasCorrect=TRUE)
 
+
 # Prior means come from running "compareRickerModelTypes_onlySR.r"
-#cap_priorMean_HM<-  ### Cannot estimate at present using compareRickerModelTypes_onlySR.r
+## Note: using expansion by 1.40 for prior cap (not 1.5, like Arbeider et al., Korman et al)
+cap_priorMean_HM<-  c(10.953847, 4.644284, 12.856508, 19.590172, 16.087002)
 
 
-# TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-#                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-#                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),
-#                                extra_eval_iter=FALSE, biasCorrect=T)
+TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),
+                               extra_eval_iter=FALSE, biasCorrect=T)
 
 
 TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
@@ -230,13 +232,12 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
-     ## Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
-     # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
-     #                BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-     #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-     #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
+     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+                 BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+                 useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
+                 bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
-     
      ## Run using distribibutional benchmark for CUs based on 50% of subpopulations within a CU > 1000 fish   
      runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
@@ -391,7 +392,7 @@ modelFitList<-c("Bern.IndivRickerSurv",
                 "Bern.IndivRickerSurvCap",
                 "Bern.SPopAbundThreshST")
 
-L_Names<-c("Sgen:Base", "Sgen:HiSRep", "Distributional")  
+L_Names<-c("Sgen:LRP", "Sgen_priorCap:LRP", "Dist:LRP")  
 
 #pList<-c(50, 66, 90, 99)
 
