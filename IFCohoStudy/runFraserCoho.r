@@ -116,7 +116,7 @@ CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
 CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 CoEscpDat_bySubpop <- CoEscpDat_bySubpop %>% filter(yr >= 1998)
 
-# Roll up escpaments, and get Gen Mean of htat
+# Roll up escpaments, and get Gen Mean of that
 AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
 

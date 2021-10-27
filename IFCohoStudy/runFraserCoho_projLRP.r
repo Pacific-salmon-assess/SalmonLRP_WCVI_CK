@@ -15,9 +15,15 @@
 #     (3) Run base projections (Using 4 different OM models at present)
 #     (4) Run sensitivity analysis projections
 #     (5) Estimate and save LRPs, and associated plots
+#        (5.1) Estimate and Save Model-Averaged LRPs, and associated plots (Optional)
+#        (5.2) Plot LRP estimates relative to aggregate abundance time series
 #     (6) Plot CU-level spawner abundance projections (Optional)
-#     (7) Make comparison plots among scenarios (NOT CURRENTLY WORKING)
-
+#     (7) Plots of LRP stabilization with number of trials
+#     (8) Compare among-CU correlation in observed and projected escapements
+#     (9) Look at posterior samples from MCMC model parameterization
+#     (10) Make example plot to show calculation of projected LRPs
+#     (11) Plot Correlation Matrices for Recruitment Residuals
+#     (12) Make Projected Curve Comparison Plots Among Scenarios
 # ===============================================================================
 
 
@@ -71,7 +77,17 @@ setwd(cohoDir)
  # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
  CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
-
+ 
+ CoEscpDat <- read.csv("DataIn/IFCoho_escpByCU.csv")
+ # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
+ colnames(CoEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
+ colnames(CoEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
+ colnames(CoEscpDat)[colnames(CoEscpDat)=="ReturnYear"] <- "yr"
+ colnames(CoEscpDat)[colnames(CoEscpDat)=="Escapement"] <- "Escp"
+ 
+ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
+   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
+ 
 # ======================================================================
 # (2) Specify initial parameters & datasets for projections  
 # =====================================================================
@@ -440,7 +456,7 @@ write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data.csv", sep="/"),
 
 
 # ===================================================================================
-# (5b) Estimate and Save Model-Averaged LRPs, and associated plots (Optional)
+# (5.1) Estimate and Save Model-Averaged LRPs, and associated plots (Optional)
 # =============================================================================
 
 # Specify threshold to use when calculating LRP
@@ -532,6 +548,51 @@ LRP_Ests<-rbind(LRP_Ests_SingleModels,LRP_Ests)
 # Save LRPs for all OM scenarios
 write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=F)
 
+
+
+
+# =============================================================================
+# (5.2) Plot LRP estimates relative to observed aggregate abudance time series
+# =============================================================================
+
+
+AggEscp<-AggEscp %>% filter(yr >= 2000)
+
+LRP_Ests <- read.csv(paste(projOutDir2, "ProjectedLRPs.csv", sep="/"))
+
+colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
+
+LRP_Ricker0.5<- LRP_Ests[LRP_Ests$OM=="Ricker" & LRP_Ests$ProbThresh==0.5,]$LRP
+LRP_RickerCap0.5<- LRP_Ests[LRP_Ests$OM=="Ricker_priorCap" & LRP_Ests$ProbThresh==0.5,]$LRP
+
+LRP_Ricker0.66<- LRP_Ests[LRP_Ests$OM=="Ricker" & LRP_Ests$ProbThresh==0.66,]$LRP
+LRP_RickerCap0.66<- LRP_Ests[LRP_Ests$OM=="Ricker_priorCap" & LRP_Ests$ProbThresh==0.66,]$LRP
+
+png(paste(cohoDir,"/Figures/coho-EscpSeries-wProjLRP.png", sep=""), width=450, height=350)
+
+par(mar=c(4,4,1,1))
+
+plot(AggEscp$yr, AggEscp$Gen_Mean, typ="l", ylim=c(0,max(AggEscp$Gen_Mean)), bty="l",
+     xlab="Year", ylab="Aggregate Abundance", cex.lab=1.3, lwd=2, cex.axis=1.1)
+points(AggEscp$yr, AggEscp$Gen_Mean,pch=19,col="grey30", cex=1)
+
+
+abline(h=LRP_Ricker0.5, col=colList[1],lty=1, lwd=2)
+#abline(h=LRP_Ricker0.66, col=colList[2],lty=1)
+abline(h=LRP_RickerCap0.5, col=colList[1],lty=2,lwd=2)
+#abline(h=LRP_RickerCap0.66, col=colList[2],lty=2)
+
+# legend(x=2000, y=15000, cex=0.8,
+#        legend=c("Ricker_p0.5", "Ricker_p0.66", "RickerCap_p0.5", "RickerCap_p0.66"),
+#        col = c(colList[1], colList[2], colList[1], colList[2]), 
+#        lty=c(1,1,2,2), bty="n")
+
+legend(x=2000, y=10000,cex=1.3,
+       legend=c("Ricker", "Ricker_priorCap"),
+       col = c(colList[1], colList[1]),
+       lty=c(1,2), bty="n", lwd=c(2,2))
+
+dev.off()
 
 
 # ===================================================================
@@ -678,7 +739,7 @@ ggsave(paste(cohoDir,"/Figures/LRP_ntrials_p",probThresh,".png",sep=""), plot = 
 
 # # ---- Code to compare observed and projected among-CU correlations in spawner abundance
 
-OMsToTest<-c("Ricker", "Ricker_0.25sigGamma", "Ricker_0.5sigGamma","Ricker_0.75sigGamma",
+OMsToTest<-c("Ricker", "Ricker_0.5sigGamma","Ricker_0.75sigGamma",
              "Ricker_1.0sigGamma")
 
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
@@ -757,7 +818,7 @@ dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","Ricker","Ricke
 g <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
   scale_x_discrete(limits=c("Observed","Ricker", "Ricker_0.25sigGamma", "Ricker_0.5sigGamma","Ricker_0.75sigGamma",
                             "Ricker_1.0sigGamma"),
-                   labels=c("Obs","0(base)", "0.0225sig", "0.045sig", "0625sig", "0.09sig")) +
+                   labels=c("Obs","0(base)", "0.0225sig", "0.045sig", "0.0625sig", "0.09sig")) +
                     xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
 
 
@@ -1069,8 +1130,160 @@ ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="
  dev.off()
 
  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  # ===================================================================
- # (12) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
+ # (12) Make Projected Curve Comparison Plots Among Scenarios
+ # ==================================================================
+ 
+ # # Comparison 1: Among SR models ========================
+ # OMsToPlot<-c("Ricker", "Ricker_priorCap", "Combined")
+ # png(paste(cohoDir,"/Figures/", "coho-projLRPCurve-byOM.png", sep=""),
+ #     width=450, height=450)
+ # par(mfrow=c(2,2), mar=c(2,2,2,1), oma=c(2,2,0,0))
+ # LabelsToPlot<-OMsToPlot
+ # headerText<-"none"
+
+ # #Comparison 2: Among sigGamma scenarios ========================
+ # OMsToPlot<-c("Ricker", "Ricker_0.5sigGamma",
+ #              "Ricker_0.75sigGamma", "Ricker_1.0sigGamma")
+ # png(paste(cohoDir,"/Figures/", "coho-projLRPCurve-bySigGamma.png", sep=""),
+ #     width=450, height=450)
+ # par(mfrow=c(2,2), mar=c(2,2,2,1), oma=c(2,2,0,0))
+ # LabelsToPlot<-c(0, 0.045, 0.0675, 0.09)
+ # headerText<-"sigma"
+ 
+ 
+ #Comparison 3: Among ER scenarios ========================
+ OMsToPlot<-c("Ricker_ER2.5", "Ricker",
+              "Ricker_ER22.5", "Ricker_ER32.5")
+ png(paste(cohoDir,"/Figures/", "coho-projLRPCurve-byER.png", sep=""),
+     width=450, height=450)
+ par(mfrow=c(2,2), mar=c(2,2,2,1), oma=c(2,2,0,0))
+ LabelsToPlot<-c(2.5, 12.5, 22.5, 32.5)
+ headerText<-"ER"
+ 
+ 
+ 
+ # Specify threshold to use when calculating LRP
+ propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
+ probThreshList<-c(0.50, 0.66, 0.90, 0.99) # probability threshhold; the LRP is set as the aggregate abundance that has this 
+ # -- probability that the propCUThreshold is met
+
+ for (i in 1:length(OMsToPlot)) {
+ 
+   
+   if (OMsToPlot[i]!="Combined") {
+     # Read in samSim outputs for OM
+     filename<-paste("projLRPDat_",OMsToPlot[i],".csv",sep="")
+     projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
+     projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+   } else {
+     filename1<-"projLRPDat_Ricker.csv"
+     filename2<-"projLRPDat_Ricker_priorCap.csv"
+     projLRPDat1<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename1))
+     projLRPDat2<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename2))
+     projLRPDat<-rbind(projLRPDat1,projLRPDat2)
+     projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+   }
+   
+   # Create bins for projected spawner abundances
+   binSize<-200 # Note: bin size is currently set here
+   minBreak<-0
+   maxBreak<-round(max(projLRPDat$sAg),digits=-2) + binSize
+   breaks<-seq(minBreak, maxBreak,by=binSize)  
+   
+   # Set bin labels as the mid-point
+   projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)),include.lowest = T)
+   
+   # Summarize nSims in each bin
+   tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+   
+   # Filter out bins with < 100 nSims
+   tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
+     add_column(nSims=tmp$nSims) %>% filter(nSims>=100)
+   
+ 
+ for (p in 1:length(probThreshList)) {
+   
+   probThresh<-probThreshList[p]
+   
+   # For each bin, calculate probability that required proportion of CUs above benchmark
+   projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+   # For each bin, calculate the difference between the threshold probability and the calculated probability 
+   projLRPDat$diff<-abs(probThresh-projLRPDat$prob)
+   
+   # Save projection summaries used to create plots
+   projLRPDat$OM.Name<-OMsToPlot[i]
+   projLRPDat.plot<-projLRPDat
+   
+   # Calculate the LRP as aggregate abundance bin with the minimum difference from threshold
+   if (min(abs(projLRPDat$diff)) < 0.02) {
+      LRP<-as.numeric(as.character(projLRPDat$bins[projLRPDat$diff == min(projLRPDat$diff)]))
+   } else {
+     LRP<-NA
+    }
+   
+   # Create a table of LRP estimates to be saved for each OM model
+   if (p == 1) {
+     LRP_Ests<-data.frame(OMsToPlot[i], probThresh, propCUThresh, LRP, binSize)
+     names(LRP_Ests)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+   } else {
+     tmp.df<-data.frame(OMsToPlot[i], probThresh, propCUThresh, LRP, binSize)
+     names(tmp.df)<-c("OM", "ProbThresh", "PropCURequired", "LRP", "binSize")
+     LRP_Ests<-rbind(LRP_Ests,tmp.df)
+   }
+ } # end of p loop     
+ 
+ colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
+ 
+ plot(as.numeric(as.character(projLRPDat$bins)),projLRPDat$prob, pch=19, xlim=c(0,90000), ylim=c(0,1.0),cex=0.2,
+      xlab="", ylab="", cex.axis=1.1)
+
+ abline(h=probThreshList[1],lty=3)
+ lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[1]],2),c(0,probThreshList[1]), lty=1, lwd=2, col=colList[1])
+ 
+ abline(h=probThreshList[2],lty=3)
+ lines(rep(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[2]],2),c(0,probThreshList[2]), lty=1, lwd=2, col=colList[2])
+ 
+ abline(h=probThreshList[3],lty=3)
+ lines(rep(min(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[3]]),2),c(0,probThreshList[3]), lty=1, lwd=2, col=colList[3])
+ 
+ abline(h=probThreshList[4],lty=3)
+ lines(rep(min(LRP_Ests$LRP[LRP_Ests$ProbThresh==probThreshList[4]]),2),c(0,probThreshList[4]), lty=1, lwd=2, col=colList[4])
+ 
+ if (headerText == "none") mtext(LabelsToPlot[i], side = 3, outer = FALSE, line=0.5)
+  
+ if (headerText == "sigma") {
+   sigVal<-LabelsToPlot[i]
+   mtext(paste ("sigGamma =",sigVal), side = 3, outer = FALSE, line=0.5)
+ }
+ 
+ if (headerText == "ER") {
+   mtext(paste ("ER =",LabelsToPlot[i]), side = 3, outer = FALSE, line=0.5)
+ }
+ 
+ }  # end of OM loop
+ 
+ mtext("Aggregate Spawner Abundances", side = 1, outer = TRUE, line=0.5, cex=1.2, font=1)
+ mtext("Pr (All CUs > Lower Benchmark)", side = 2, outer = TRUE, line=0.5, cex=1.2, font=1)
+ 
+ 
+ dev.off()
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ # ===================================================================
+ # (13) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
  # ==================================================================
  
  
