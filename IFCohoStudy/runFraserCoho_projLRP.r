@@ -213,7 +213,6 @@ projSpawners <-run_ScenarioProj(SRDat = SRDat, BMmodel = BMmodel, scenarioName=s
                                 biasCorrectEst=T, biasCorrectProj=T)
 
 
-
 scenarioName <- "RickerHM"
 BMmodel <- "SR_HierRicker_Surv"
 TMB_Inputs <- TMB_Inputs_HM
@@ -903,13 +902,54 @@ ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="
  }
  
 
-   
+ 
+ # =============================================================================================
+ # (9.1) Save posterior quantiles
+ # =============================================================================================
 
+ 
+ Mod <- "SR_IndivRicker_SurvCap"
+ OM<-"Ricker_priorCap"
+ 
+ # Mod <- "SR_IndivRicker_Surv"
+ # OM<-"Ricker"
+ 
+ muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+ muLSurv <- muLSurv$muLSurv
+ 
+ post<-read.csv(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/",OM,"/",Mod,"_mcmc.csv", sep=""))
+ adjProd<-exp(post$alpha + post$gamma * rep(muLSurv, length=nrow(post)))
+ post<- post %>% add_column(adjProd = adjProd)
+ 
+ CU_list<-unique(SRDat[, "CU_Name"])
+ CUID_list<-unique(SRDat[, "CU_ID"])
+ nCUs<-length(CU_list)
+ 
+ for (i in 1:5) {
+ 
+ tmp<-post %>% filter(stk==i)
+ Name<-unique(SRDat$CU_Name)[i]
+ tmp2<-tmp %>% gather("variable", "value") %>% 
+   group_by(variable) %>% 
+   summarize(Mean = mean(value), 
+             P05 = quantile(value, probs = .05),
+             P50 = quantile(value, probs = .5),
+             P75 = quantile(value, probs = .95)) %>% add_column(CU_Name = Name, .before="variable")
+  if (i == 1) postSummary<-as.data.frame(tmp2)
+  if ( i > 1) {
+    postSummary<-rbind(postSummary,tmp2)
+  }
+ }
+  
+  write.csv(postSummary,file=paste(projOutDir,"/postSummary_",Mod,".csv",sep=""))
+ 
+  
+ 
  
  
  
  # =============================================================================================
- # (9b) Look at posterior samples from MCMC model parameterization, with a focus on those with low Sgen
+ # (9.2) Look at posterior samples from MCMC model parameterization, with a focus on those with low Sgen
  # =============================================================================================
  
  Mod <- "SR_HierRicker_Surv_noLRP"

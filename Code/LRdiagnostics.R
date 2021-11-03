@@ -117,43 +117,44 @@ library(viridis)
 library(patchwork)
 library(TMB)
 library(here)
+library(stats)
 
-source(here::here("R", "helperFunctions.r"))
-source(here::here("R", "WCVILRPs.R")) # Needed for Step 10 (LOO), specific to 
+#source(here::here("R", "helperFunctions.r"))
+#source(here::here("R", "WCVILRPs.R")) # Needed for Step 10 (LOO), specific to 
 # WCVI Chinook
 
 #----------------------------------------------------------------------------
 # Input data
 
-caseStudy <- "SCChum"#"WCVIchinook"#"SCChum"# 
-
-if(caseStudy=="WCVIchinook") {
-  load(here::here("DataIn", "Input_LRdiagnostics.rda"))
-  
-  SMUlogisticData <- input$SMUlogisticData
-  nCU <- input$nCU
-  All_Ests <- input$All_Ests
-  p <- input$p
-  Bern_logistic <- input$Bern_logistic
-  dir <- "DataOut/"#input$dir
-  plotname <- "WCVICK_LRdiag"#input$plotname 
-}
-
-# ISC Chum
-if(caseStudy=="SCChum") {
-  load(here::here("DataIn", "Input_logisticFit_ISC2018v2.rda"))
-  
-  SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
-                                                      Years=yr)
-  nCU <- 4
-  All_Ests <- LRP_Mod$All_Ests
-  p <- 0.5#input$p
-  Bern_logistic <- TRUE#input$Bern_logistic
-  dir <- ""#input$dir
-  plotname <- "SCChumTest"#input$plotname 
-  assumed_added_scalar <- 100 # Need to check this with Luke. I scaled by 10^5 for ISChum, but I think he scaled by 10^3, hence by additional scalar here
-  
-}
+# caseStudy <- "SCChum"#"WCVIchinook"#"SCChum"# 
+# 
+# if(caseStudy=="WCVIchinook") {
+#   load(here::here("DataIn", "Input_LRdiagnostics.rda"))
+#   
+#   SMUlogisticData <- input$SMUlogisticData
+#   nCU <- input$nCU
+#   All_Ests <- input$All_Ests
+#   p <- input$p
+#   Bern_logistic <- input$Bern_logistic
+#   dir <- "DataOut/"#input$dir
+#   plotname <- "WCVICK_LRdiag"#input$plotname 
+# }
+# 
+# # ISC Chum
+# if(caseStudy=="SCChum") {
+#   load(here::here("DataIn", "Input_logisticFit_ISC2018v2.rda"))
+#   
+#   SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
+#                                                       Years=yr)
+#   nCU <- 4
+#   All_Ests <- LRP_Mod$All_Ests
+#   p <- 0.5#input$p
+#   Bern_logistic <- TRUE#input$Bern_logistic
+#   dir <- ""#input$dir
+#   plotname <- "SCChumTest"#input$plotname 
+#   assumed_added_scalar <- 100 # Need to check this with Luke. I scaled by 10^5 for ISChum, but I think he scaled by 10^3, hence by additional scalar here
+#   
+# }
 
 #-------------------------------------------------------------------------------
 # Returns:
@@ -166,7 +167,7 @@ if(caseStudy=="SCChum") {
 # Function:
 
 LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir, 
-                          plotname){
+                          plotname, caseStudy=NULL){
   
   #-----------------------------------------------------------------------------
   # Step 1. Box-Tidwell test to assess linearity between aggregate abundances
@@ -320,6 +321,9 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   #   (Assumption 2)
   #-----------------------------------------------------------------------------
   
+  # Extract AR-1 values
+  AR1.dev<-acf(DevResid)$acf[2]
+  AR1.pear<-acf(PearResid)$acf[2]
   
   # See ggplot.cor function in "helperFunctions.r"
   p3 <- ggplot.corr(data=PearResid, title="Pearsons's residuals") 
@@ -541,6 +545,8 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   out$p2 <- p2
   out$p3 <- p3
   out$p4 <- p4
+  out$AR1.dev<-AR1.dev
+  out$AR1.pear<-AR1.pear
   out$minSampleSize <- minSampleSize
   out$sampleSize <- sampleSize
   out$signTable <- signTable
@@ -717,3 +723,102 @@ LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE){
 
 #-------------------------------------------------------------------------------
 
+LOO_LRdiagnostics_cohoModel <- function(year, p, useBern_Logistic,
+                                        RunName,outputDir, TMB_Inputs) {
+  
+  # Step 1: Extract logistic regression data from .rda file
+  load(paste(outputDir,"/logisticFit_",year,".rda",sep=""))
+  print(LRP_Mod$Logistic_Data)
+  
+  # Save "observed" data from logistic model fit with all data
+  # how Carrie scaled aggregate abundance data:
+  AggAbundRaw<-LRP_Mod$Logistic_Data$xx
+  digits <- count.dig(AggAbundRaw)
+  ScaleSMU <- min(10^(digits -1 ), na.rm=T)
+  obsAggAbund <- AggAbundRaw/ScaleSMU
+  # an alternative that seems to give the same thing ...
+  #obsAggAbund<-LRP_Mod$Logistic_Data$xx/TMB_Inputs$Scale
+  
+  obsPpnAboveBM <- LRP_Mod$Logistic_Data$yy
+  
+  LRPmodel<-"LRP_Logistic_Only_Bernoulli"
+  
+  # Loop over nyears and leave-one-out of data set
+  predPpnAboveBM <- NA
+  
+  for (i in 1:nrow(LRP_Mod$Logistic_Data)) {
+    
+    # Step 2: Get observed time-series of aggregate raw abundances that includes all
+    # data and then scale to units near 1-10
+    
+    # ---- 2a) Set-up data and parameter inputs ---------------------
+    Logistic_Data<-LRP_Mod$Logistic_Data[-i,]
+    
+    # Test: Used following to confirm that logistic only model fit with all data gave the same LRP estimate
+    # as the original integrated model (K.Holt, March 2021).Estimates and S.Error match.
+    #Logistic_Data<-LRP_Mod$Logistic_Data
+    
+    Logistic_Data$yr_num <- group_by(as.data.frame(Logistic_Data), yr) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+    
+    
+    data<-list()
+    data$LM_Agg_Status<-Logistic_Data$yy
+    data$LM_Agg_Abund <- Logistic_Data$xx / TMB_Inputs$Scale
+    data$LM_yr <- Logistic_Data$yr_num
+    data$Pred_Abund <- seq(0, max(data$LM_Agg_Abund), length.out = 100)
+    data$p <- p
+    
+    param<-list()
+    param$B_0 <- 2
+    param$B_1 <- 0.1
+    
+    
+    #  ---- 2b) Run TMB code to fit logistic model ---------------------
+    obj <- MakeADFun(data, param, DLL=LRPmodel, silent=TRUE)
+    opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
+    
+    #  ---- 2c) Create table of outputs ----------------------
+    All_Ests <- data.frame(summary(sdreport(obj)))
+    All_Ests$Param <- row.names(All_Ests)  
+    
+    # Put together readable data frame of values
+    All_Ests$Param <- sapply(All_Ests$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
+    All_Ests[All_Ests$Param == "Agg_LRP", ] <-  All_Ests %>% filter(Param == "Agg_LRP") %>% 
+      mutate(Estimate = Estimate*TMB_Inputs$Scale) %>% mutate(Std..Error = Std..Error*TMB_Inputs$Scale)
+    Preds <- All_Ests %>% filter(Param == "Logit_Preds")
+    All_Ests <- All_Ests %>% filter(!(Param == "Logit_Preds")) 
+    
+    
+    # Step 3: Get predicted ppn of CUs above their lower benchmark for the year
+    # that was held out
+    B_0 <- All_Ests %>% filter(Param=="B_0") %>% pull(Estimate)
+    B_1 <- All_Ests %>% filter(Param=="B_1") %>% pull(Estimate)
+    # Step 3a: Calculate predicted ppn of CUs above lower benchmark for the year that was held out
+    predPpnAboveBM[i] <- inv_logit(B_0 + B_1*obsAggAbund[i])
+    
+    # Testing plots
+    #Preds.plot<-Preds %>% mutate(PredProp=inv_logit(Estimate))
+    #plot(data$Pred_Abund,Preds.plot$PredProp)
+    
+    
+  } # End of for i in 1:nyears
+  
+  # Step 4: Calculate Hit Ratio
+  # In which years did the model predict aggregate abundances >LRP?
+  yHat <- predPpnAboveBM > p
+  
+  # In which years were observed aggregate abundances >LRP?
+  y <- obsPpnAboveBM > p
+  #
+  # Confusion Matrix
+  confMat <- table(y, yHat)
+  
+  # What is the accuracy in classifying observed aggregate abundances?
+  # Hit ratio = ratio of correct classification
+  hitRatio <- sum(diag(confMat))/sum(confMat)
+  hitRatio <- round(hitRatio, digits=2)
+  
+  return(hitRatio)
+  
+
+}

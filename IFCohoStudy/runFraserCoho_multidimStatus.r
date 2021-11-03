@@ -44,11 +44,19 @@ CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
 # (2) Get multi-dimensional status
 # ====================================================================================
 
+BMsource<-"Ricker_priorCap"
+
 statusDat<- CoEscpDat %>% group_by(CU_Name) %>%
   mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right"))
 
-SR_pars<-read.csv(paste(cohoDir,"DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv.csv",sep="/"))
-
+if (BMsource == "Ricker" | BMsource == "WSP2015") {
+  SR_pars<-read.csv(paste(cohoDir,"DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv.csv",sep="/"))
+}
+  
+if (BMsource == "Ricker_priorCap") {
+  SR_pars<-read.csv(paste(cohoDir,"DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv_priorCap.csv",sep="/"))
+}
+  
 # Get Sgen estimates for IM model
 SR_pars<-as_tibble(SR_pars)
 Sgen <- SR_pars %>% filter(Param == "Sgen") %>% select(Estimate, CU_Name)
@@ -57,18 +65,21 @@ Smsy <- SR_pars %>% filter(Param == "Smsy") %>% select(Estimate, CU_Name)
 Smsy<- rename(Smsy, Smsy = Estimate)
 Smsy<- Smsy %>% add_column(Smsy0.8 = Smsy$Smsy*0.8) %>% select(CU_Name, Smsy0.8)
 
+
+if (BMsource == "WSP2015") {
 # # Test: Sub in Sgen estimates from WSP 2015
  Sgen$Sgen<-c(1585, 741, 1405, 2546, 2337)
  Smsy$Smsy0.8<-c(2785, 1562, 3052, 5285, 4462)
-
+}
+ 
 statusDat <- left_join(statusDat, Sgen, by="CU_Name")
 statusDat <- left_join(statusDat, Smsy, by="CU_Name")
 statusDat<-na.omit(statusDat)
 
 
-statusEst<-getMultiDimStatus(statusDat = statusDat, outDir=cohoDir)
+statusEst<-getMultiDimStatus(statusDat = statusDat, outDir=cohoDir, filename=paste("multiDimStatusEsts_",BMsource,".csv", sep=""))
 
 
-plot_CU_Escp_withMultiStatus(statusEst, outDir=cohoDir, plotName="coho-CU-EscpSeries-wMultiStatus-2015")
+plot_CU_Escp_withMultiStatus(statusEst, outDir=cohoDir, plotName=paste("coho-CU-EscpSeries-wMultiStatus",BMsource, sep="_"))
 
 

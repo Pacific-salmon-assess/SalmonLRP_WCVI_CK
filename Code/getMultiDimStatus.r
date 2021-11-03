@@ -9,7 +9,7 @@ library(zoo)
 
 
 
-getMultiDimStatus<-function(statusDat,outDir) {
+getMultiDimStatus<-function(statusDat,outDir, filename) {
  
   rapidStatus<-NA
   
@@ -30,7 +30,7 @@ getMultiDimStatus<-function(statusDat,outDir) {
   
   statusOut<-statusDat %>% add_column(rapidStatus=rapidStatus)
   
-  write.csv(statusOut, paste(outDir, "DataOut/multiDimStatusEsts.csv", sep="/"), row.names=F)
+  write.csv(statusOut, paste(outDir, "/DataOut/", filename, sep=""), row.names=F)
   
   return(statusOut)
   
