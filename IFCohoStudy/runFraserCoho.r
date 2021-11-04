@@ -129,6 +129,8 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 # plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
 # plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
 
+#CW: Some of these do not run because it cannot find the file DataOut/ModelFits/AllEsts_Indiv_Ricker_Surv.csv
+
  plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries", samePlot = F, withSgen=TRUE, addGenMean=T,
                         SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
 
@@ -251,6 +253,15 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
                     BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+
+     ## CW: Run using multidimensional rapid assessments results  (in progress)  
+     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
+                    SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+                    BMmodel = "RapidAssessment_Ricker",#working on this option
+                     LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                    useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     
      
   }
 
