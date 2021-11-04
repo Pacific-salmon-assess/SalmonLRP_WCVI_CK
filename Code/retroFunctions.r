@@ -9,12 +9,50 @@
 # ==================================================================
 
 
+
+
+
+
+
+
+
+
+#' runAnnualRetro
+#'
+#' Runs retrospective analysis using specified model type. Calls Run_LRP or Run_Ricker_LRP functions 
+#' from LRPFunctions.r (latter if integratedModel=T) 
+#' 
+#' @param EscpDat data frame, ecapement data with the following columns: MU, CU_Name, CU, yr, Escp
+#' @param SRDat data frame, SR dat with the following columns: CU_Name, CU_ID, BroodYear, Spawners, 
+#' Recruits, Age_3_Recruits, Age_4_Recruits, STAS_Age_3, STAS_Age_4, ER_Age_3, ER_Age_4
+#' @param startYr numerical, year to start the retrospective analysis (year that the shortest time 
+#' series ends)
+#' @param endYr numerical, year to end the retrospective analysis (most complete time series)
+#' @param BroodYrLag the number of years to subtract from the current year to get to the most recent
+#'  brood year
+#' @param genYrs length of a generation
+#' @param p default is 0.95 
+#' @param BMmodel Type of model being run options are: if integratedModel = F, ThreshAbund_Subpop1000_ST, 
+#' ThreshAbund_Subpop1000_LT, Percentile and if integratedModel = F other values passed to Run_Ricker_LRP 
+#' @param LRPmodel BernLogistic or BinLogistic (deprecated)
+#' @param LRPfile default NULL
+#' @param integratedModel Logical, default FALSE, indicates if Ricker curve and logistic regression sre estimated in the same model 
+#' @param useGenMean Logical, default TRUE, indicates if generational mean should e used 
+#' @param TMB_Inputs List of parameter starting values and prior definitions to be passed to tmb model
+#' @param outDir Case study results directory
+#' @param RunName Name to identify run results and plote
+#' @param bootstrapMode Logical, default False
+#' @param plotLRP Logical default T
+#' @param runLogisticDiag Logical default False
+#' 
+#' @export
+#' 
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
                          BMmodel, LRPmodel=NULL, LRPfile=NULL, integratedModel=F, useGenMean=T, 
                          TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T,
                          runLogisticDiag=F) {
   
-  yearList<-startYr:endYr
+  yearList <- startYr:endYr
   
   # Put together Run info
   RunInfo <- data.frame(BMmodel, LRPmodel, useGenMean, integratedModel)
@@ -116,7 +154,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           # ---- if wanting to run with geometric means calculated at subpopulation level, will need to add AggEscp_gmBySP arguement to LRP_Mod function
             #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
             #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
-          }
+        }
        
         # Case 3: BM model is percentile-based benchmark model (e.g., for Inside South Coast Chum)
         #"if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior )) {
@@ -148,7 +186,22 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                            useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
         }
-       
+
+
+       # Case 4: BM Model == Multi dimensional rapid tool assesment
+        
+        if (BMmodel == "RapidAssessment_Ricker" | BMmodel == "RapidAssessment_Ricker_Cap") { 
+        
+         #Calculate or read in data from rapid assessment tool
+
+         #run LRP logistic regression with otput from rapid assessment tool
+          # Call specified LRP function:
+          LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
+                         useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
+          #
+
+        }#end rapid assessment option
+
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================
     
     } else if(integratedModel == T){
