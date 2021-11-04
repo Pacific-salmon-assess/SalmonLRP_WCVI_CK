@@ -400,6 +400,7 @@ modelFitList<-c("Bern.IndivRickerSurv",
                 "Bern.IndivRickerSurvCap",
                 "Bern.SPopAbundThreshST")
 
+# Label names
 L_Names<-c("Sgen:LRP", "Sgen_priorCap:LRP", "Dist:LRP")  
 
 #pList<-c(50, 66, 90, 99)
