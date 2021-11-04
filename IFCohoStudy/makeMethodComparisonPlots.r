@@ -87,10 +87,6 @@ WSP_AboveLRP<-TRUE
 LRP_estYr<-2020
 retroYears<-2000:LRP_estYr
 
-# plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
-#                           modelFitList=modelFitList, projLRPList=projLRPList, multiDimList=multiDimList, ps_Prop=ps_Prop,
-#                           outDir = cohoDir, fName = paste("statusPlot_withBars",LRP_estYr,sep=""))
-
 plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
                   modelFitList=modelFitList, projLRPList=projLRPList, multiDimList=multiDimList, ps_Prop=ps_Prop,
                   WSP_estYr=WSP_estYr, WSP_AboveLRP=WSP_AboveLRP,
