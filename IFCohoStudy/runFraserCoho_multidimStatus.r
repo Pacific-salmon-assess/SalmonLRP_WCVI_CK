@@ -44,7 +44,9 @@ CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
 # (2) Get multi-dimensional status
 # ====================================================================================
 
-BMsource<-"Ricker_priorCap"
+
+
+BMsource<-"Ricker"
 
 statusDat<- CoEscpDat %>% group_by(CU_Name) %>%
   mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right"))
@@ -81,5 +83,3 @@ statusEst<-getMultiDimStatus(statusDat = statusDat, outDir=cohoDir, filename=pas
 
 
 plot_CU_Escp_withMultiStatus(statusEst, outDir=cohoDir, plotName=paste("coho-CU-EscpSeries-wMultiStatus",BMsource, sep="_"))
-
-

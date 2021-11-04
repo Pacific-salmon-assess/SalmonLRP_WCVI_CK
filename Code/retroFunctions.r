@@ -189,14 +189,32 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
 
 
        # Case 4: BM Model == Multi dimensional rapid tool assesment
+        #multi dimensional status starts in 2000 but the data starts in 1998.
         
         if (BMmodel == "RapidAssessment_Ricker" | BMmodel == "RapidAssessment_Ricker_Cap") { 
         
          #Calculate or read in data from rapid assessment tool
+          if(BMmodel == "RapidAssessment_Ricker" ){
+            rapid_status<-read.csv(paste(outDir,"/DataOut/multiDimStatusEsts_Ricker.csv", sep=""))
+          }
+          if(BMmodel == "RapidAssessment_Ricker_Cap"){
+            rapid_status<-read.csv(paste(outDir,"/DataOut/multiDimStatusEsts_Ricker_priorCap.csv"))
+          }
+          #filter years to allow for retrospective analysis
+          rapid_status <- rapid_status %>% 
+                  filter(yr <= yearList[yy]) %>% 
+                  mutate(AboveBenchmark = ifelse(rapidStatus=="Red",0,1))
+          
+          RMA_status_byCU <- rapid_status %>% 
+                              select(CU_Name, CU, yr, Escp, AboveBenchmark)%>%
+                              rename(CU_ID=CU)
+         
+
+          #LBM_status_byCU <-  CU_Name       CU_ID    yr  Escp     N N_grThresh
 
          #run LRP logistic regression with otput from rapid assessment tool
           # Call specified LRP function:
-          LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
+          LRP_Mod<-Run_LRP(Dat=RMA_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                          useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
           #
 
