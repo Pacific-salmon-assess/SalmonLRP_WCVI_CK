@@ -198,7 +198,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
             rapid_status<-read.csv(paste(outDir,"/DataOut/multiDimStatusEsts_Ricker.csv", sep=""))
           }
           if(BMmodel == "RapidAssessment_Ricker_Cap"){
-            rapid_status<-read.csv(paste(outDir,"/DataOut/multiDimStatusEsts_Ricker_priorCap.csv"))
+            rapid_status<-read.csv(paste(outDir,"/DataOut/multiDimStatusEsts_Ricker_priorCap.csv", sep=""))
           }
           #filter years to allow for retrospective analysis
           rapid_status <- rapid_status %>% 
