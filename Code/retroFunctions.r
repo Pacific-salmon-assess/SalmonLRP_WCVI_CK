@@ -9,12 +9,50 @@
 # ==================================================================
 
 
+
+
+
+
+
+
+
+
+#' runAnnualRetro
+#'
+#' Runs retrospective analysis using specified model type. Calls Run_LRP or Run_Ricker_LRP functions 
+#' from LRPFunctions.r (latter if integratedModel=T) 
+#' 
+#' @param EscpDat data frame, ecapement data with the following columns: MU, CU_Name, CU, yr, Escp
+#' @param SRDat data frame, SR dat with the following columns: CU_Name, CU_ID, BroodYear, Spawners, 
+#' Recruits, Age_3_Recruits, Age_4_Recruits, STAS_Age_3, STAS_Age_4, ER_Age_3, ER_Age_4
+#' @param startYr numerical, year to start the retrospective analysis (year that the shortest time 
+#' series ends)
+#' @param endYr numerical, year to end the retrospective analysis (most complete time series)
+#' @param BroodYrLag the number of years to subtract from the current year to get to the most recent
+#'  brood year
+#' @param genYrs length of a generation
+#' @param p default is 0.95 
+#' @param BMmodel Type of model being run options are: if integratedModel = F, ThreshAbund_Subpop1000_ST, 
+#' ThreshAbund_Subpop1000_LT, Percentile and if integratedModel = F other values passed to Run_Ricker_LRP 
+#' @param LRPmodel BernLogistic or BinLogistic (deprecated)
+#' @param LRPfile default NULL
+#' @param integratedModel Logical, default FALSE, indicates if Ricker curve and logistic regression sre estimated in the same model 
+#' @param useGenMean Logical, default TRUE, indicates if generational mean should e used 
+#' @param TMB_Inputs List of parameter starting values and prior definitions to be passed to tmb model
+#' @param outDir Case study results directory
+#' @param RunName Name to identify run results and plote
+#' @param bootstrapMode Logical, default False
+#' @param plotLRP Logical default T
+#' @param runLogisticDiag Logical default False
+#' 
+#' @export
+#' 
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
                          BMmodel, LRPmodel=NULL, LRPfile=NULL, integratedModel=F, useGenMean=T, 
                          TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T,
                          runLogisticDiag=F) {
   
-  yearList<-startYr:endYr
+  yearList <- startYr:endYr
   
   # Put together Run info
   RunInfo <- data.frame(BMmodel, LRPmodel, useGenMean, integratedModel)
@@ -116,7 +154,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           # ---- if wanting to run with geometric means calculated at subpopulation level, will need to add AggEscp_gmBySP arguement to LRP_Mod function
             #LRP_Mod<-Run_LRP(EscDat=LBM_status_byCU,Mod = BMmodel, useBern_Logistic = useBern_Logistic, 
             #                 useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs, dum2=dum2)
-          }
+        }
        
         # Case 3: BM model is percentile-based benchmark model (e.g., for Inside South Coast Chum)
         #"if (BMmodel %in% c( "LRP_Logistic_Only", "LRP_Logistic_Only_LowAggPrior )) {
@@ -148,7 +186,40 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
           LRP_Mod<-Run_LRP(Dat=LBM_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
                            useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
         }
-       
+
+
+       # Case 4: BM Model == Multi dimensional rapid tool assesment
+        #multi dimensional status starts in 2000 but the data starts in 1998.
+        
+        if (BMmodel == "RapidAssessment_Ricker" | BMmodel == "RapidAssessment_Ricker_Cap") { 
+        
+         #Calculate or read in data from rapid assessment tool
+          if(BMmodel == "RapidAssessment_Ricker" ){
+            rapid_status<-read.csv(paste(outDir,"/DataOut/multiDimStatusEsts_Ricker.csv", sep=""))
+          }
+          if(BMmodel == "RapidAssessment_Ricker_Cap"){
+            rapid_status<-read.csv(paste(outDir,"/DataOut/multiDimStatusEsts_Ricker_priorCap.csv"))
+          }
+          #filter years to allow for retrospective analysis
+          rapid_status <- rapid_status %>% 
+                  filter(yr <= yearList[yy]) %>% 
+                  mutate(AboveBenchmark = ifelse(rapidStatus=="Red",0,1))
+          
+          RMA_status_byCU <- rapid_status %>% 
+                              select(CU_Name, CU, yr, Escp, AboveBenchmark)%>%
+                              rename(CU_ID=CU)
+         
+
+          #LBM_status_byCU <-  CU_Name       CU_ID    yr  Escp     N N_grThresh
+
+         #run LRP logistic regression with otput from rapid assessment tool
+          # Call specified LRP function:
+          LRP_Mod<-Run_LRP(Dat=RMA_status_byCU, Mod = LRPfile, useBern_Logistic = useBern_Logistic, 
+                         useGenMean = useGenMean, genYrs = genYrs, p = p,  TMB_Inputs)
+          #
+
+        }#end rapid assessment option
+
     # Integrated model (i.e., benchmark and LRP are estimated simultaneously in TMB) ===================================
     
     } else if(integratedModel == T){
@@ -207,6 +278,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
         out.perc.df <- rbind(out.perc.df, new.perc.df) # as looping through retro years, add rows with percentile benchmarks for each CU (with escapement too)
       }
     }
+    
     
     if (plotLRP == T) {
       plotLogistic(Data = LRP_Mod$Logistic_Data, Preds = LRP_Mod$Preds, 
@@ -318,37 +390,7 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
         TMB_Inputs.ii$cap_mean<-TMB_Inputs$cap_mean[which(CUs.ii %in% as.character(unique(EscpDat$CU_Name)))]
       }
       
-      
-      # Specify low agg prior penalty parameters that are specific to the sampled CUs
-      
-      # For Ricker models:
-      if(BMmodel %in% c("SR_IndivRicker_Surv_LowAggPrior",
-                    "SR_HierRicker_Surv_LowAggPrior","SR_IndivRicker_SurvCap_LowAggPrior",
-                    "SR_HierRicker_SurvCap_LowAggPrior" )) {
-        
-        
-        
-        # First, fit model without low agg prior:
-        BMmodel_noPrior<-strsplit(BMmodel,"_LowAggPrior")[[1]]
-        out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=endYr, endYr=endYr, BroodYrLag=BroodYrLag, 
-                             genYrs=genYrs, p = p, BMmodel = BMmodel_noPrior, LRPmodel=LRPmodel, LRPfile=LRPfile, integratedModel=integratedModel,
-                             useGenMean=useGenMean, TMB_Inputs=TMB_Inputs.ii, outDir=cohoDir, RunName = NA, 
-                             bootstrapMode = T, plotLRP=F,runLogisticDiag=F)
-        # Extract Sgen
-        Sgen_up<-out$SRparsByCU$up_Sgen
-        Sgen_est<-out$SRparsByCU$est_Sgen
-        # Calculate penalty for sub-pop using Sgen ests
-        B_penalty_lwr<-min(out$SRparsByCU$est_Sgen) # set at abundance below which no one CU could be above Sgen
-        B_penalty_upr<-sum(out$SRparsByCU$est_Sgen) 
-        # (i.e., MFr = 1 subpop>1000, FCany=1 subpop>1000, LThomp=1 subpop>1000, NThomp=2 subpop>3000, SThomp = 2 subpop> 1000)
-        B_penalty_mu<-mean(c(B_penalty_lwr,B_penalty_upr))
-        dum<-optim(par=200, fn = getSD, method="Brent",lower=1, upper=5000, low_lim=subPop_B_penalty_lwr, hi_lim=subPop_B_penalty_upr)
-        B_penalty_sigma<-dum$par
-        # Add penalty parts to TMB_Inputs for this combination of CUs
-        TMB_Inputs.ii$B_penalty_mu<-B_penalty_mu
-        TMB_Inputs.ii$B_penalty_sigma<-B_penalty_sigma
-      }
-      
+     
       # For Subpopulation threshold models:
       if(BMmodel %in% c("ThreshAbund_Subpop1000_ST")) {
         
@@ -366,11 +408,12 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
     }
       
 # Run annual retrospective analyses for sampled CUs:
-        out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=startYr, endYr=endYr, BroodYrLag=BroodYrLag, 
-                            genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, LRPfile=LRPfile, integratedModel=integratedModel,
-                            useGenMean=useGenMean, TMB_Inputs=TMB_Inputs.ii, outDir=cohoDir, RunName = NA, 
-                            bootstrapMode = T, plotLRP=F,runLogisticDiag=runLogisticDiag)
-          
+ 
+      out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=startYr, endYr=endYr, BroodYrLag=BroodYrLag,
+                           genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, LRPfile=LRPfile, integratedModel=integratedModel,
+                           useGenMean=useGenMean, TMB_Inputs=TMB_Inputs.ii, outDir=cohoDir, RunName = NA,
+                           bootstrapMode = T, plotLRP=F, runLogisticDiag=runLogisticDiag)
+
           # Add output to table
           # - if first retrospective run, create dataframe to store outputs
           if (ii == 1) {
@@ -391,7 +434,7 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
             new.df<-data.frame(iCombn, nCUs, new.df, status, se, cv)
             output.df<-rbind(output.df, new.df)
           }
-        
+
       
     } # End of nReps loop 
     

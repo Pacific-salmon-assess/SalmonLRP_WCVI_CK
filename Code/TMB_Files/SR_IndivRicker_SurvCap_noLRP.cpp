@@ -149,7 +149,7 @@ Type objective_function<Type>::operator() ()
   vector<Type> Rec_Preds(N_SpwnPreds);
   
   for(int i=0; i<N_SpwnPreds; i++){  // predict recruitment based on Ricker equation with stock-specific parameters
-    LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv(stk_predS(i)) + log(Pred_Spwn(i)) - B(stk_predS(i))  * Pred_Spwn(i);
+    LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv(stk_predS(i)) + log(Pred_Spwn(i)) - B(stk_predS(i))  * Pred_Spwn(i) - pow(sigma(stk_predS(i)),2)/2;
   }
   Rec_Preds = exp(LogRec_Preds);
   

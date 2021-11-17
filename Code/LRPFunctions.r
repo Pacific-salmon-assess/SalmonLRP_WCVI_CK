@@ -330,8 +330,8 @@ Run_LRP <- function(Dat, Mod, useBern_Logistic,
   Mod_Yrs <- Num_CUs_Over_Time$yr[Num_CUs_Over_Time$n == max(Num_CUs_Over_Time$n)]
   
   # -- and only include years with geometric mean of aggregate abundance
-  Gen_Mean_Yrs<-Agg_Abund$yr[!is.na(Agg_Abund$Gen_Mean)]
-  Mod_Yrs<-Mod_Yrs[Mod_Yrs %in% Gen_Mean_Yrs]
+  Gen_Mean_Yrs <- Agg_Abund$yr[!is.na(Agg_Abund$Gen_Mean)]
+  Mod_Yrs <- Mod_Yrs[Mod_Yrs %in% Gen_Mean_Yrs]
   Logistic_Dat <- Dat %>% filter(yr %in% Mod_Yrs)
   Agg_Abund <- Agg_Abund %>% filter(yr %in% Mod_Yrs)
 
@@ -352,9 +352,10 @@ Run_LRP <- function(Dat, Mod, useBern_Logistic,
 #  }
   
   if(useGenMean==TRUE) {
-  data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale } else {
-  # switch to this if not wanting to fit to geometric mean of aggregate escapement
-  data$LM_Agg_Abund <- Agg_Abund$Agg_Esc / Scale }
+    data$LM_Agg_Abund <- Agg_Abund$Gen_Mean / Scale } else {
+     # switch to this if not wanting to fit to geometric mean of aggregate escapement
+    data$LM_Agg_Abund <- Agg_Abund$Agg_Esc / Scale 
+  }
   # switch to this if wanting to match Arbeider et al. approach of calculating geomean at sub-population level before aggregating (not; will need to add dum as a model input first)
   #dum2 <- dum2 %>% filter(yr %in% Mod_Yrs)
   #data$LM_Agg_Abund <- dum2$AggEscp.gm / Scale

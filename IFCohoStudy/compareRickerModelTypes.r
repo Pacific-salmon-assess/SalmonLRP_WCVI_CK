@@ -74,12 +74,12 @@ CoEscpDat$yr_num <- group_indices(CoEscpDat, yr) - 1
 CoEscpDat<- CoEscpDat %>% right_join(unique(CoSRDat[,c("CU_ID", "CU_Name")]))
 
 
-SRDat<-CoSRDat
+SRDat <- CoSRDat
 EscDat <- CoEscpDat
 Bern_Logistic <- T
 useGenMean <- F
 genYrs <- 3
-p<-0.5
+p <- 0.5
 
 Scale<-1000
 

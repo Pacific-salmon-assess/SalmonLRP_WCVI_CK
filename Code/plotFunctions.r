@@ -326,39 +326,37 @@ plot_Subpop_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withThre
 }
 
 
-# Plot available CU estimates over time, by MU
-plot_CU_EscpRatio_Over_Time <-function(Dat, Dir, plotName,baseYr) {
+plot_CU_Escp_withMultiStatus<-function(statusEsts,outDir,plotName) {
   
-  theme_update(plot.title = element_text(hjust = 0.5))
+  # Rename to make prettier for plotting
+  statusEsts$CU_Name[statusEsts$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
+  statusEsts$CU_Name[statusEsts$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
+  statusEsts$CU_Name[statusEsts$CU_Name == "North_Thompson"] <- "N. Thompson"
+  statusEsts$CU_Name[statusEsts$CU_Name == "South_Thompson"] <- "S. Thompson"
+  statusEsts$CU_Name[statusEsts$CU_Name == "Lower_Thompson"] <- "L. Thompson"
   
-  pdf(paste(Dir,"/Figures/",plotName,".pdf",sep=""))
+ # LRPStatus <- statusEsts %>% summarise(LRPStatus=ifelse(rapidStatus=="Red", "Below", "Above"))
+#  status<-as.data.frame(LRPStatus)$LRPStatus
   
-  MUs <- unique(Dat$MU)
+  status<-ifelse(statusEsts$rapidStatus == "Red", "Below", "Above")
   
-  p <- list()
+  statusEsts<-statusEsts %>% add_column(LRPStatus=status)
   
-  for(mm in 1:length(MUs)){
-    Dat.MU <- Dat %>% filter(MU == MUs[mm])
-    
-    escpDat <- Dat.MU %>% filter(MU == MUs[mm]) %>% group_by(CU, yr) %>% summarise(value=sum(Escp))
-    
-    tmpDat<-escpDat %>% group_by(CU) %>% summarise(valueBaseYr= value[yr==baseYr])
-    
-    tmpDat<-left_join(escpDat,tmpDat)
-    
-    ratioDat <- tmpDat  %>% group_by(CU, yr) %>% summarise(ratio = value/valueBaseYr)
-    
-    p[[mm]]<-ggplot(data=ratioDat,aes(x=yr,y=ratio)) + 
-      geom_line(aes(colour=CU),size=1.1 ) + 
-      labs(title=MUs[mm], x = "Year", y = "Escapement Ratio") + 
-      theme(plot.title = element_text(size=14, face="bold",hjust=0.5)) + 
-      theme_classic()
-  }
+  g<-ggplot(statusEsts) +
+    geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
+    geom_point(aes(y=Gen_Mean, x=yr, colour=LRPStatus)) +
+    geom_hline(aes(yintercept=Sgen), colour="orange") +
+    ylab("Escapement") + xlab("Year") +
+    scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
+    facet_wrap(~interaction(CU_Name), scales = "free_y") +
+    theme_classic()
   
-  do.call(grid.arrange,p)
+
+  # Save plot
+  ggsave(paste(outDir,"/Figures/",plotName,".png",sep=""), plot = g,
+         width = 10, height = 5, units = "in") 
   
-  
-  dev.off()
+
   
 }
 
@@ -607,8 +605,9 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
 
 
 plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, 
-                                    projLRPList = NULL, ps_Prop,
+                                    multiDimList, projLRPList = NULL, mutliDimList, ps_Prop,
                                     WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName) {
+
   
   Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
   
@@ -621,23 +620,16 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     
     retroResults <- read.csv(paste(Dir,"/DataOut/AnnualRetrospective/", modelFitList[mm], "/annualRetro_LRPs.csv", sep=""))
     
-    # Set-up name for labelling plot ====================
-    # if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggAb_Hist: Sgen_IM_"
-    # if (retroResults$BMmodel[1] == "SR_HierRicker_Surv") name1<-"AggAb_Hist: Sgen_HM_"
-    # if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggAb_Hist: Sgen_IM.HiSrep_"
-    # if (retroResults$BMmodel[1] == "SR_HierRicker_SurvCap") name1<-"AggAb_Hist: Sgen_HM.HiSrep_"
-    # if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"AggAb_Hist: Dist_"
-    # 
     
     # Labels if only using IM models:
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"AggAb_Hist: Sgen"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"AggAb_Hist: Sgen.HiSrep"
-    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"AggAb_Hist: Dist"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Abund: Logistic:Sgen-Ricker"
+    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Abund: Logistic:Sgen-priorCap"
+    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Abund: Logistic:IFCRT"
     
     # If including probability in label:
     # name3<-strsplit(modelFitList[mm], "_")[[1]][2]
     # retroResults$Name <- paste(name1,name3,sep="_")
-      
+
     # If no probability in label:
     retroResults$Name<-name1
     
@@ -659,13 +651,14 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
         Curr_Esc <- AggEscp %>% filter(yr == retroYears[yy]) %>% pull(Gen_Mean)
         Status <-  Curr_Esc > LRPs$LRP
       }
-      New_Row <- data.frame(LRP_estYr = LRP_estYr, retroYear = retroYears[yy], Name = retroResults$Name, AboveLRP=Status)
+      New_Row <- data.frame(LRP_estYr = LRP_estYr, retroYear = retroYears[yy], Name = retroResults$Name[1], AboveLRP=Status)
       Status_DF <- rbind(Status_DF, New_Row)
+      
     } # end of year (yy) loop
+    
     
   } # end of model (mm) loop
 
-  
   
   # Step 2: Add projected LRPs (Optional)
   if (!is.null(projLRPList)) {
@@ -674,9 +667,16 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     
     for (j in 1:length(projLRPList)) {
       
-      OM.j<-strsplit(projLRPList[j],"_")[[1]][1]
-      probThresh.j<-as.numeric(strsplit(projLRPList[j],"_")[[1]][2])/100
+      tmp<-strsplit(projLRPList[j],"_")
       
+      if (tmp[[1]][2] == "priorCap") {
+        OM.j<-paste(tmp[[1]][1],tmp[[1]][2], sep="_")
+        probThresh.j<-as.numeric(tmp[[1]][3])/100
+      } else {
+        OM.j<-tmp[[1]][1]
+        probThresh.j<-as.numeric(tmp[[1]][2])/100
+      }
+     
       dum<-projResults %>% filter(OM==OM.j,ProbThresh==probThresh.j)
       LRP<-dum$LRP
       
@@ -687,8 +687,8 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       
       
       # Labels if only using IM models:
-      if (OM.j == "IM.Base") name1<-"AggAb_Proj: Sgen"
-      if (OM.j == "IMCap.Base") name1<-"AggAb_Proj: Sgen.HiSrep"
+      if (OM.j == "Ricker") name1<-"Abund: Proj:Sgen-Ricker"
+      if (OM.j == "Ricker_priorCap") name1<-"Abund: Proj:Sgen-priorCap"
       
       # If includuding probability in label:
       # name2<-probThresh.j * 100
@@ -697,50 +697,46 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       # if not including probability:
       Name <- name1
       
-      
-     
-      
       # Loop over years and summarize status as above (True) or below (False) the LRP for each year
       for (yy in 1:length(retroYears)) { 
+    
         Curr_Esc <- AggEscp %>% filter(yr == retroYears[yy]) %>% pull(Gen_Mean)
         Status <-  Curr_Esc > LRP
         New_Row <- data.frame(LRP_estYr = LRP_estYr, retroYear = retroYears[yy], Name = Name, AboveLRP=Status)
         Status_DF <- rbind(Status_DF, New_Row)
-        
+               
       } # end of year (yy) loop
       
     } # end of projection model loop
     
-    
   } # end of !is.null(projLRPList)
   
+
+  # Step 3: Assess status for proportion-based LRP using Sgen (optional)
   
-  
-  
-  
-  # Step 3: Assess status for data-based LRP options based on the observed proportion of CUs above LRP
-  
-  # # --- for each year, extract Sgens and calc proportion above Sgen
- 
+   # --- for each year, extract Sgens and calc proportion above Sgen
+
   # Make a list of only modelFits that are based on SR model fits to get Sgen:
   # -- For coho, I can do this by excluding the distributional models based on absolute abundance thresholds
+  
   SRmodelList<-modelFitList[-grep("SPopAbundThresh",modelFitList)]
   
   for (mm in 1:length(SRmodelList)) {
-  
+
     SRmodName<-strsplit(SRmodelList[mm],"_")[[1]][1]
-    # if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen_IM"
-    # if(SRmodName =="Bern.HierRickerSurv") propName<-"Prop: Sgen_HM"
-    # if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen_IM.HiSrep"
-    # if(SRmodName =="Bern.HierRickerSurvCap") propName<-"Prop: Sgen_HM.HiSrep"
     
-    
-    # Labels if only using IM models:
-    if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen"
-    if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen.HiSrep"
-    
-    CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",SRmodelList[mm],"/annualRetro_SRparsByCU.csv",sep=""))
-    CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
+
+     if(SRmodName =="Bern.IndivRickerSurv") {
+       propName<-"Prop: Sgen-Ricker"
+       fitName<-"AllEsts_Indiv_Ricker_Surv"
+     }
+     if(SRmodName =="Bern.IndivRickerSurvCap") {
+       propName<-"Prop: Sgen-priorCap"
+       fitName<-"AllEsts_Indiv_Ricker_Surv_priorCap"
+     }
+     
+    CU_Params <- read.csv(paste(Dir, "/DataOut/ModelFits/",fitName,".csv",sep=""))
+    CU_Params <- CU_Params %>% filter(Param == "Sgen")
 
     # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
     EscpDat.mm <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
@@ -748,14 +744,14 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
 
     # -- join together Escp data with Sgens
     CU_Status <- left_join(EscpDat.mm[ , c("CU_Name", "yr", "Escp", "Gen_Mean")],
-                         CU_Params[, c( "CU_Name", "est_Sgen", "low_Sgen", "up_Sgen", "retroYr")],
+                         CU_Params[, c( "CU_Name", "Estimate")],
                          by = c("CU_Name" = "CU_Name"))
-    colnames(CU_Status)[colnames(CU_Status)=="retroYr"] <- "LRP_estYr"
+    colnames(CU_Status)[colnames(CU_Status)=="Estimate"] <- "Sgen"
 
     # --- for each year, get proportion of stocks above Sgen
     NCUs <- length(unique(CU_Status$CU_Name))
     CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
-    summarise(Prop = sum(Escp > est_Sgen)/NCUs)
+    summarise(Prop = sum(Gen_Mean > Sgen)/NCUs)
 
     # --- for each year, add to Status_DF using p thresholds, Ps
     #    --- note: should make these an input variable in the future
@@ -769,14 +765,49 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       Status_DF <- rbind(Status_DF, New_Rows)
     }
   }
+
+
+  # Step 4: Add mutlidimensional results (optional)
+ 
+  for (j in 1:length(multiDimList)) {
+    
+    tmp<-strsplit(multiDimList[j],"_")
+    
+    if (tmp[[1]][2] == "priorCap") {
+      OM.j<-paste(tmp[[1]][1],tmp[[1]][2], sep="_")
+      probThresh.j<-as.numeric(tmp[[1]][3])/100
+    } else {
+      OM.j<-tmp[[1]][1]
+      probThresh.j<-as.numeric(tmp[[1]][2])/100
+    }
+    
   
-  # Step 4: Add row to Status_DF for 2014 status assessment (Optional)
+    if (OM.j == "Ricker") name1<-"Prop: Multidim-Ricker"
+    if (OM.j == "Ricker_priorCap") name1<-"Prop: Multidim-priorCap"
+      
+    multiDimResults<-as_tibble(read.csv(paste(Dir,"/DataOut/multiDimStatusEsts_",OM.j,".csv", sep="")))
+    
+    # Loop over years and summarize status as above (True) or below (False) the LRP for each year
+    for (yy in 1:length(retroYears)) { 
+      
+      multiDimDat<-multiDimResults %>% filter(yr == retroYears[yy])
+      
+      nRed<-nrow(multiDimDat[multiDimDat$rapidStatus=="Red",])
+      Status<-ifelse(nRed>0,FALSE,TRUE)
+      New_Row <- data.frame(LRP_estYr = LRP_estYr, retroYear = retroYears[yy], Name = name1, AboveLRP=Status)
+      Status_DF <- rbind(Status_DF, New_Row)
+      
+    } # end of year (yy) loop
+    
+    
+  } # end of multidimMethods
+  
+  # Step 5: Add row to Status_DF for 2014 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
-    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop.WSP_100", AboveLRP = WSP_AboveLRP)
+    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop: WSP-2014", AboveLRP = WSP_AboveLRP)
     Status_DF <- rbind(Status_DF, New_Row)
     Status_DF <- arrange(Status_DF, Name)
   }
-  
 
   
   # Make Plot =============================================================
@@ -784,11 +815,10 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   methods <- unique(Status_DF$Name)
   
   # Hack to re-order methods for plotting ===============
-  methods<-c("AggAb_Hist: Sgen", "AggAb_Proj: Sgen", "Prop: Sgen",
-             "AggAb_Hist: Sgen.HiSrep", "AggAb_Proj: Sgen.HiSrep", "Prop: Sgen.HiSrep",
-             "AggAb_Hist: Dist")
-  
-  
+  methods<-c("Prop: WSP-2014", "","Prop: Multidim-Ricker", "Prop: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
+             "Prop: Multidim-priorCap", "Prop: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
+             "Abund: Logistic:IFCRT") 
+             
   # --- set-up pdf to save to
   #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
   png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=700, height=580)
@@ -813,8 +843,9 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   high <- max(AggEscp$StdGen_Mean, na.rm=T)
   
   # --- create empty plotting region
-  plot(1, type="n", xlab="", ylab="", xlim=c(Xlow, Xhigh), ylim=c(low-(high-low)/8*length(methods), high), axes=F,
-       main = paste("LRP Estimation Year = ",LRP_estYr, sep=""))
+  # plot(1, type="n", xlab="", ylab="", xlim=c(Xlow, Xhigh), ylim=c(low-(high-low)/8*length(methods), high), axes=F,
+  #      main = paste("LRP Estimation Year = ",LRP_estYr, sep=""))
+  plot(1, type="n", xlab="", ylab="", xlim=c(Xlow, Xhigh), ylim=c(low-(high-low)/8*length(methods), high), axes=F)
   
   # --- add generational mean escapement
   lines(x=AggEscp$yr, y=AggEscp$StdGen_Mean, lwd=1.5)
@@ -835,7 +866,7 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       }
       #label the method
       text(x=(Xlow-((Xhigh-Xlow)/2)), y=y, labels=methods[mm], 
-           xpd=NA, pos=4, cex=0.8)
+           xpd=NA, pos=4, cex=1)
     }
   }
   
@@ -858,8 +889,8 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
  
   # add x-axis label
   axis(1)
-  mtext(side = 1, "Year", outer = T)
-  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4)
+  mtext(side = 1, "Year", outer = T, cex=1.2)
+  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4, cex=1.2)
   
   # legend( "topright", bty="n", lty=c(1,1,1,1), lwd=c(2,2,4,2) , 
   #         col=c("black", "grey", "#08AB0B", Tcols[1]),
@@ -1219,14 +1250,18 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
    
     g<-ggplot(Dat2, aes(x=nCUs.jit, y=status)) +
         scale_x_reverse(breaks=unique(Dat2$nCUs)) +
-        geom_errorbar(aes(x=nCUs.jit, ymax = status_upr, ymin = status_lwr), width = 0, colour="grey") +
-        geom_point() +   
+        geom_errorbar(aes(x=nCUs.jit, ymax = status_upr, ymin = status_lwr), width = 0, size = 0.8, colour="grey") +
+        geom_point(size=2.5) +   
         labs(title=year, x = "Number of CUs", y = "Aggregate Status") +
         theme_classic() +
-        theme(plot.title = element_text(hjust = 0.5)) +
+        theme(axis.text=element_text(size=16), axis.title=element_text(size=16), plot.title = element_text(hjust = 0.5, size=16, face="bold")) +
         ylim(0,ymax) + 
         # add additional points for cases that didn't converge
-        geom_point(data = Dat[errorFlag==TRUE,],aes(x=nCUs.jit, y=rep(AllCU$status,length(Dat[errorFlag==TRUE,"nCUs.jit"]))),shape=4, size=2)
+        geom_point(data = Dat[errorFlag==TRUE,],aes(x=nCUs.jit, y=rep(AllCU$status,length(Dat[errorFlag==TRUE,"nCUs.jit"]))),shape=4, size=2.5)
+    
+    
+    # theme(axis.text=element_text(size=12),
+    #       axis.title=element_text(size=14,face="bold"))
     
     if (length(Dat2$yTrunc[Dat2$yTrunc==TRUE]) > 0) {
         # add additional points to show when ylim truncated
@@ -1253,10 +1288,13 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
     dir.create(outputDir)
   } 
   
-   
-   plotName <- paste("coho_StatusByNCUs_",inputPrefix, sep="")
+ 
+  outName1<-str_split(inputPrefix, "[.]")[[1]][2]
+  outName2<-paste(str_split(outName1, "_")[[1]][1],str_split(outName1, "_")[[1]][2],sep="-") 
   
-   png(paste(outputDir,"/", plotName, ".png", sep=""))
+   plotName <- paste("coho-StatusByNCUs-",outName2, sep="")
+  
+   png(paste(outputDir,"/", plotName, ".png", sep=""), width=580, height=700)
    
    do.call(grid.arrange,  ps)
   
@@ -1548,5 +1586,38 @@ plotPostHist<-function(x, post, parName, CUNames) {
                   x=quantile(margPost,0.05)[[1]]*1.25), vjust=-1,col='blue',size=5)
   
     #annotate("text", x=x.text, y=13000, label= "boat")
+  
+}
+
+
+
+plotAgeProp_byCU<-function(CUages, outDir, plotName) {
+
+  
+  
+  CUages$CU_Names[CUages$CU_Names=="Fraser_Canyon"]<-"Fraser Canyon"
+  CUages$CU_Names[CUages$CU_Names=="Lower_Thompson"]<-"Lower Thompson"
+  CUages$CU_Names[CUages$CU_Names=="Middle_Fraser"]<-"Middle Fraser"
+  CUages$CU_Names[CUages$CU_Names=="North_Thompson"]<-"North Thompson"
+  CUages$CU_Names[CUages$CU_Names=="South_Thompson"]<-"South Thompson"
+
+  
+  
+  #cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+  
+  colList<-c("#999999","#E69F00", "#56B4E9", "#009E73", "#D55E00")
+  
+  
+  g<-ggplot(CUages,aes(x=Year, y=age3, col=CU_Names)) + geom_line(size=1.1) +
+    theme_classic() +
+    xlab("Year") + ylab("Proportion Age 3") + labs(color='Conservation Unit')  +
+    theme(legend.position = c(0.2, 0.25)) +
+    scale_color_manual(values=colList) +
+    theme(axis.text=element_text(size=11),
+          axis.title=element_text(size=12,face="bold"))
+  
+  ggsave(paste(outDir,"/",plotName,".png",sep=""), plot = g,
+         width = 5.25, height = 4.25, units = "in") 
+  
   
 }

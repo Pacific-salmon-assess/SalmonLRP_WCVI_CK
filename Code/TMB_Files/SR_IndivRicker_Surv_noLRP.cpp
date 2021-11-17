@@ -93,8 +93,8 @@ Type objective_function<Type>::operator() ()
   for(int i=0; i<N_Obs; i++){
     // Add lognormal bias correction if BiasCorrect == 1
     if (BiasCorrect == 1) {
-      LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/2;
-      LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/2;
+      LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/Type(2);
+      LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/Type(2);
     }
     
     if (BiasCorrect == 0) {
@@ -141,7 +141,7 @@ Type objective_function<Type>::operator() ()
   vector<Type> Rec_Preds(N_SpwnPreds);
   
   for(int i=0; i<N_SpwnPreds; i++){  // predict recruitment based on Ricker equation with stock-specific parameters
-    LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv(stk_predS(i)) + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i);
+    LogRec_Preds(i) = logA(stk_predS(i)) + gamma*muLSurv(stk_predS(i)) + log(Pred_Spwn(i)) - exp(logB(stk_predS(i))) * Pred_Spwn(i) - pow(sigma(stk_predS(i)),2)/Type(2);
   }
   Rec_Preds = exp(LogRec_Preds);
   

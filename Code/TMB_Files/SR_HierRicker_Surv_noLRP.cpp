@@ -101,8 +101,8 @@ Type objective_function<Type>::operator() ()
     
     // Add lognormal bias correction if BiasCorrect == 1
     if (BiasCorrect == 1) {
-      LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/2;
-      LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/2;
+      LogR_Pred_3(i) = logA(stk(i)) + gamma*logSurv_3(i) + log(P_3(i)*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/Type(2);
+      LogR_Pred_4(i) = logA(stk(i)) + gamma*logSurv_4(i) + log((1-P_3(i))*S(i)) - exp(logB(stk(i))) * S(i) - pow(sigma(stk(i)),2)/Type(2);
     }
     
     if (BiasCorrect == 0) {
@@ -121,7 +121,6 @@ Type objective_function<Type>::operator() ()
 	ans += -dnorm(logA(i), logMuA, SigmaA, true );
     // add prior on sigma
 	ans += -dgamma(pow(sigma(i),-2), Tau_dist, 1/Tau_dist, true);
-	ans += -dgamma(pow(SigmaA,-2), Tau_A_dist, 1/Tau_A_dist, true);
 	if(Bayes == 1){
 	  // Jacobian adjustment; only needed for Bayesian runs using TMBstan
 	ans -= log(2) - 2*logSigma(i);

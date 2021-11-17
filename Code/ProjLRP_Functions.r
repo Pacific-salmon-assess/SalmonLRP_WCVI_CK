@@ -1,7 +1,7 @@
 
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
-                             ERScalar=NULL, cvER, recCorScalar,
+                             ERScalar=NULL, recCorScalar, cvER,
                              gammaSigScalar=NULL, cvERSMU=NULL, agePpnConst=NULL,
                              annualcvERCU=NULL,
                              corMat=NULL, alphaScalar=NULL, aNarrow=NULL, SREPScalar=NULL,
@@ -239,10 +239,14 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
       CUpars$mu_logCovar1 <- mean_logMS$mean_logMS
       sig_logMS<-SRDat %>% group_by(CU_ID) %>% summarise(sig_logMS=sd(log(STAS_Age_3)))
       CUpars$sig_logCovar1 <- sig_logMS$sig_logMS
-      CUpars$min_logCovar <- rep(log(0.000128),length(unique(SRDat$CU_ID))) # lowest observed mSurv in updated 2020 dataset
-      CUpars$max_logCovar <- rep(log(0.036),length(unique(SRDat$CU_ID))) # highest observed mSurv in updated 2020 dataset
-    
-
+      
+      min_logMS<-SRDat %>% group_by(CU_ID) %>% summarise(min_logMS=min(log(STAS_Age_3)))
+      CUpars$min_logCovar <- min_logMS$min_logMS # lowest observed mSurv in updated 2020 dataset
+      
+      max_logMS<-SRDat %>% group_by(CU_ID) %>% summarise(max_logMS=max(log(STAS_Age_3)))
+      CUpars$max_logCovar <- max_logMS$max_logMS # lowest observed mSurv in updated 2020 dataset
+      
+      
       # -- add mean recruitment, by age
       CUpars$meanRec2 <- rep(0,length(unique(SRDat$CU_ID)))
       rec3<-SRDat %>% group_by(CU_ID) %>% summarize(rec3=mean(Age_3_Recruits/Recruits))
@@ -278,6 +282,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
   }
   # If gammaSigScalar is specified in function call, add to simPars file
   if (is.null(gammaSigScalar)==FALSE) {
+  
     if (is.null(mcmcOut) == TRUE) {
       # Use mpd fit standard error if no mcmc outputs available
       gammaSig<-mpdOut$All_Ests[mpdOut$All_Ests$Param=="gamma","Std..Error"]
@@ -841,21 +846,21 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 
   # Phase 2 get Sgen, SMSY etc. =================
   if (BMmodel == "SR_HierRicker_Surv" | BMmodel == "SR_HierRicker_SurvCap") {
-    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA", map=map)
+    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, random = "logA")
   } else {
-    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE, map=map)
+    obj <- MakeADFun(data, pl, DLL=Mod, silent=TRUE)
   }
 
 
   # Create upper bounds vector that is same length and order as start vector that will be given to nlminb
    upper<-unlist(obj$par)
    upper[1:length(upper)]<-Inf
-  # upper[names(upper) =="logSgen"] <- log(SMSYs)
+   upper[names(upper) =="logSgen"] <- log(SMSYs)
    upper<-unname(upper)
  
    lower<-unlist(obj$par)
    lower[1:length(lower)]<--Inf
-   #lower[names(lower) =="logSgen"] <- log(0.01)
+   lower[names(lower) =="logSgen"] <- log(0.01)
    lower[names(lower) =="cap"] <- 0
    lower<-unname(lower)
    
@@ -886,9 +891,11 @@ get_MPD_Fit<-function (SRDat, BMmodel, TMB_Inputs, outDir, biasCorrectEst) {
 
 get_MCMC_Fit<-function (scenarioName, obj, init, upper, lower, nMCMC, Scale) {
 
+
 # # Fit mcmc with STAN to get parameter estimates for projections ===============================
-fitmcmc <- tmbstan(obj, chains=3, iter=nMCMC, init=init, thin=10,
+fitmcmc <- tmbstan(obj, chains=3, iter=nMCMC, init=init, thin=1,
                    control = list(adapt_delta = 0.99),upper=upper, lower=lower)
+
 
 ## Can get ESS and Rhat from rstan::monitor
 mon <- monitor(fitmcmc)
@@ -906,8 +913,8 @@ post_long_alpha$stock<-rep(1:5,length=nrow(post_long_alpha))
 
 
 ## Extract Sgen marginal posterior
-#post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
-#post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
+post_long_Sgen<-post %>% select(starts_with("logSgen"), iteration) %>% pivot_longer(starts_with("logSgen"),names_to="stock", values_to="logSgen")
+post_long_Sgen$stock<-rep(1:5,length=nrow(post_long_Sgen))
 
 # Extract beta marginal posterior (or cap parameter if Prior Cap model formulation)
 if ("logB" %in% names(obj$par)) {
@@ -932,13 +939,13 @@ post_long_gamma$stock<-rep(1:5,length=nrow(post_long_gamma))
 
 # Compile marginal posteriors to get joint posterior for export
 if ("cap" %in% names(obj$par)) {
-#  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
+  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
+ # post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(cap = post_long_cap$cap*Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
 }
 
 if ("logB" %in% names(obj$par)) {
-  #post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
-  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
+  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma, Sgen=exp(post_long_Sgen$logSgen)*Scale)
+#  post_long <- post_long_alpha %>%select(stk=stock, alpha=logA) %>% add_column(beta = exp(post_long_beta$logB)/Scale, sigma=exp(post_long_sigma$logSigma), gamma = post_long_gamma$gamma)
 }
 
 post_long

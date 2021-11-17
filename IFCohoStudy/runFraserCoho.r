@@ -116,7 +116,7 @@ CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
 CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 CoEscpDat_bySubpop <- CoEscpDat_bySubpop %>% filter(yr >= 1998)
 
-# Roll up escpaments, and get Gen Mean of htat
+# Roll up escpaments, and get Gen Mean of that
 AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
 
@@ -128,6 +128,7 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 
 # plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
 # plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
+
 
  plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries", samePlot = F, withSgen=TRUE, addGenMean=T,
                         SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
@@ -155,9 +156,15 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
 
 # Prior means come from running "compareRickerModelTypes_onlySR.r", with bias correction
  ## Note: using expansion by 1.40 for prior cap (not 1.5, like Arbeider et al., Korman et al)
-cap_priorMean_IM<-c(11.084298, 4.456175, 13.343691, 27.145187, 17.361800)
+# Current estimates:
+cap_priorMean_IM<-c(11.661606, 4.220915, 13.584558, 20.156285, 17.128963)
+ # Old estimates:
+#cap_priorMean_IM<-c(11.084298, 4.456175, 13.343691, 27.145187, 17.361800)
+# With 1.35
+# cap_priorMean_IM<-c(11.245117, 4.070168, 13.099408, 19.436428, 16.517216)
 
-  
+
+
 TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1, 
                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2),
@@ -169,15 +176,19 @@ TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1, 
                       extra_eval_iter=FALSE,biasCorrect=TRUE)
 
+
 # Prior means come from running "compareRickerModelTypes_onlySR.r"
-#cap_priorMean_HM<-  ### Cannot estimate at present using compareRickerModelTypes_onlySR.r
+## Note: using expansion by 1.40 for prior cap (not 1.5, like Arbeider et al., Korman et al)
+cap_priorMean_HM<-  c(10.834784, 4.854988, 12.752003, 19.777548, 15.856521)
 
+## Note: using expansion by 1.35 for prior cap (not 1.5, like Arbeider et al., Korman et al)
+#cap_priorMean_HM<-c(10.447827, 4.681596, 12.296574, 19.071207, 15.290217)
 
-# TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1, 
-#                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1, 
-#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-#                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),
-#                                extra_eval_iter=FALSE, biasCorrect=T)
+TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
+                               logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
+                               gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
+                               cap_mean=cap_priorMean_HM, cap_sig=sqrt(2),
+                               extra_eval_iter=FALSE, biasCorrect=T)
 
 
 TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
@@ -230,18 +241,34 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
-     ## Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
-     # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
-     #                BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
-     #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
-     #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
+     # CW : I am getting an error when running this, since we will not be using these for now, I'll comment it out
+     #runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     #            BMmodel = "SR_HierRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
+     #            useGenMean=F, TMB_Inputs=TMB_Inputs_HM_priorCap, outDir=cohoDir, RunName = paste("Bern.HierRickerSurvCap_",ps[pp]*100, sep=""),
+     #            bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
-     
      ## Run using distribibutional benchmark for CUs based on 50% of subpopulations within a CU > 1000 fish   
      runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+
+     ## CW: Run using multidimensional rapid assessments results  (in progress)  
+     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
+                    SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+                    BMmodel = "RapidAssessment_Ricker",#working on this option
+                     LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                    useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.Multidim_Ricker",ps[pp]*100, sep=""),
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+
+     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
+                    SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+                    BMmodel = "RapidAssessment_Ricker_Cap",#working on this option
+                     LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+                    useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.Multidim_Ricker_Cap",ps[pp]*100, sep=""),
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     
      
   }
 
@@ -391,7 +418,8 @@ modelFitList<-c("Bern.IndivRickerSurv",
                 "Bern.IndivRickerSurvCap",
                 "Bern.SPopAbundThreshST")
 
-L_Names<-c("Sgen:Base", "Sgen:HiSRep", "Distributional")  
+# Label names
+L_Names<-c("Sgen:LRP", "Sgen_priorCap:LRP", "Dist:LRP")  
 
 #pList<-c(50, 66, 90, 99)
 
@@ -413,7 +441,6 @@ plotAnnualRetro_CompareMethods(Dat=EscpDat.yy, Names = modelFitList, pList=pList
 nCUs<-c(5,4,3)
 ps<-c(0.50, 0.66, 0.90,0.99)
 
-
 for (pp in 1:length(ps)){
 
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
@@ -421,10 +448,10 @@ for (pp in 1:length(ps)){
                useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                runLogisticDiag=F)
   
-  runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
-               genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-               useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
-               runLogisticDiag=F)
+  # runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
+  #              genYrs=3, p = ps[pp], BMmodel="SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+  #              useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
+  #              runLogisticDiag=F)
   
   runNCUsRetro(nCUList=nCUs, EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4,
                genYrs=3, p = ps[pp], BMmodel="SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
@@ -461,18 +488,11 @@ plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", B
 
 yearList<-2015:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE)
+                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE, ymax=6)
 
 yearList<-2015:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE,ymax=8)
-
-## Temp: test
-yearList<-2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE)
-
-
 
 
 
