@@ -118,9 +118,18 @@ library(patchwork)
 library(TMB)
 library(here)
 
-source(here::here("R", "helperFunctions.r"))
-source(here::here("R", "WCVILRPs.R")) # Needed for Step 10 (LOO), specific to 
-# WCVI Chinook
+
+codeDir <- file.path(dirname(here()), "Code") # get code directory in project parent folder
+r_to_source <- dir(codeDir, pattern="\\.R|\\.r", full.names=TRUE) # get r files to source from parent code directory
+r_to_source <- r_to_source[-grep("LRdiagnostics.R",r_to_source)]
+# function to source all files required
+sourceAll <- function(files){
+  walk(files, function(x) {source(x, chdir=TRUE)})
+}
+sourceAll(files= r_to_source) # source all r files from parent directory
+
+# For LOO need to source file from the Watershed-Area-Model repo
+# source(here::here("R", "WCVILRPs.R")) # Needed for Step 10 (LOO), specific to 
 
 #----------------------------------------------------------------------------
 # Input data
@@ -141,7 +150,10 @@ if(caseStudy=="WCVIchinook") {
 
 # ISC Chum
 if(caseStudy=="SCChum") {
-  load(here::here("DataIn", "Input_logisticFit_ISC2018v2.rda"))
+  SCCDir <- file.path(dirname(here()), "SCChumStudy") # get code directory in project parent folder
+  load(paste(SCCDir,"/DataIn/logisticFit_2018.rda" , sep=""))
+  
+  # load(here::here("DataIn", "logisticFit_2018.rda"))#Input_logisticFit_ISC2018v2.rda"))
   
   SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
                                                       Years=yr)
@@ -206,7 +218,8 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   param$B_1 <- 0.1
   param$B_2 <- 0.1
   
-  dyn.load(dynlib(paste("TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
+  
+  dyn.load(dynlib(paste(codeDir, "/TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
   
   obj <- MakeADFun(data, param, DLL="Logistic_LRPs_BoxTidwell", silent=TRUE)
   
