@@ -39,6 +39,9 @@ CoEscpDat <- read.csv("DataIn/IFCoho_escpByCU.csv")
 # CoEscpDat <- CoEscpDat[ , -grep("^Escapement$", names(CoEscpDat))] # remove total escapement column
 # write.csv(CoEscpDat, "DataIn/IFCoho_escpByCU_SOTSwild.csv")
 
+# Read in data with wild escapement
+CoEscpDat <- read.csv("DataIn/IFCoho_escpByCU_SOTSwild.csv")
+
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
 colnames(CoEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
 colnames(CoEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
