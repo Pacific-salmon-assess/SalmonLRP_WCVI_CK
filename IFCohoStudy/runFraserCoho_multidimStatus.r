@@ -33,8 +33,10 @@ CoEscpDat <- read.csv("DataIn/IFCoho_escpByCU.csv")
 # LW: Add wild escapement from State of the Salmon Rapid Assessment repo
 # wild <- read.csv("https://raw.githubusercontent.com/BronwynMacDonald/Scanner-Data-Processing/main/DATA_OUT/MERGED_FLAT_FILE_BY_CU.csv")
 # wild$CU_Name <- sub(" ", "_", wild$CU_Name) # replace space with underscore for merge
-# CoEscpDat$Species <- "Coho" # add species column for merging
+# CoEscpDat$Species <- "Coho" # add species column for merge
+# # Merge total escapement data with wild data
 # CoEscpDat <- merge(CoEscpDat, wild[,names(wild) %in% c("Species", "Year", "SpnForAbd_Wild", "CU_Name")], by.x=c("Species", "CU_Name", "ReturnYear"), by.y=c("Species", "CU_Name", "Year"))
+# # Rename to wild escapement
 # names(CoEscpDat)[grep("SpnForAbd_Wild", names(CoEscpDat))] <- "Wild_Escapement"
 # CoEscpDat <- CoEscpDat[ , -grep("^Escapement$", names(CoEscpDat))] # remove total escapement column
 # write.csv(CoEscpDat, "DataIn/IFCoho_escpByCU_SOTSwild.csv")
