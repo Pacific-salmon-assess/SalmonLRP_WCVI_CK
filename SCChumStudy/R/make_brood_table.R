@@ -37,9 +37,6 @@ rawdat <- readxl::read_excel("DataIn/Chum Escapement Data With Areas(CleanedFeb1
 share <- rawdat %>% group_by(CU_Name, NME, Area, SummerRun, Rabcode) %>% summarise(n=n()) 
 write.csv(share[ , -which(names(share)=="n")], "DataOut/streams_counted.csv", row.names = FALSE)
 
-# Get number of summer vs fall run streams for each CU (for reference)
-table(rawdat$CU_Name, rawdat$SummerRun)
-
 # ----------------------------------------------------#
 # Notes on data (From Pieter Van Will): 
 # ----------------------------------------------------#
@@ -88,6 +85,16 @@ CU_short <- c("SCS", "NEVI", "UK", "LB", "BI", "GS", "HSBI")
 CU_names<-c("Southern Coastal Streams", "North East Vancouver Island", "Upper Knight",
             "Loughborough", "Bute Inlet", "Georgia Strait", "Howe Sound to Burrard Inlet" )
 CUdf <- data.frame(CU_short, "CU_raw"=CU_raw[1:7], CU_names)
+
+# Get number of summer vs fall run streams for each CU (for reference)
+table(rawdat$CU_Name, rawdat$SummerRun)
+CUsum <- merge(rawdat, CUdf, by.x="CU_Name", by.y="CU_raw")
+CUsum1 <- CUsum %>% group_by(CU_Name, CU_short, SummerRun) %>% summarise("Streams" = n_distinct(NME)) %>% 
+  pivot_wider(names_from=SummerRun, values_from=Streams)
+names(CUsum1) <- c("CU Name", "Abbr.", "Fall run streams", "Summer run streams") # summarise number of streams
+CUsum1$`CU Name` <- substr(CUsum1$`CU Name`, 5, 40) # remove leading number, spaces and dash
+CUsum1$`Summer run streams`[is.na(CUsum1$`Summer run streams`)] <- 0
+write.csv(CUsum1, "DataOut/CU_summary_table_report.csv", row.names=FALSE)
 
 # Process and filter data
 rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish - earlier run timing means they are not intercepted in same fisheries, can't do run reconstruction with them

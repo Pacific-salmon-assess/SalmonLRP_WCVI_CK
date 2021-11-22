@@ -45,7 +45,7 @@ ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the n
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Year"] <- "yr"
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="SiteEsc"] <- "Escp" # FLAG: check that this is the right column to use (infilled escapement)
-
+  
 # Read in chum stock-recruit data
 ChumSRDat <- read.csv("DataOut/SRdatWild.csv")
 # Rename columns to be used in analysis, follow format of IFCohoStudy/DataIn/IFCoho_SRbyCU.csv
