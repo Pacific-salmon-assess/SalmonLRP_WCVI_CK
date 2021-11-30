@@ -31,7 +31,7 @@ TMB_for_chum <- c("SR_IndivRicker_NoSurv",
 compile_load_TMB(dir=codeDir, files=TMB_for_chum)
 
 # ====================================================================#
-# Read in data and format for using in retrospective analysis------------
+# Read in data and format for using in retrospective analysis---------
 # ====================================================================#
 # Run to re-do infilling and brood table
 #source("R/make_brood_table.r") 
@@ -45,7 +45,7 @@ ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the n
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Year"] <- "yr"
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="SiteEsc"] <- "Escp" # FLAG: check that this is the right column to use (infilled escapement)
-
+  
 # Read in chum stock-recruit data
 ChumSRDat <- read.csv("DataOut/SRdatWild.csv")
 # Rename columns to be used in analysis, follow format of IFCohoStudy/DataIn/IFCoho_SRbyCU.csv
@@ -479,7 +479,7 @@ dev.off()
 # Plot LRP status by year, compare different methods -----------
 # --------------------------------------------------------------#
 
-# Roll up escpaments, and get Gen Mean of that
+# Roll up escapements, and get Gen Mean of that
 AggEscp <- ChumEscpDat_full %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
 
@@ -627,3 +627,27 @@ for(i in 1:length(unique(ests$CU_ID))) {
   abline(a=0, b=1, lty=2, col="orange")
 }
 
+# Check PNI
+#ts <- read.csv("DataOut/infill_escapement_for_external_run_reconstruction/total_spawners_infilled_by_CU.csv")
+# check to see what happens when you remove Puntledge, Qualicum, Little Qualicum
+ts <- read.csv("DataOut/infill_escapement_for_external_run_reconstruction/total_spawners_infilled_by_site.csv") 
+tssub <- ts# ts[!(ts$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")),]
+# Qualicum, Little Qualicum, and Puntledge were removed before infilling wild
+ws <- read.csv("DataOut/infill_escapement_for_external_run_reconstruction/wild_spawners_infilled_by_site.csv")
+names(tssub)
+names(ws)
+# sum by CU
+tssub <- tssub[,c(1,2,3,9)]
+ws <- ws[,c(2,3,4,10)]
+sp <- merge(ws, tssub, by=c("CU_Name", "Year", "NME"), suffixes=c("_wild", "_total"))
+sp$prop_wild <- sp$Escape_wild/sp$Escape_total
+hist(sp$prop_wild)
+library(ggplot2)
+ggplot(sp, aes(y=prop_wild, x=Year)) +
+   geom_line(aes(group=NME)) +
+   facet_wrap(~CU_Name, scales="free_y") + 
+   theme_bw()
+# Something weird going on with Georgia Strait. Might have to do with Qualicum, 
+# LIttle QUalicum, and Puntledge rivers (highly enhanced) being removed when infilling 
+# wild spanwes, but not for total spawners. Therefore expansion of wild streams 
+# is much different than for total streams?
