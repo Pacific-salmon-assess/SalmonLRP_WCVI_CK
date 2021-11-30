@@ -119,43 +119,54 @@ library(TMB)
 library(here)
 library(stats)
 
-#source(here::here("R", "helperFunctions.r"))
-#source(here::here("R", "WCVILRPs.R")) # Needed for Step 10 (LOO), specific to 
-# WCVI Chinook
+
+
+codeDir <- file.path(dirname(here()), "Code") # get code directory in project parent folder
+r_to_source <- dir(codeDir, pattern="\\.R|\\.r", full.names=TRUE) # get r files to source from parent code directory
+r_to_source <- r_to_source[-grep("LRdiagnostics.R",r_to_source)]
+# function to source all files required
+sourceAll <- function(files){
+  walk(files, function(x) {source(x, chdir=TRUE)})
+}
+sourceAll(files= r_to_source) # source all r files from parent directory
+
+# For LOO need to source file from the Watershed-Area-Model repo
+# source(here::here("R", "WCVILRPs.R")) # Needed for Step 10 (LOO), specific to 
 
 #----------------------------------------------------------------------------
 # Input data
+caseStudy <- "SCChum"#"WCVIchinook"#"SCChum"# 
 
-# caseStudy <- "SCChum"#"WCVIchinook"#"SCChum"# 
-# 
-# if(caseStudy=="WCVIchinook") {
-#   load(here::here("DataIn", "Input_LRdiagnostics.rda"))
-#   
-#   SMUlogisticData <- input$SMUlogisticData
-#   nCU <- input$nCU
-#   All_Ests <- input$All_Ests
-#   p <- input$p
-#   Bern_logistic <- input$Bern_logistic
-#   dir <- "DataOut/"#input$dir
-#   plotname <- "WCVICK_LRdiag"#input$plotname 
-# }
-# 
-# # ISC Chum
-# if(caseStudy=="SCChum") {
-#   load(here::here("DataIn", "Input_logisticFit_ISC2018v2.rda"))
-#   
-#   SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
-#                                                       Years=yr)
-#   nCU <- 4
-#   All_Ests <- LRP_Mod$All_Ests
-#   p <- 0.5#input$p
-#   Bern_logistic <- TRUE#input$Bern_logistic
-#   dir <- ""#input$dir
-#   plotname <- "SCChumTest"#input$plotname 
-#   assumed_added_scalar <- 100 # Need to check this with Luke. I scaled by 10^5 for ISChum, but I think he scaled by 10^3, hence by additional scalar here
-#   
-# }
+if(caseStudy=="WCVIchinook") {
+  load(here::here("DataIn", "Input_LRdiagnostics.rda"))
+  
+  SMUlogisticData <- input$SMUlogisticData
+  nCU <- input$nCU
+  All_Ests <- input$All_Ests
+  p <- input$p
+  Bern_logistic <- input$Bern_logistic
+  dir <- "DataOut/"#input$dir
+  plotname <- "WCVICK_LRdiag"#input$plotname 
+}
 
+# ISC Chum
+if(caseStudy=="SCChum") {
+  SCCDir <- file.path(dirname(here()), "SCChumStudy") # get code directory in project parent folder
+  load(paste(SCCDir,"/DataIn/logisticFit_2018.rda" , sep=""))
+  
+  # load(here::here("DataIn", "logisticFit_2018.rda"))#Input_logisticFit_ISC2018v2.rda"))
+  
+  SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
+                                                      Years=yr)
+  nCU <- 4
+  All_Ests <- LRP_Mod$All_Ests
+  p <- 0.5#input$p
+  Bern_logistic <- TRUE#input$Bern_logistic
+  dir <- ""#input$dir
+  plotname <- "SCChumTest"#input$plotname 
+  assumed_added_scalar <- 100 # Need to check this with Luke. I scaled by 10^5 for ISChum, but I think he scaled by 10^3, hence by additional scalar here
+  
+}
 #-------------------------------------------------------------------------------
 # Returns:
 # - list of outputs from steps 1-9
@@ -207,7 +218,8 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   param$B_1 <- 0.1
   param$B_2 <- 0.1
   
-  dyn.load(dynlib(paste("TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
+  
+  dyn.load(dynlib(paste(codeDir, "/TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
   
   obj <- MakeADFun(data, param, DLL="Logistic_LRPs_BoxTidwell", silent=TRUE)
   
@@ -713,13 +725,14 @@ LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE){
 # # Run code using ISC chum input data from above
 
 # 
-# LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
-#                            nCU = nCU,
-#                            All_Ests = All_Ests, p = p,
-#                            Bern_logistic = Bern_logistic,
-#                            dir = dir, plotname = plotname)
-# 
-# save(LRdiagOut, file="DataOut/logisticFitSSC_2018Outputv2.rda")
+LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
+                           nCU = nCU,
+                           All_Ests = All_Ests, p = p,
+                           Bern_logistic = Bern_logistic,
+                           dir = dir, plotname = plotname,
+                           caseStudy = "SCChum")
+
+save(LRdiagOut, file="DataOut/logisticFit_2018Output.rda")
 
 #-------------------------------------------------------------------------------
 

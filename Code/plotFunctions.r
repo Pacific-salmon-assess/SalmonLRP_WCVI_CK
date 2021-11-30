@@ -712,58 +712,60 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   } # end of !is.null(projLRPList)
   
 
-  # Step 3: Assess status for data-based LRP options based on the observed proportion of CUs above LRP
+  # Step 3: Assess status for proportion-based LRP using Sgen (optional)
   
-  # # --- for each year, extract Sgens and calc proportion above Sgen
- 
+   # --- for each year, extract Sgens and calc proportion above Sgen
+
   # Make a list of only modelFits that are based on SR model fits to get Sgen:
   # -- For coho, I can do this by excluding the distributional models based on absolute abundance thresholds
-  # SRmodelList<-modelFitList[-grep("SPopAbundThresh",modelFitList)]
-  # 
-  # for (mm in 1:length(SRmodelList)) {
-  # 
-  #   SRmodName<-strsplit(SRmodelList[mm],"_")[[1]][1]
-  #   # if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen_IM"
-  #   # if(SRmodName =="Bern.HierRickerSurv") propName<-"Prop: Sgen_HM"
-  #   # if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen_IM.HiSrep"
-  #   # if(SRmodName =="Bern.HierRickerSurvCap") propName<-"Prop: Sgen_HM.HiSrep"
-  #   
-  #   
-  #   # Labels if only using IM models:
-  #   if(SRmodName =="Bern.IndivRickerSurv") propName<-"Prop: Sgen"
-  #   if(SRmodName =="Bern.IndivRickerSurvCap") propName<-"Prop: Sgen.HiSrep"
-  #   
-  #   CU_Params <- read.csv(paste(Dir, "/DataOut/AnnualRetrospective/",SRmodelList[mm],"/annualRetro_SRparsByCU.csv",sep=""))
-  #   CU_Params <- CU_Params %>% filter(retroYr == LRP_estYr)
-  # 
-  #   # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
-  #   EscpDat.mm <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
-  #     filter(is.na(Gen_Mean) == F)
-  # 
-  #   # -- join together Escp data with Sgens
-  #   CU_Status <- left_join(EscpDat.mm[ , c("CU_Name", "yr", "Escp", "Gen_Mean")],
-  #                        CU_Params[, c( "CU_Name", "est_Sgen", "low_Sgen", "up_Sgen", "retroYr")],
-  #                        by = c("CU_Name" = "CU_Name"))
-  #   colnames(CU_Status)[colnames(CU_Status)=="retroYr"] <- "LRP_estYr"
-  # 
-  #   # --- for each year, get proportion of stocks above Sgen
-  #   NCUs <- length(unique(CU_Status$CU_Name))
-  #   CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
-  #   summarise(Prop = sum(Escp > est_Sgen)/NCUs)
-  # 
-  #   # --- for each year, add to Status_DF using p thresholds, Ps
-  #   #    --- note: should make these an input variable in the future
-  #   Ps <- ps_Prop
-  #   for(pp in 1:length(Ps)){
-  #     # Would use this is wanted to show the proportion of CUs above Sgen
-  #     #Name <- paste(propName,Ps[pp]*100)
-  #     Name <- propName
-  #     Status <- CU_Status_Summ$Prop >= Ps[pp]
-  #     New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
-  #     Status_DF <- rbind(Status_DF, New_Rows)
-  #   }
-  # }
-  # 
+  
+  SRmodelList<-modelFitList[-grep("SPopAbundThresh",modelFitList)]
+  
+  for (mm in 1:length(SRmodelList)) {
+
+    SRmodName<-strsplit(SRmodelList[mm],"_")[[1]][1]
+    
+
+     if(SRmodName =="Bern.IndivRickerSurv") {
+       propName<-"Prop: Sgen-Ricker"
+       fitName<-"AllEsts_Indiv_Ricker_Surv"
+     }
+     if(SRmodName =="Bern.IndivRickerSurvCap") {
+       propName<-"Prop: Sgen-priorCap"
+       fitName<-"AllEsts_Indiv_Ricker_Surv_priorCap"
+     }
+     
+    CU_Params <- read.csv(paste(Dir, "/DataOut/ModelFits/",fitName,".csv",sep=""))
+    CU_Params <- CU_Params %>% filter(Param == "Sgen")
+
+    # -- add generational means to CU-level escapements; we will compare CU benchmarks to these
+    EscpDat.mm <- EscpDat %>% group_by(CU) %>% mutate(Gen_Mean = rollapply(Escp, genYrs, gm_mean, fill = NA, align="right"))  %>%
+      filter(is.na(Gen_Mean) == F)
+
+    # -- join together Escp data with Sgens
+    CU_Status <- left_join(EscpDat.mm[ , c("CU_Name", "yr", "Escp", "Gen_Mean")],
+                         CU_Params[, c( "CU_Name", "Estimate")],
+                         by = c("CU_Name" = "CU_Name"))
+    colnames(CU_Status)[colnames(CU_Status)=="Estimate"] <- "Sgen"
+
+    # --- for each year, get proportion of stocks above Sgen
+    NCUs <- length(unique(CU_Status$CU_Name))
+    CU_Status_Summ <- CU_Status %>%  group_by(yr) %>% filter(yr %in% retroYears) %>%
+    summarise(Prop = sum(Gen_Mean > Sgen)/NCUs)
+
+    # --- for each year, add to Status_DF using p thresholds, Ps
+    #    --- note: should make these an input variable in the future
+    Ps <- ps_Prop
+    for(pp in 1:length(Ps)){
+      # Would use this is wanted to show the proportion of CUs above Sgen
+      #Name <- paste(propName,Ps[pp]*100)
+      Name <- propName
+      Status <- CU_Status_Summ$Prop >= Ps[pp]
+      New_Rows <- data.frame(LRP_estYr, retroYear = CU_Status_Summ$yr, Name , AboveLRP=Status)
+      Status_DF <- rbind(Status_DF, New_Rows)
+    }
+  }
+
 
   # Step 4: Add mutlidimensional results (optional)
  
@@ -780,8 +782,8 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     }
     
   
-    if (OM.j == "Ricker") name1<-"Prop: Scanner-Ricker"
-    if (OM.j == "Ricker_priorCap") name1<-"Prop: Scanner-priorCap"
+    if (OM.j == "Ricker") name1<-"Prop: Multidim-Ricker"
+    if (OM.j == "Ricker_priorCap") name1<-"Prop: Multidim-priorCap"
       
     multiDimResults<-as_tibble(read.csv(paste(Dir,"/DataOut/multiDimStatusEsts_",OM.j,".csv", sep="")))
     
@@ -813,8 +815,8 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   methods <- unique(Status_DF$Name)
   
   # Hack to re-order methods for plotting ===============
-  methods<-c("Prop: WSP-2014", "","Prop: Scanner-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
-             "Prop: Scanner-priorCap", "Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
+  methods<-c("Prop: WSP-2014", "","Prop: Multidim-Ricker", "Prop: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
+             "Prop: Multidim-priorCap", "Prop: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
              "Abund: Logistic:IFCRT") 
              
   # --- set-up pdf to save to
