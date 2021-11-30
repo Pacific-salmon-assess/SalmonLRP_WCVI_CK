@@ -725,13 +725,14 @@ LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE){
 # # Run code using ISC chum input data from above
 
 # 
-# LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
-#                            nCU = nCU,
-#                            All_Ests = All_Ests, p = p,
-#                            Bern_logistic = Bern_logistic,
-#                            dir = dir, plotname = plotname)
-# 
-# save(LRdiagOut, file="DataOut/logisticFitSSC_2018Outputv2.rda")
+LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
+                           nCU = nCU,
+                           All_Ests = All_Ests, p = p,
+                           Bern_logistic = Bern_logistic,
+                           dir = dir, plotname = plotname,
+                           caseStudy = "SCChum")
+
+save(LRdiagOut, file="DataOut/logisticFit_2018Output.rda")
 
 #-------------------------------------------------------------------------------
 
