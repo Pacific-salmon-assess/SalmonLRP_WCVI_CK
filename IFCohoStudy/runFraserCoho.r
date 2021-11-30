@@ -122,13 +122,9 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 
 
 
-# ==================================================================================
+# ======================================================================================================================
 # (2) Call functions to plot data:
-# ====================================================================================
-
-# plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
-# plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
-
+# ===================================================================================================================
 
  plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries", samePlot = F, withSgen=TRUE, addGenMean=T,
                         SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
@@ -332,7 +328,7 @@ for (pp in 1:length(ps)) {
   # Extract logistic regression data from .rda file
   load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
   pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
-  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid)),2)
   AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
   minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
   sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
@@ -357,7 +353,7 @@ for (pp in 1:length(ps)) {
   # Extract logistic regression data from .rda file
   load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
   pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
-  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid)),2)
   AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
   minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
   sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
@@ -382,7 +378,7 @@ for (pp in 1:length(ps)) {
   # Extract logistic regression data from .rda file
   load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
   pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
-  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid)),2)
   AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
   minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
   sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
@@ -403,7 +399,6 @@ for (pp in 1:length(ps)) {
                                 hitRatio, hitRatio_LOO)
   
   write.csv(diagStats_byModel,file=paste(cohoDir,"/DataOut/LogisticDiagStatsByModel_p=",p,"_",year,".csv",sep=""))
-  
   
 }
 
@@ -486,9 +481,9 @@ yearList<-2015:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE, ymax=5)
 
-yearList<-2015:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE, ymax=6)
+# yearList<-2015:2020
+# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
+#                      inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE, ymax=6)
 
 yearList<-2015:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,

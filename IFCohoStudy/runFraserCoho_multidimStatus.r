@@ -49,6 +49,7 @@ colnames(CoEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
 colnames(CoEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
 colnames(CoEscpDat)[colnames(CoEscpDat)=="ReturnYear"] <- "yr"
 colnames(CoEscpDat)[colnames(CoEscpDat)=="Escapement"] <- "Escp"
+colnames(CoEscpDat)[colnames(CoEscpDat)=="Wild_Escapement"] <- "Escp"
 
 # Run annual restrospective analyses over various levels of p, restrict escapement dataset to 1998+ ============================================================
 # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
@@ -61,7 +62,10 @@ CoEscpDat <- CoEscpDat %>% filter(yr >= 1998)
 
 
 
-BMsource<-"Ricker"
+#BMsource<-"Ricker"
+BMsource<-"Ricker_priorCap"
+BMsource<-"WSP2015"
+
 
 statusDat<- CoEscpDat %>% group_by(CU_Name) %>%
   mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right"))
