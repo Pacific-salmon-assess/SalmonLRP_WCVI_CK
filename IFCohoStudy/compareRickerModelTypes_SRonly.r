@@ -947,7 +947,7 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
   
 }
 
-# Create multi-panel plots of SR fits =====================
+# Create multi-panel plots of SR fits for IM and IM_cap model =====================
 
 ps<-lapply(CUID_list, makeSRplots, plotDat=plotDat_IM, plotDat_cap=plotDat_IM_cap, SRDat=SRDat)
 png(paste(figDir, "coho-compare-SRFits-IM.png", sep="/"))
