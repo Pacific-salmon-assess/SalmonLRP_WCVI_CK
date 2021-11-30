@@ -83,7 +83,7 @@ rawdat_f <- rawdat[rawdat$SummerRun==FALSE, ] # Remove summer run fish - earlier
 # wide to long format. maintain NA values (uncounted streams)
 ldat <- rawdat_f %>% pivot_longer(cols=grep("[[:digit:]]{4}", names(rawdat_f)), names_to="Year", values_to="Escape")
 
-# summarise by stream, to collapse any brood/rack/enhanced/rack etc categories
+# summarise by stream, to collapse any brood/rack/enhanced etc categories
 ldat_s <- ldat %>% group_by(CU_Name, GroupName, GU_Name, NME, SummerRun, Rabcode, Area, Year) %>%
   summarise(Escape=sum(Escape, na.rm=TRUE))
 # # for sum escapement values that are 0, make back into NA (unobserved)

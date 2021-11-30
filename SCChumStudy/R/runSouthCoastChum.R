@@ -8,6 +8,9 @@ library(gridExtra)
 library(reshape2)
 library(TMB)
 library(here)
+library(corrplot)
+
+
 
 options(scipen=1000000)
 
@@ -627,27 +630,51 @@ for(i in 1:length(unique(ests$CU_ID))) {
   abline(a=0, b=1, lty=2, col="orange")
 }
 
-# Check PNI
-#ts <- read.csv("DataOut/infill_escapement_for_external_run_reconstruction/total_spawners_infilled_by_CU.csv")
-# check to see what happens when you remove Puntledge, Qualicum, Little Qualicum
-ts <- read.csv("DataOut/infill_escapement_for_external_run_reconstruction/total_spawners_infilled_by_site.csv") 
-tssub <- ts# ts[!(ts$NME %in% c("QUALICUM RIVER", "LITTLE QUALICUM RIVER", "PUNTLEDGE RIVER")),]
-# Qualicum, Little Qualicum, and Puntledge were removed before infilling wild
-ws <- read.csv("DataOut/infill_escapement_for_external_run_reconstruction/wild_spawners_infilled_by_site.csv")
-names(tssub)
-names(ws)
-# sum by CU
-tssub <- tssub[,c(1,2,3,9)]
-ws <- ws[,c(2,3,4,10)]
-sp <- merge(ws, tssub, by=c("CU_Name", "Year", "NME"), suffixes=c("_wild", "_total"))
-sp$prop_wild <- sp$Escape_wild/sp$Escape_total
-hist(sp$prop_wild)
-library(ggplot2)
-ggplot(sp, aes(y=prop_wild, x=Year)) +
-   geom_line(aes(group=NME)) +
-   facet_wrap(~CU_Name, scales="free_y") + 
-   theme_bw()
-# Something weird going on with Georgia Strait. Might have to do with Qualicum, 
-# LIttle QUalicum, and Puntledge rivers (highly enhanced) being removed when infilling 
-# wild spanwes, but not for total spawners. Therefore expansion of wild streams 
-# is much different than for total streams?
+
+# Compare correlation among CUs------------
+# convert long to wide data for correlations
+chum_dat_w <- ChumEscpDat %>% select(CU_Name, Escp, yr) %>% pivot_wider(names_from=CU_Name, values_from=Escp)
+cormat <- cor(chum_dat_w[ ,-1])
+cormat<-as.matrix(cormat)
+
+png("Figures/chum_spawners_corr.png", width=6, height=6, units="in", res=500)
+corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower")
+dev.off()
+
+# Load, summarize and save diagnostics---------
+load("DataOut/logisticFit_2018Output.rda")
+
+# Create vectors of diagnostic stats to fill for each model
+modelName<-NA
+pBoxTidwell<-NA
+maxDevResid<-NA
+AR1.dev<-NA
+minSampSize<-NA
+sampSize<-NA
+p_WaldB0<-NA
+p_WaldB1<-NA
+quasiR2<-NA
+pGoodnessOfFit<-NA
+hitRatio<-NA
+hitRatio_LOO<-NA
+# extract values for table
+  mm<-1
+  modelName[mm]<-"Percentile"
+  # Extract logistic regression data from .rda file
+  pBoxTidwell[mm]<-round(LRdiagOut$pBoxTidwell,3)
+  maxDevResid[mm]<-round(max(abs(LRdiagOut$DevResid)),2)
+  AR1.dev[mm]<-round(LRdiagOut$AR1.dev,2)
+  minSampSize[mm]<-round(LRdiagOut$minSampleSize,0)
+  sampSize[mm]<-round(LRdiagOut$sampleSize,0)
+  p_WaldB0[mm]<-round(LRdiagOut$signTable[LRdiagOut$signTable$Param=="B_0","P.value"],3)
+  p_WaldB1[mm]<-round(LRdiagOut$signTable[LRdiagOut$signTable$Param=="B_1","P.value"],3)
+  quasiR2[mm]<-round(LRdiagOut$quasiR2,2)
+  pGoodnessOfFit[mm]<-round(LRdiagOut$pDRT,3)
+  hitRatio[mm]<-round(LRdiagOut$hitRatio,2)
+  
+  diagStats_byModel<-rbind(model = modelName, pBoxTidwell, maxDevResid, AR1.dev, minSampSize, sampSize,
+                                p_WaldB0, p_WaldB1, quasiR2, pGoodnessOfFit,                 
+                                hitRatio)
+  
+  write.csv(diagStats_byModel,file="DataOut/LogisticDiagStatsByModel.csv")
+  
