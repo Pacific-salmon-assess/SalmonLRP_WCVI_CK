@@ -50,7 +50,7 @@
 runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p = 0.95,
                          BMmodel, LRPmodel=NULL, LRPfile=NULL, integratedModel=F, useGenMean=T, 
                          TMB_Inputs=NULL, outDir, RunName, bootstrapMode=F, plotLRP=T,
-                         runLogisticDiag=F) {
+                         runLogisticDiag=F, codeDir) {
   
   yearList <- startYr:endYr
   
@@ -309,11 +309,11 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
                                                           Years=yr)
       
-      logisticDiagStats<-LRdiagnostics(SMUlogisticData, 
+      logisticDiagStats<-LRdiagnostics(SMUlogisticData=SMUlogisticData, 
                  nCU=length(unique(EscpDat$CU_Name)), All_Ests = LRP_Mod$All_Ests,
                   p=p, Bern_logistic = useBern_Logistic, dir=paste(figDir,"/",sep=""),
                   plotname=paste("logisticFitDiag",yearList[yy], sep="_"),
-                 caseStudy=unique(EscpDat$MU))
+                 caseStudy=unique(EscpDat$MU), codeDir)
     
       
       capture.output(logisticDiagStats, file = paste(outputDir,"/logisticFitDiag_",yearList[yy] ,".txt", sep=""))

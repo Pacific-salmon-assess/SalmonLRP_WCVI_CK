@@ -183,7 +183,7 @@ sourceAll(files= r_to_source) # source all r files from parent directory
 # Function:
 
 LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir, 
-                          plotname, caseStudy=NULL){
+                          plotname, caseStudy=NULL, codeDir){
   
   #-----------------------------------------------------------------------------
   # Step 1. Box-Tidwell test to assess linearity between aggregate abundances
@@ -223,9 +223,9 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   param$B_1 <- 0.1
   param$B_2 <- 0.1
   
-  if (caseStudy == "IF Coho") {
-    codeDir <- file.path(here(), "Code")
-  }
+  #if (caseStudy == "IF Coho") {
+  #  codeDir <- file.path(here(), "Code")
+  #}
   
   dyn.load(dynlib(paste(codeDir, "/TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
   
@@ -732,15 +732,16 @@ LOO_LRdiagnostics <- function(remove.EnhStocks=TRUE){
 # #----------------------------------------------------------------------------
 # # Run code using ISC chum input data from above
 
+#CW commented this out in order to run cofo example
 # 
-LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
-                           nCU = nCU,
-                           All_Ests = All_Ests, p = p,
-                           Bern_logistic = Bern_logistic,
-                           dir = dir, plotname = plotname,
-                           caseStudy = "SCChum")
-
-save(LRdiagOut, file="DataOut/logisticFit_2018Output.rda")
+#LRdiagOut <- LRdiagnostics(SMUlogisticData = SMUlogisticData,
+#                           nCU = nCU,
+#                           All_Ests = All_Ests, p = p,
+#                           Bern_logistic = Bern_logistic,
+#                           dir = dir, plotname = plotname,
+#                           caseStudy = "SCChum")
+#
+#save(LRdiagOut, file="DataOut/logisticFit_2018Output.rda")
 
 #-------------------------------------------------------------------------------
 
