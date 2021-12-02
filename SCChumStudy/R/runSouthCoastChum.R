@@ -680,7 +680,7 @@ hitRatio_LOO<-NA
   
   
   # Plot distributions of spawner abundances ----------
-  png(filename="Figures/fig_spawner_dist.png", width=7, height=6,units="in", res=300)
+  png(filename="Figures/fig_spawner_dist.png", width=7, height=4,units="in", res=300)
   ggplot(ChumEscpDat, aes(x=Escp, colour=CU_Name, fill=CU_Name)) +
     #geom_point(aes(y=0, x=Escp), shape=108, colour="black", size=2) +
     geom_density(alpha=0.5) + 
