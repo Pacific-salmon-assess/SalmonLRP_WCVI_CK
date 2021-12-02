@@ -637,7 +637,7 @@ chum_dat_w <- ChumEscpDat %>% select(CU_Name, Escp, yr) %>% pivot_wider(names_fr
 cormat <- cor(chum_dat_w[ ,-1])
 cormat<-as.matrix(cormat)
 
-png("Figures/chum_spawners_corr.png", width=6, height=6, units="in", res=500)
+png("Figures/fig_chum_spawners_corr.png", width=6, height=6, units="in", res=500)
 corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower")
 dev.off()
 
@@ -677,4 +677,19 @@ hitRatio_LOO<-NA
                                 hitRatio)
   
   write.csv(diagStats_byModel,file="DataOut/LogisticDiagStatsByModel.csv")
+  
+  
+  # Plot distributions of spawner abundances ----------
+  png(filename="Figures/fig_spawner_dist.png", width=7, height=6,units="in", res=300)
+  ggplot(ChumEscpDat, aes(x=Escp, colour=CU_Name, fill=CU_Name)) +
+    #geom_point(aes(y=0, x=Escp), shape=108, colour="black", size=2) +
+    geom_density(alpha=0.5) + 
+    scale_x_log10( breaks= c(10^(1:10))) +
+    coord_cartesian(expand=FALSE) +
+    scale_colour_discrete(name="CU Name") +
+    scale_fill_discrete(name="CU Name") +
+    xlab(bquote("log"[10]~"(spawners)")) +
+    ylab("Density") +
+    theme_classic()
+  dev.off()
   
