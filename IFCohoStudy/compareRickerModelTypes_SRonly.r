@@ -282,7 +282,6 @@ print("Prior means for capacity in Indiv model, by CU:")
 print(cap_priorMean)
 
 
-
 png(paste(figDir, "/coho-SrepPriorDist.png", sep=""), width=480, height=300)
 # Plot prior distributions, by CU
 xx<-seq(1,30,length=1000)
