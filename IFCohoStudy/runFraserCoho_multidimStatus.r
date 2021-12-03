@@ -92,8 +92,8 @@ for (m in 1:length(BMList)) {
     Sgen <- SR_pars %>% filter(Param == "Sgen") %>% select(Estimate, CU_Name)
     Sgen <- rename(Sgen, Sgen = Estimate)
     Smsy <- SR_pars %>% filter(Param == "Smsy") %>% select(Estimate, CU_Name)
-    Smsy<- rename(Smsy, Smsy = Estimate)
-    Smsy<- Smsy %>% add_column(Smsy0.8 = Smsy$Smsy*0.8) %>% select(CU_Name, Smsy0.8)
+    Smsy <- rename(Smsy, Smsy = Estimate)
+    Smsy <- Smsy %>% add_column(Smsy0.8 = Smsy$Smsy*0.8) %>% select(CU_Name, Smsy0.8)
   }
   
   if (BMsource == "Ricker_priorCap") {

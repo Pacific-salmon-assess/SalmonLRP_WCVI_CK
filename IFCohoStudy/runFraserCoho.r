@@ -146,7 +146,7 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
  plot_CU_Escp_withStatus(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries-wStatus", SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
  
  
- plot_Subpop_Escp_withStatus(CoEscpDat_bySubpop, cohoDir, plotName="coho-Subpop-EscpSeries-wStatus")
+ plot_Subpop_Escp_withStatus(Dat=CoEscpDat_bySubpop, Dir=cohoDir, plotName="coho-Subpop-EscpSeries-wStatus")
  
  
 # ==================================================================================================================
@@ -616,10 +616,11 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
+LRP_plot1 <- LRP_plot + ggtitle("Logistic:Sgen-Ricker") +
+      geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-IM2020-LogisticLRP.png",sep=""), plot = LRP_plot,
+ggsave(paste(cohoDir, "/Figures/","coho-IM2020-LogisticLRP.png",sep=""), plot = LRP_plot1,
        width = 4, height = 3, units = "in")  
 
 
@@ -679,10 +680,11 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
+LRP_plot2 <- LRP_plot + ggtitle("Logistic:Sgen-priorCap") +
+geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-IMCap2020-LogisticLRP.png",sep=""), plot = LRP_plot,
+ggsave(paste(cohoDir, "/Figures/","coho-IMCap2020-LogisticLRP.png",sep=""), plot = LRP_plot2,
        width = 4, height = 3, units = "in")  
 
 
@@ -760,16 +762,19 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
+LRP_plot3 <- LRP_plot + ggtitle("Logistic:IFCRT LRP") +
+geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), plot = LRP_plot,
+ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), plot = LRP_plot3,
        width = 4, height = 3, units = "in")  
 
 
 
-
+LRP_plotall<-plot_grid(LRP_plot1,LRP_plot2,LRP_plot3)
+ggsave(paste(cohoDir, "/Figures/","coho-all-LogisticLRP.png",sep=""), plot = LRP_plotall,
+       width = 10, height = 8)  
 
 # =================================================================================================================
 # (6b) NOT YET WORKING: Create table of 2020 estimates
