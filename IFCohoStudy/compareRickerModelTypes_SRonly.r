@@ -282,7 +282,6 @@ print("Prior means for capacity in Indiv model, by CU:")
 print(cap_priorMean)
 
 
-
 png(paste(figDir, "/coho-SrepPriorDist.png", sep=""), width=480, height=300)
 # Plot prior distributions, by CU
 xx<-seq(1,30,length=1000)
@@ -947,7 +946,7 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
   
 }
 
-# Create multi-panel plots of SR fits =====================
+# Create multi-panel plots of SR fits for IM and IM_cap model =====================
 
 ps<-lapply(CUID_list, makeSRplots, plotDat=plotDat_IM, plotDat_cap=plotDat_IM_cap, SRDat=SRDat)
 png(paste(figDir, "coho-compare-SRFits-IM.png", sep="/"))

@@ -8,6 +8,9 @@ library(gridExtra)
 library(reshape2)
 library(TMB)
 library(here)
+library(corrplot)
+
+
 
 options(scipen=1000000)
 
@@ -31,7 +34,7 @@ TMB_for_chum <- c("SR_IndivRicker_NoSurv",
 compile_load_TMB(dir=codeDir, files=TMB_for_chum)
 
 # ====================================================================#
-# Read in data and format for using in retrospective analysis------------
+# Read in data and format for using in retrospective analysis---------
 # ====================================================================#
 # Run to re-do infilling and brood table
 #source("R/make_brood_table.r") 
@@ -45,7 +48,7 @@ ChumEscpDat$CU_Name <- substr(ChumEscpDat$CU_Name, 5, 100) # pull out just the n
 # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="Year"] <- "yr"
   colnames(ChumEscpDat)[colnames(ChumEscpDat)=="SiteEsc"] <- "Escp" # FLAG: check that this is the right column to use (infilled escapement)
-
+  
 # Read in chum stock-recruit data
 ChumSRDat <- read.csv("DataOut/SRdatWild.csv")
 # Rename columns to be used in analysis, follow format of IFCohoStudy/DataIn/IFCoho_SRbyCU.csv
@@ -479,7 +482,7 @@ dev.off()
 # Plot LRP status by year, compare different methods -----------
 # --------------------------------------------------------------#
 
-# Roll up escpaments, and get Gen Mean of that
+# Roll up escapements, and get Gen Mean of that
 AggEscp <- ChumEscpDat_full %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
 
@@ -627,3 +630,66 @@ for(i in 1:length(unique(ests$CU_ID))) {
   abline(a=0, b=1, lty=2, col="orange")
 }
 
+
+# Compare correlation among CUs------------
+# convert long to wide data for correlations
+chum_dat_w <- ChumEscpDat %>% select(CU_Name, Escp, yr) %>% pivot_wider(names_from=CU_Name, values_from=Escp)
+cormat <- cor(chum_dat_w[ ,-1])
+cormat<-as.matrix(cormat)
+
+png("Figures/fig_chum_spawners_corr.png", width=6, height=6, units="in", res=500)
+corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower")
+dev.off()
+
+# Load, summarize and save diagnostics---------
+load("DataOut/logisticFit_2018Output.rda")
+
+# Create vectors of diagnostic stats to fill for each model
+modelName<-NA
+pBoxTidwell<-NA
+maxDevResid<-NA
+AR1.dev<-NA
+minSampSize<-NA
+sampSize<-NA
+p_WaldB0<-NA
+p_WaldB1<-NA
+quasiR2<-NA
+pGoodnessOfFit<-NA
+hitRatio<-NA
+hitRatio_LOO<-NA
+# extract values for table
+  mm<-1
+  modelName[mm]<-"Percentile"
+  # Extract logistic regression data from .rda file
+  pBoxTidwell[mm]<-round(LRdiagOut$pBoxTidwell,3)
+  maxDevResid[mm]<-round(max(abs(LRdiagOut$DevResid)),2)
+  AR1.dev[mm]<-round(LRdiagOut$AR1.dev,2)
+  minSampSize[mm]<-round(LRdiagOut$minSampleSize,0)
+  sampSize[mm]<-round(LRdiagOut$sampleSize,0)
+  p_WaldB0[mm]<-round(LRdiagOut$signTable[LRdiagOut$signTable$Param=="B_0","P.value"],3)
+  p_WaldB1[mm]<-round(LRdiagOut$signTable[LRdiagOut$signTable$Param=="B_1","P.value"],3)
+  quasiR2[mm]<-round(LRdiagOut$quasiR2,2)
+  pGoodnessOfFit[mm]<-round(LRdiagOut$pDRT,3)
+  hitRatio[mm]<-round(LRdiagOut$hitRatio,2)
+  
+  diagStats_byModel<-rbind(model = modelName, pBoxTidwell, maxDevResid, AR1.dev, minSampSize, sampSize,
+                                p_WaldB0, p_WaldB1, quasiR2, pGoodnessOfFit,                 
+                                hitRatio)
+  
+  write.csv(diagStats_byModel,file="DataOut/LogisticDiagStatsByModel.csv")
+  
+  
+  # Plot distributions of spawner abundances ----------
+  png(filename="Figures/fig_spawner_dist.png", width=7, height=4,units="in", res=300)
+  ggplot(ChumEscpDat, aes(x=Escp, colour=CU_Name, fill=CU_Name)) +
+    #geom_point(aes(y=0, x=Escp), shape=108, colour="black", size=2) +
+    geom_density(alpha=0.5) + 
+    scale_x_log10( breaks= c(10^(1:10))) +
+    coord_cartesian(expand=FALSE) +
+    scale_colour_discrete(name="CU Name") +
+    scale_fill_discrete(name="CU Name") +
+    xlab(bquote("log"[10]~"(spawners)")) +
+    ylab("Density") +
+    theme_classic()
+  dev.off()
+  

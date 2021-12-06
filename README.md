@@ -20,7 +20,10 @@ Code and associated files are organized into the following sub-folders:
 3. **SCChumStudy**
  * Contains files specific to South Coast Chum case study, including input data, outputs, and master file from which South Coast Chum retrospective analyses are run ("runSouthCoastChum.r") along with file that does escapement infilling ("")
 
-4. **Documents**
+4. **WCVIChinookStudy**
+ * Contains files specific to West Coast Vancouver Island Chum case study
+
+5. **Documents**
  * Miscellaneous word documents included for reference or created while formulating case studies 
 
 
@@ -30,7 +33,11 @@ Code and associated files are organized into the following sub-folders:
 
 This case study compares multiple LRP options for the Interior Fraser Coho Stock Management Unit (SMU), which is made up of 5 Conservation Units (Middle Fraser, Fraser Canyon, Lower Thompson, North Thompson, South Thompson). Lower benchmarks for each CU are obtained by fitting stock-recruitment models to CU-level data in order to estimate Sgen, which is the spawner abundance from which the CU can recover to Smsy within one generation in the absence of fishing. 
 
-Data for this case study covered brood years 1998-2014 (return years 2001-2018). Data for the 1998-2013 brood years were taken from the 2018 Interior Fraser Coho RPA report (Appendix 4 of Arebider et al. 2020, available at http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2020/2020_025-eng.pdf), while one additional year of spawner-recruit data (2014 brood year) and sub-population level escapement series were provided by DFO’s Fraser River Stock Assessment Unit (M. Arbeider, pers. comm., 2020). 
+Data were similar to those previously described in the 2018 Interior Fraser Coho RPA report (Appendix 4 of Arebider et al. 2020, available at http://www.dfo-mpo.gc.ca/csas-sccs/Publications/ResDocs-DocRech/2020/2020_025-eng.pdf); data treatments, assumptions, infilling, and data quality are described in detail in that document. More recent updates that are not described in the RPA report include the incorporation of three additional years of data (return years 2018-2020; brood years 2014-2016), updates to the smolt-to-adult marine survival rate index to use a weighted average by release size, and increased data quality screening of scale ages used to calculate the proportion of recruits at age (M. Arbeider, pers. comm).
+
+
+
+<!--
 
 Aggregate LRPs are estimated using an integrated model coded in TMB that simultaneoulsy fits (i) CU-level stock-recruit models to estimate Sgen and (ii) a SMU-level logsitic regression model that estimates the aggregate abundance that has historically been associated with a specified proportion of CUs being above Sgen (binomial model) or the aggregate abundance that has historically been associated with all CUs having a specified probability of being above Sgen (bernoulli model).  
 
@@ -48,6 +55,8 @@ In addition, questions about the effect of missing data on LRP estimates are eva
 
 The first two of these options (type of Ricker Model,  hierarchical vs. individual models) are implemented by calling one of four different TMB files to estimate LRPs (SR_HierRicker_Surv.cpp, SR_HierRicker_SurvCap.cpp, SR_IndivRicker_Surv.cpp, SR_IndivRicker_SurvCap.cpp; located in "LRP_RetroEval/Code/TMB_Files"). All other options are implemented by changing data and parameter inputs to these four TMB files.
 
+
+
 #### Threshold benchmarks based on sub-population abundance
 
 An alternative definition of CU-level benchmarks is also considered for Interior Fraser Coho to match work that has been undertaken by the **Interior Fraser Coho Recovery Team** and incorporated into the 2018 Recovery Potential Assessment (RPA; Arbeider et al. 2020). As part of this work, short- and long-term recovery targets are based on maintaining the diversity of 11 subpopulations nested within CUs. Using this approach, lower benchmarks are based on the proportion of sub-populations within a CU that are above a 1000-fish threshold. 
@@ -58,15 +67,27 @@ An alternative definition of CU-level benchmarks is also considered for Interior
 
 The Interior Fraser Coho case study includes functions that retrospectively compare and plot LRPs based on sub-population diversity (using a 1000-fish threshold) with LRPs based on CU-level diversity (using Sgen).  TMB code to calculate LRPs based on sub-population diversity is located in "LRP_RetroEval/Code/TMB_Files/ThresholdAbund_Subpop1000.cpp".  
 
+-->
 
-#### To run case study:
+#### To run case study analyses, follow these steps:
 
 1) Set working directory to "LRP_RetroEval\IFCohoStudy"
 
-2) Run code in "runFraserCoho.r". This is the master file for this analysis from which all other files are sourced, and in which scenarios and plot options can be specified.
+2) Run code in "compareRickerModelTypes_SRonly.r". This file fits four types of spawner recruit models to data on total spawner abundance (natural + hatchery origin fish spawning in the wild) and natural-origin recruitment. Saved outputs are estimated parameter values (written to "DataOut/ModelFits"") and figures comparing SR fits for different models (saved to "Figures").
+
+2) Run code in "runFraserCoho.r". This file runs all of the analyses for aggregate abundance-based LRP options using the logistic regression approach.  It includes code to run retrospective analyses of logistic regression-based LRPs, calculate model diagnostics for logistic regression fits, and create results plots.
+
+3) Run code in "runFraserCoho_projLRP.r". This file runs all of the analyses for aggregate abundance-based LRP options using the projection-based approach, including MCMC fits of spawner recruit models to parameterize forward projections, calls to samSim modelling tool to run projections, sensitivity analyses, and results plots.  
+
+4) Run code in "runFraserCoho_multidimStatus.r". This file runs a partial version of the State of the Salmon multidimensional scanning tool using their decision tree 3 (which, is located in "Code/getMultiDimStatus.r"); it is partial because it only includes nodes that are relevant to data available for Interior Fraser Coho.
+* Note that in order to run this code, the "compareRickerModelTypes_SRonly.r" file described above must first be run to create Sgen estimates. 
+
+5) Run code in "makeMethodComparisonPlots.r". This code draws from outputs from all of the above analyses and creates a figure that compares estimated status relative to LRPs for all of the LRP options considered. All of the above analyses must be run in order to support this code.  
+
 
 
 ### Analysis outputs
+(Note: The drop-box folder should be updated with final outputs once available)
 
 Current model outputs, including .csv files of estimated parameters and plots, are posted to a dropbox site that can be accessed at:
 https://www.dropbox.com/sh/otiku88jc2eu8cx/AACagLQd85blX7jc8-yBYs4Na?dl=0

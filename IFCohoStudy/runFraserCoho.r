@@ -91,12 +91,12 @@ dyn.load(dynlib("TMB_Files/LRP_Logistic_Only"))
 # =====================================================================
 setwd(cohoDir)
 
-CoEscpDat <- read.csv("DataIn/IFCoho_escpByCU.csv")
-  # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
-  colnames(CoEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
-  colnames(CoEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
-  colnames(CoEscpDat)[colnames(CoEscpDat)=="ReturnYear"] <- "yr"
-  colnames(CoEscpDat)[colnames(CoEscpDat)=="Escapement"] <- "Escp"
+# CoEscpDat <- read.csv("DataIn/IFCoho_escpByCU.csv")
+#   # Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
+#   colnames(CoEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
+#   colnames(CoEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
+#   colnames(CoEscpDat)[colnames(CoEscpDat)=="ReturnYear"] <- "yr"
+#   colnames(CoEscpDat)[colnames(CoEscpDat)=="Escapement"] <- "Escp"
 
 CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
 
@@ -107,8 +107,16 @@ CoEscpDat_bySubpop<-read.csv("DataIn/IFCoho_escpBySubpop.csv")
   tmp.df<-data.frame(CU_Name=unique(CoEscpDat_bySubpop$CU_Name), CU_ID=seq(1,length(unique(CoEscpDat_bySubpop$CU_Name)),by=1))
   CoEscpDat_bySubpop <- left_join(CoEscpDat_bySubpop,tmp.df)
 
-setwd(codeDir)
 
+# Summary of CU-level escapements based on Natural.Spawners  
+CoEscpDat <- as_tibble(CoEscpDat_bySubpop) %>% group_by(MU_Name, CU_Name, CU_ID, yr) %>% select(MU_Name, CU_Name, CU_ID, yr, Escp) %>%summarize(Escp=sum(Escp))
+CoEscpDat <- as.data.frame(CoEscpDat)
+# Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
+colnames(CoEscpDat)[colnames(CoEscpDat)=="CU_ID"] <- "CU"
+colnames(CoEscpDat)[colnames(CoEscpDat)=="MU_Name"] <- "MU"
+
+  
+setwd(codeDir)
 
 # Run annual restrospective analyses over various levels of p, restrict escapement dataset to 1998+ ============================================================
 # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
@@ -122,18 +130,14 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
 
 
 
-# ==================================================================================
+# ======================================================================================================================
 # (2) Call functions to plot data:
-# ====================================================================================
-
-# plot_CU_DataObs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_DataByCU")
-# plot_Num_CUs_Over_Time(CoEscpDat, cohoDir, plotName="Fr_Co_N_CUs")
-
+# ===================================================================================================================
 
  plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries", samePlot = F, withSgen=TRUE, addGenMean=T,
                         SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
 
- plot_CU_Escp_Over_Time(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries-Combined", samePlot = TRUE, withSgen=FALSE, addGenMean=FALSE,
+ plot_CU_Escp_Over_Time(Dat=CoEscpDat, Dir=cohoDir, plotName="coho-CU-EscpSeries-Combined", samePlot = TRUE, withSgen=FALSE, addGenMean=FALSE,
                        SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
  
  plot_Subpop_Escp_Over_Time(CoEscpDat_bySubpop, cohoDir, plotName="coho-Subpop-EscpSeries", samePlot = F, addGenMean=T)
@@ -142,7 +146,7 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
  plot_CU_Escp_withStatus(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries-wStatus", SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
  
  
- plot_Subpop_Escp_withStatus(CoEscpDat_bySubpop, cohoDir, plotName="coho-Subpop-EscpSeries-wStatus")
+ plot_Subpop_Escp_withStatus(Dat=CoEscpDat_bySubpop, Dir=cohoDir, plotName="coho-Subpop-EscpSeries-wStatus")
  
  
 # ==================================================================================================================
@@ -155,11 +159,11 @@ TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
                       extra_eval_iter=FALSE,biasCorrect=TRUE)
 
 # Prior means come from running "compareRickerModelTypes_onlySR.r", with bias correction
- ## Note: using expansion by 1.40 for prior cap (not 1.5, like Arbeider et al., Korman et al)
-# Current estimates:
-cap_priorMean_IM<-c(11.661606, 4.220915, 13.584558, 20.156285, 17.128963)
- # Old estimates:
-#cap_priorMean_IM<-c(11.084298, 4.456175, 13.343691, 27.145187, 17.361800)
+ ## Note: using expansion by 1.4 for prior cap (not 1.5, like Arbeider et al., Korman et al)
+# Current estimates (based on expansion of 1.4):
+ cap_priorMean_IM <- c(11.661606, 4.220915, 13.584558, 20.156285, 17.128963)
+ # With expansion of 1.5:
+# cap_priorMean_IM<-c(12.494575, 4.522409, 14.554897, 21.596031, 18.352463)
 # With 1.35
 # cap_priorMean_IM<-c(11.245117, 4.070168, 13.099408, 19.436428, 16.517216)
 
@@ -227,19 +231,19 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
            
-     ## Run with Bernoulli LRP model with hierarchical Ricker
-     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
-                    BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
-                    useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     # ## Run with Bernoulli LRP model with hierarchical Ricker
+     # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     #                BMmodel = "SR_HierRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
+     #                useGenMean=F, TMB_Inputs=TMB_Inputs_HM, outDir=cohoDir, RunName = paste("Bern.HierRickerSurv_",ps[pp]*100, sep=""),
+     #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
      
      ## Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T,codeDir=codeDir)
 
      # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
      # CW : I am getting an error when running this, since we will not be using these for now, I'll comment it out
@@ -252,22 +256,22 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
 
-     ## CW: Run using multidimensional rapid assessments results  (in progress)  
-     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
-                    SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
-                    BMmodel = "RapidAssessment_Ricker",#working on this option
-                     LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-                    useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.Multidim_Ricker",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
-
-     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
-                    SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
-                    BMmodel = "RapidAssessment_Ricker_Cap",#working on this option
-                     LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
-                    useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.Multidim_Ricker_Cap",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     # ## CW: Run using multidimensional rapid assessments results  (in progress)  
+     # runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
+     #                SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     #                BMmodel = "RapidAssessment_Ricker",#working on this option
+     #                 LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+     #                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.Multidim_Ricker",ps[pp]*100, sep=""),
+     #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
+     # 
+     # runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
+     #                SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     #                BMmodel = "RapidAssessment_Ricker_Cap",#working on this option
+     #                 LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
+     #                useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.Multidim_Ricker_Cap",ps[pp]*100, sep=""),
+     #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
      
      
   }
@@ -332,7 +336,7 @@ for (pp in 1:length(ps)) {
   # Extract logistic regression data from .rda file
   load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
   pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
-  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid)),2)
   AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
   minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
   sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
@@ -357,7 +361,7 @@ for (pp in 1:length(ps)) {
   # Extract logistic regression data from .rda file
   load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
   pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
-  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid)),2)
   AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
   minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
   sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
@@ -382,7 +386,7 @@ for (pp in 1:length(ps)) {
   # Extract logistic regression data from .rda file
   load(paste(outputDir,"/logisticFitDiagStats_",year,".rda",sep=""))
   pBoxTidwell[mm]<-round(logisticDiagStats$pBoxTidwell,3)
-  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid),2))
+  maxDevResid[mm]<-round(max(abs(logisticDiagStats$DevResid)),2)
   AR1.dev[mm]<-round(logisticDiagStats$AR1.dev,2)
   minSampSize[mm]<-round(logisticDiagStats$minSampleSize,0)
   sampSize[mm]<-round(logisticDiagStats$sampleSize,0)
@@ -403,7 +407,6 @@ for (pp in 1:length(ps)) {
                                 hitRatio, hitRatio_LOO)
   
   write.csv(diagStats_byModel,file=paste(cohoDir,"/DataOut/LogisticDiagStatsByModel_p=",p,"_",year,".csv",sep=""))
-  
   
 }
 
@@ -486,9 +489,9 @@ yearList<-2015:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE, ymax=5)
 
-yearList<-2015:2020
-plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
-                     inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE, ymax=6)
+# yearList<-2015:2020
+# plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
+#                      inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE, ymax=6)
 
 yearList<-2015:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,
@@ -613,10 +616,11 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
+LRP_plot1 <- LRP_plot + ggtitle("Logistic:Sgen-Ricker") +
+      geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-IM2020-LogisticLRP.png",sep=""), plot = LRP_plot,
+ggsave(paste(cohoDir, "/Figures/","coho-IM2020-LogisticLRP.png",sep=""), plot = LRP_plot1,
        width = 4, height = 3, units = "in")  
 
 
@@ -676,10 +680,11 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
+LRP_plot2 <- LRP_plot + ggtitle("Logistic:Sgen-priorCap") +
+geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-IMCap2020-LogisticLRP.png",sep=""), plot = LRP_plot,
+ggsave(paste(cohoDir, "/Figures/","coho-IMCap2020-LogisticLRP.png",sep=""), plot = LRP_plot2,
        width = 4, height = 3, units = "in")  
 
 
@@ -757,16 +762,19 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot <- LRP_plot + geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
+LRP_plot3 <- LRP_plot + ggtitle("Logistic:IFCRT LRP") +
+geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), plot = LRP_plot,
+ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), plot = LRP_plot3,
        width = 4, height = 3, units = "in")  
 
 
 
-
+LRP_plotall<-plot_grid(LRP_plot1,LRP_plot2,LRP_plot3)
+ggsave(paste(cohoDir, "/Figures/","coho-all-LogisticLRP.png",sep=""), plot = LRP_plotall,
+       width = 10, height = 8)  
 
 # =================================================================================================================
 # (6b) NOT YET WORKING: Create table of 2020 estimates
