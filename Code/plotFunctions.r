@@ -13,7 +13,7 @@
 # plotLogistic()
 
 
-
+library(cowplot)
 
 
 # =================================================================================
@@ -233,7 +233,7 @@ plot_CU_Escp_withStatus<-function(Dat, Dir, plotName, SgenFileName=NULL) {
 plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName) {
   
   
-  escpDat <- Dat %>% group_by(Subpop_Name, yr) %>% summarise(Escp=sum(Escp)) %>% 
+  escpDat <- Dat %>% group_by(Subpop_Name, CU_Name, yr) %>% summarise(Escp=sum(Escp)) %>% 
     mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right")) 
   
   statusDat <- escpDat %>%
@@ -249,19 +249,52 @@ plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName) {
   statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle North Thompson"] <- "Middle North Thomp."
   statusDat$Subpop_Name[statusDat$Subpop_Name == "Upper North Thompson"] <- "Upper North Thomp."
   
+  statusDat$CU_Name[statusDat$CU_Name == "South_Thompson"] <- "South Thompson"
+  statusDat$CU_Name[statusDat$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
+  statusDat$CU_Name[statusDat$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
+  statusDat$CU_Name[statusDat$CU_Name == "North_Thompson"] <- "North Thompson"
+  statusDat$CU_Name[statusDat$CU_Name == "Lower_Thompson"] <- "Lower Thompson"
   
-  g<-ggplot(statusDat) +
-    geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
-    geom_point(aes(y=Gen_Mean, x=yr, colour=Status)) +
-    geom_hline(aes(yintercept=1000), colour="orange") +
-    ylab("Escapement") + xlab("Year") +
-    scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
-    facet_wrap(~interaction(Subpop_Name), scales = "free_y") +
-    theme_classic()
+  #g<-ggplot(statusDat) +
+  #  geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
+  #  geom_point(aes(y=Gen_Mean, x=yr, colour=Status)) +
+  #  geom_hline(aes(yintercept=1000), colour="orange") +
+  #  ylab("Escapement") + xlab("Year") +
+  #  scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
+  #  facet_wrap(~interaction(Subpop_Name), scales = "free_y") +
+  #  theme_classic()
+
+  cus<-unique(statusDat$CU_Name)
+  pp<-list()
+  for(n in seq_along(cus)){
+
+    statusDato <-statusDat %>% filter(CU_Name==cus[n]) 
+    g<-ggplot(statusDato) +
+      geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
+      geom_point(aes(y=Gen_Mean, x=yr, colour=Status)) +
+      geom_hline(aes(yintercept=1000), colour="orange") +
+      ylab(paste(cus[n],"\n Escapement")) + xlab("Year") +
+      scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
+      facet_wrap(~interaction(Subpop_Name), scales = "free_y",ncol=1) +
+      theme_classic()
+    pp[[n]]<-g
+  }
+
+
+
+tres<- plot_grid(pp[[1]],pp[[4]],ncol=2,align="h")
+dois<- plot_grid(pp[[3]],pp[[5]],NULL,ncol=2, rel_heights = c(.66, .33),
+  align="h")
+um <- plot_grid(pp[[2]],NULL,NULL,ncol=1,align="h",
+  rel_heights = c(.36, .32,.32))
+
+gf<-plot_grid(tres, dois, um, nrow=1,rel_widths = c(.33, .33,.165))
+
+
 
   # Save plot
-  ggsave(paste(Dir,"/Figures/",plotName,".png",sep=""), plot = g,
-         width = 10, height = 5, units = "in") 
+  ggsave(paste(Dir,"/Figures/",plotName,".png",sep=""), plot = gf,
+         width = 12, height = 5, units = "in") 
     
   
 }
