@@ -224,7 +224,8 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   param$B_2 <- 0.1
   
   if (caseStudy == "IF Coho") {
-    codeDir <- file.path(here(), "Code")
+    #codeDir <- file.path(here(), "Code") # K.Holt: if running from IFCohoCohoStudy folder, the here() will not work
+    codeDir <- "C:/github/SalmonLRP_RetroEval/Code"
   }
   
   dyn.load(dynlib(paste(codeDir, "/TMB_Files/Logistic_LRPs_BoxTidwell", sep="")))
@@ -392,8 +393,18 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   
   # Frequency of outcomes (coded to accept proportional as well as 0/1 data)
   
+  # Original Freq code:
   Freq <- c(sum(floor(SMUlogisticData$ppn))/length(SMUlogisticData$ppn),
             sum(ceiling(SMUlogisticData$ppn))/length(SMUlogisticData$ppn))
+  
+
+  # Added by K.Holt for Fraser Coho case study, in which data is binary (success / failure), not proportion format
+  if (caseStudy == "IF Coho") {
+
+    Freq <- c(sum(ceiling(SMUlogisticData$ppn))/length(SMUlogisticData$ppn), 
+            1-sum(ceiling(SMUlogisticData$ppn))/length(SMUlogisticData$ppn))
+  }  
+  
   
   minFreq <- min(Freq)
   minSampleSize <- 10/min(Freq)
