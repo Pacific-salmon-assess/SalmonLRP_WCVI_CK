@@ -228,7 +228,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
   for(pp in 1:length(ps)){
   
      ## Run with Bernoulli LRP model with individual model Ricker
-     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
@@ -240,7 +240,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
      
      ## Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
-     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T,codeDir=codeDir)
@@ -253,7 +253,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      #            bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
      ## Run using distribibutional benchmark for CUs based on 50% of subpopulations within a CU > 1000 fish   
-     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
@@ -422,7 +422,7 @@ modelFitList<-c("Bern.IndivRickerSurv",
                 "Bern.SPopAbundThreshST")
 
 # Label names
-L_Names<-c("Sgen:LRP", "Sgen_priorCap:LRP", "Dist:LRP")  
+L_Names<-c("Sgen-Ricker", "Sgen-priorCap", "IFCRT")  
 
 #pList<-c(50, 66, 90, 99)
 
@@ -798,9 +798,9 @@ for (pp in 1:length(plotMultiP)) {
   
 
 modelFitList<-c("Bern.IndivRickerSurv",
-                "Bern.HierRickerSurv",
+                #"Bern.HierRickerSurv",
                 "Bern.IndivRickerSurvCap",
-                "Bern.HierRickerSurvCap",
+                #"Bern.HierRickerSurvCap",
                 "Bern.SPopAbundThreshST")
 
 

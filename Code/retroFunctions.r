@@ -411,7 +411,7 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
  
       out<- runAnnualRetro(EscpDat=EscpDat.ii, SRDat=SRDat.ii, startYr=startYr, endYr=endYr, BroodYrLag=BroodYrLag,
                            genYrs=genYrs, p = p, BMmodel = BMmodel, LRPmodel=LRPmodel, LRPfile=LRPfile, integratedModel=integratedModel,
-                           useGenMean=useGenMean, TMB_Inputs=TMB_Inputs.ii, outDir=cohoDir, RunName = NA,
+                           useGenMean=useGenMean, TMB_Inputs=TMB_Inputs, outDir=cohoDir, RunName = NA,
                            bootstrapMode = T, plotLRP=F, runLogisticDiag=runLogisticDiag)
 
           # Add output to table
