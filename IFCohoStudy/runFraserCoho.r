@@ -422,7 +422,7 @@ modelFitList<-c("Bern.IndivRickerSurv",
                 "Bern.SPopAbundThreshST")
 
 # Label names
-L_Names<-c("Sgen-Ricker", "Sgen-priorCap", "IFCRT")  
+L_Names<-c("Sgen:LRP", "Sgen_priorCap:LRP", "Dist:LRP")  
 
 #pList<-c(50, 66, 90, 99)
 
@@ -798,9 +798,9 @@ for (pp in 1:length(plotMultiP)) {
   
 
 modelFitList<-c("Bern.IndivRickerSurv",
-                #"Bern.HierRickerSurv",
+                "Bern.HierRickerSurv",
                 "Bern.IndivRickerSurvCap",
-                #"Bern.HierRickerSurvCap",
+                "Bern.HierRickerSurvCap",
                 "Bern.SPopAbundThreshST")
 
 
