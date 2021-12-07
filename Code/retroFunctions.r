@@ -309,12 +309,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
                                                           Years=yr)
       
-<<<<<<< HEAD
-      
       logisticDiagStats<-LRdiagnostics(SMUlogisticData, 
-=======
-      logisticDiagStats<-LRdiagnostics(SMUlogisticData=SMUlogisticData, 
->>>>>>> 8c530b5386e800ad936200b58b70fe3fd8412882
                  nCU=length(unique(EscpDat$CU_Name)), All_Ests = LRP_Mod$All_Ests,
                   p=p, Bern_logistic = useBern_Logistic, dir=paste(figDir,"/",sep=""),
                   plotname=paste("logisticFitDiag",yearList[yy], sep="_"),
