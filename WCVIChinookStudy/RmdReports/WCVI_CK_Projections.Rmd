@@ -414,6 +414,8 @@ par(xpd=TRUE)
 
 corrplot(corMat, method="circle", p.mat=corMat, insig="p-value", type="lower", mar=c(5,4,3,2))
 # dev.off()
+
+#write.csv(corMat[lower.tri(corMat)==TRUE], "DataOut/WCVI_Spawner_cors.csv", row.names=FALSE)
 ```
 
 When we assumed correlations in recruitment residuals equal to observed spawner correlations (i.e., scalar = 1) the resulting correlations in spawner abundances from the projections matched observed correlations (Fig. 7). Reducing the correlations in recruitment residuals (i.e., scaling by 0.5 or 0) resulted spawner correlations in the projections that were lower than those observed. 
