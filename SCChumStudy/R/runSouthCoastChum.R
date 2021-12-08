@@ -497,13 +497,14 @@ md$AboveLRP <- ifelse(md$lrp_status=="above", TRUE, FALSE)
 # Make new names for scenarios
 snames <- c("1. Percentile- 4 CUs full",
             "2. Percentile- 5 CUs partial",
-            "3. Decision Tree- 4 CUs full",
-            "4. Decision Tree-  5 CUs full",
-            "5. Decision Tree- 7 CUs partial",
-            "6. Decision Tree- 5 CUs partial")
+            "3. Salmon Scanner- 4 CUs full",
+            "4. Salmon Scanner-  5 CUs full",
+            "5. Salmon Scanner- 7 CUs partial",
+            "6. Salmon Scanner- 5 CUs partial")
 skey <- data.frame(id = sort(unique(md$scenario)), name=snames) 
 md$data_name <- skey$name[match(md$scenario, skey$id)]
 plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
+
 
 # --------------------------------------------------------------#
 # Plot ricker, SMSY, Sgen estimates from integrated model
@@ -692,4 +693,5 @@ hitRatio_LOO<-NA
     ylab("Density") +
     theme_classic()
   dev.off()
+  
   
