@@ -783,7 +783,7 @@ ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), p
 
 LRP_plotall<-plot_grid(LRP_plot1,LRP_plot2,LRP_plot3)
 ggsave(paste(cohoDir, "/Figures/","coho-all-LogisticLRP.png",sep=""), plot = LRP_plotall,
-       width = 10, height = 8)  
+       width = 8, height = 7)  
 
 # =================================================================================================================
 # (6b) NOT YET WORKING: Create table of 2020 estimates

@@ -255,6 +255,13 @@ plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName) {
   statusDat$CU_Name[statusDat$CU_Name == "North_Thompson"] <- "North Thompson"
   statusDat$CU_Name[statusDat$CU_Name == "Lower_Thompson"] <- "Lower Thompson"
   
+  write.csv(statusDat,
+    paste(Dir,"/DataOut/ModelFits/IFCRTstatusbyCU.csv", sep=""), row.names =F)
+
+
+
+
+
   #g<-ggplot(statusDat) +
   #  geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
   #  geom_point(aes(y=Gen_Mean, x=yr, colour=Status)) +
@@ -767,6 +774,10 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
        propName<-"Prop: Sgen-priorCap"
        fitName<-"AllEsts_Indiv_Ricker_Surv_priorCap"
      }
+     #if(SRmodName =="Bern.SPopAbundThreshST")  {
+     # propName<-"Prop: IFCRT"
+     # fitName<-""
+     #}
      
     CU_Params <- read.csv(paste(Dir, "/DataOut/ModelFits/",fitName,".csv",sep=""))
     CU_Params <- CU_Params %>% filter(Param == "Sgen")
@@ -798,7 +809,25 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       Status_DF <- rbind(Status_DF, New_Rows)
     }
   }
+  
+  # Step 3.5 Add Prop IFCRT
+  IFCRT<-read.csv(paste(Dir, "/DataOut/ModelFits/IFCRTstatusbyCU",".csv",sep=""))
 
+  names(IFCRT)
+   stpropIFCRT <- IFCRT %>% select(-"Escp",  -"Gen_Mean") %>%
+  filter(yr>1999)%>%
+  group_by(CU_Name,yr) %>%
+   summarise(above = sum(Status=="Above"), below= sum(Status=="Below"))
+
+  stpropIFCRT$propbelow<-stpropIFCRT$below/(stpropIFCRT$below+stpropIFCRT$above)
+  stpropIFCRT$status<-stpropIFCRT$propbelow>.5
+
+  IFCRTstatus<-aggregate(stpropIFCRT$status,list(year=stpropIFCRT$yr),sum)
+  
+  IFCRTrows<-data.frame(LRP_estYr=2020,
+   retroYear = IFCRTstatus$year , Name="Prop: IFCRT" , AboveLRP=!as.logical(IFCRTstatus$x))
+
+  Status_DF <- rbind(Status_DF, IFCRTrows)
 
   # Step 4: Add mutlidimensional results (optional)
  
@@ -815,8 +844,8 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     }
     
   
-    if (OM.j == "Ricker") name1<-"Prop: Multidim-Ricker"
-    if (OM.j == "Ricker_priorCap") name1<-"Prop: Multidim-priorCap"
+    if (OM.j == "Ricker") name1<-"Prop: Scanner-Ricker"
+    if (OM.j == "Ricker_priorCap") name1<-"Prop: Scanner-priorCap"
       
     multiDimResults<-as_tibble(read.csv(paste(Dir,"/DataOut/multiDimStatusEsts_",OM.j,".csv", sep="")))
     
@@ -848,9 +877,9 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   methods <- unique(Status_DF$Name)
   
   # Hack to re-order methods for plotting ===============
-  methods<-c("Prop: WSP-2014", "","Prop: Multidim-Ricker", "Prop: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
-             "Prop: Multidim-priorCap", "Prop: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
-             "Abund: Logistic:IFCRT") 
+  methods<-c("Prop: WSP-2014", "","Prop: Scanner-Ricker", "Prop: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
+             "Prop: Scanner-priorCap", "Prop: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
+             "Prop: IFCRT", "Abund: Logistic:IFCRT") 
              
   # --- set-up pdf to save to
   #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
@@ -1327,7 +1356,7 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
   
    plotName <- paste("coho-StatusByNCUs-",outName2, sep="")
   
-   png(paste(outputDir,"/", plotName, ".png", sep=""), width=580, height=700)
+   png(paste(outputDir,"/", plotName, ".png", sep=""), width=580, height=600)
    
    do.call(grid.arrange,  ps)
   
