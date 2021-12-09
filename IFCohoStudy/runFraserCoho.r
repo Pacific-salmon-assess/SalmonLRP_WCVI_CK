@@ -485,7 +485,7 @@ yearList<-2017:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE, ymax=6)
 
-yearList<-2015:2020
+yearList<-2017:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE, ymax=5)
 
@@ -493,7 +493,7 @@ plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", B
 # plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
 #                      inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE, ymax=6)
 
-yearList<-2015:2020
+yearList<-2017:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE,ymax=8)
 
@@ -540,7 +540,10 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=fit), col="black", size=1) +
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
-      geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data,
+       aes(x = xx, y = yy)) +
+      #geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),], 
+      #  aes(x = xx, y = yy), shape=4, stroke = 2) +
       xlab("Aggregate Spawner Abundance") + ylab("Pr(All CUs > Lower Benchmark)") +
       coord_cartesian(ylim=c(0,1)) +
       theme_classic()
@@ -599,6 +602,8 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
       geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),],
+       aes(x = xx, y = yy), shape=4, stroke = 2) +
       annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill=colList[pp], alpha = .2) +
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
@@ -663,6 +668,8 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
       geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),],
+       aes(x = xx, y = yy), shape=4, stroke = 2) +
       annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill=colList[pp], alpha = .2) +
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
@@ -745,6 +752,8 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
       geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),],
+       aes(x = xx, y = yy), shape=4, stroke = 2) +
       annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill=colList[pp], alpha = .2) +
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
