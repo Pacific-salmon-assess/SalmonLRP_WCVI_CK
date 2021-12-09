@@ -636,8 +636,8 @@ cormat<-as.matrix(cormat)
 # save correlation matrix
 write.csv(cormat, "DataOut/chum-escapement-correlation-matrix.csv")
 
-png("Figures/fig_chum_spawners_corr.png", width=8, height=8, units="in", res=500)
-corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower")
+png("Figures/fig_chum_spawners_corr.png", width=6, height=6, units="in", res=500)
+corrplot(cormat, method="circle", addCoef.col="black", tl.col = "black", insig="p-value", type="lower", diag=FALSE)
 dev.off()
 
 # Load, summarize and save diagnostics---------
