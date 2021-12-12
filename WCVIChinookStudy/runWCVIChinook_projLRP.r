@@ -1133,14 +1133,14 @@ if(calcTau){
 
 
 OMsToTest<-c(
-  "recCorSca0",
-  "recCorSca0.5",
-  "baseERn10000")
+   "recCorSca0",
+   "recCorSca0.5",
+   "baseERn10000",#)
   # "baseERn10000",
-  # "agePpnConst")
-    # "cvER0",
+  "agePpnConst",
+    "cvER0",
     # "baseERn10000",
-    # "cvER0.17")
+     "cvER0.17")
 
 LRPFileName <- "ProjectedLRPs_cvERage.csv"
 
@@ -1231,23 +1231,28 @@ SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
 if(len > 12000) {ind <- is.na(SpwnCorr.df$highlight)} else ind <- rep(FALSE,len)
 
 # Save LRPs for all OM scenarios
-write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
-#SpwnCorr.df <- read.csv(paste(projOutDir2, "SpwnCorr.df.csv", sep="/"))
-
-
+write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorrAllSAs.df.csv", sep="/"), row.names=F)
+#SpwnCorr.df <- read.csv(paste(projOutDir2, "SpwnCorrAllSAs.df.csv", sep="/"))
+tmp.Age <- SpwnCorr.df %>% filter(OM_Name=="baseERn10000") %>% mutate(OM_Name="agePpnVar")
+tmp.cvER <- SpwnCorr.df %>% filter(OM_Name=="baseERn10000") %>% mutate(OM_Name="cvER0.085")
+SpwnCorr.df <- SpwnCorr.df %>% add_row(tmp.Age) %>% add_row(tmp.cvER)
 #LRPs <- read.csv(paste(wcviCKDir,"/DataOut/ProjectedLRPs/", LRPFileName, sep="")) %>% pull(LRP)
 
 
 factor(SpwnCorr.df$OM_Name,levels = c(
-  "recCorSca0",
-  "recCorSca0.5",
+   "recCorSca0",
+   "recCorSca0.5",
   # "baseER"),
-  "baseERn10000"),
+   "baseERn10000",
   # "baseERn10000",
-  # "agePpnConst"),
-  # "cvER0",
+  "agePpnConst",
+  "agePpnVar",
   # "baseERn10000",
-  # "cvER0.17"),
+  "cvER0",
+  "cvER0.085",
+  # "baseERn10000",
+  # "baseERn10000",
+  "cvER0.17"),
 
  ordered = TRUE)
 
@@ -1256,21 +1261,21 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
   geom_boxplot(width=0.5, outlier.shape=NA) + ylim(-0.25,1)+
   geom_jitter(data=SpwnCorr.df[!ind, ],
               position=position_jitter(0.2), col="dark grey", alpha=0.95,
-              size=0.2) +
+              size=0.1) +
   scale_x_discrete(limits=c("Observed",
                             # "cvER0",
                             # "cvER0.21baseERn10000",
                             # # "cvER0.21.annualcvERCU")
                             # "cvER0.42"),
                             # "baseERn10000",
-                            # "agePpnConst"),
-                            "recCorSca0",
-                            "recCorSca0.5",
-                            "baseERn10000"),
-
-                            # "cvER0",
-                            # "baseERn10000",
-                            # "cvER0.17"),
+                             "recCorSca0",
+                             "recCorSca0.5",
+                             "baseERn10000",
+                             "agePpnConst",
+                             "agePpnVar",
+                             "cvER0",
+                             "cvER0.085",
+                             "cvER0.17"),
 
                        labels=c("Observed",
                             # "0",
@@ -1279,10 +1284,15 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             # # #"annual\ndeviations\nover years")) +
                             # "0.17" )) +
                             "0",
-                            "0.5",
-                            "1")) +
-                            # "Variable\nAge Ppn\nAmong Inlets",
-                            # "Constant\nAge Ppn\nAmong Inlets" )) +
+                            "0.5\nScalar for recruitment deviations",
+                            "1",
+                            # #"const\ndeviations\nover years",
+                            # # #"annual\ndeviations\nover years")) +)) +
+                            "Variable\nage ppn\namong\ninlets",
+                            "Constant\nage ppn\namong\ninlets" ,
+                            "0",
+                            "0.085\nCV in exploitation rates",#)) +
+                            "0.17" )) +
 
 
 
@@ -1290,7 +1300,14 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
   # xlab("Scalar for Ricker Residual Correlation Matrix") +
   xlab("") +
   ylab("Pairwise correlations in spawners among inlets") +
-  theme(axis.text=element_text(size=7),  axis.title=element_text(size=8)) #+
+  theme(axis.text=element_text(size=5),
+        axis.title=element_text(size=8))#,
+        # axis.text.x = element_text(hjust = 0))
+  # theme(panel.grid.major.x = element_blank(),
+  #       panel.grid.minor.x = element_blank(),
+  #       plot.margin = unit(c(1, 1, 4, 1), "lines")) +
+  # coord_cartesian(expand = FALSE, clip = "off") +
+  # annotate(geom = "text", x = 3, y = -0.3, label = "Scalar for recruitment\ndeviations", size = 0.5)
   # annotate("text", x = c(1.5,2:4), y = -0.2, label =c("LRP:",LRPs), size=3)
   # annotate("text", x = c(1.4,2:12), y = -0.2, label =c("LRP:",LRPs), size=2)
   # annotate("text", x = c(1.5,2:3), y = -0.2, label =c("LRP:",LRPs), size=5)
@@ -1299,7 +1316,9 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
 
 
 
-ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor-recCorSca.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor-recCorSca.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
+#        width = 4, height = 3, units = "in")
+ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
        width = 4, height = 3, units = "in")
 
 # summary(SpwnCorr.df %>% filter(OM_Name=="cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc") %>% pull(SpwnCorrValues))
@@ -1952,7 +1971,7 @@ probThresh <- 0.5
 # dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
 # ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
 
-GroupName <- "sameSREPhCor"
+GroupName <- "sameSREPhCor"#"sameProdhCor"#"evenhCor"
 OMsToIncludeName <- paste("CUAbove_", GroupName, sep="")
 
 
@@ -2060,7 +2079,7 @@ for (OM in 1:length(OMsToInclude)){
                        position="identity", bins=30, alpha=0.4) +
         # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
         #                 alpha=0.4) +
-        labs(title="(a) Productivity (log alpha)")+
+        labs(title="(a) Productivity (log alpha)", x="log alpha")+
         xlim(0,3.5)
 
       library(gridExtra)
@@ -2070,7 +2089,8 @@ for (OM in 1:length(OMsToInclude)){
       gSREP <- ggplot(parsDF, aes(x = SREP)) +
         geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
                        position="identity", bins=30, alpha=0.4) +
-        labs(title="(b) SREP") +
+        #labs(title="(b) SREP") +
+        labs(title=expression((b)~S[REP]), x=expression(S[REP])) +
         xlim(0,50000)
       # ggsave(filename = paste("Figures/", GroupName, "_SREPHist.png", sep="") , plot=gSREP)
       gSRpars <- grid.arrange(galpha, gSREP)
