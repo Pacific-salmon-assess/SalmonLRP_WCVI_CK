@@ -74,7 +74,8 @@ dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
 setwd(cohoDir)
 
   CoSRDat <- read.csv("DataIn/IFCoho_SRbyCU.csv")
- # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
+ 
+  # Restrict data set to years 1998+ based on recommendation from Michael Arbeider
  CoSRDat <- CoSRDat %>% filter(BroodYear >= 1998)
 
  
@@ -87,6 +88,23 @@ setwd(cohoDir)
  
  AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
    mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
+ 
+ 
+ # Summary of CU-level escapements based on Natural.Spawners
+ # -- Read-in Natural spawners at the stream level
+ CoEscpDat_bySubpop<-read.csv("DataIn/IFCoho_escpBySubpop.csv")
+ # --Change column names to yr, CU_Name, Escp, Subpop_Name, CU_ID
+ CoEscpDat_bySubpop<-CoEscpDat_bySubpop %>% select(MU_Name=MU_Name, yr=Return.Year, CU_Name=Conservation.Unit, Escp=Natural.Returns, Subpop_Name=Sub.Population)
+ tmp.df<-data.frame(CU_Name=unique(CoEscpDat_bySubpop$CU_Name), CU_ID=seq(1,length(unique(CoEscpDat_bySubpop$CU_Name)),by=1))
+ CoEscpDat_bySubpop <- left_join(CoEscpDat_bySubpop,tmp.df)
+ # -- Calculate CU-level Natural Spawners
+ CoEscpDat.Natural <- as_tibble(CoEscpDat_bySubpop) %>% group_by(MU_Name, CU_Name, CU_ID, yr) %>% select(MU_Name, CU_Name, CU_ID, yr, Escp) %>%summarize(Escp=sum(Escp))
+ CoEscpDat.Natural <- as.data.frame(CoEscpDat.Natural)
+ # -- Change header names to match generic data headers (this will allow generic functions from Functions.r to be used)
+ colnames(CoEscpDat.Natural)[colnames(CoEscpDat.Natural)=="CU_ID"] <- "CU"
+ colnames(CoEscpDat.Natural)[colnames(CoEscpDat.Natural)=="MU_Name"] <- "MU"
+ 
+ 
  
 # ======================================================================
 # (2) Specify initial parameters & datasets for projections  
@@ -789,7 +807,21 @@ cor_mat<-spawners.obs %>% pivot_wider(names_from = CU, names_prefix="CU", values
 SpwnCorrValues.Obs<-cor_mat[lower.tri(cor_mat)==TRUE]
 tmp<-data.frame(OM_Name = "Observed",SpwnCorrValues = SpwnCorrValues.Obs)
 SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
-  
+ 
+
+# Calculate observed escapement correlations for natural spawners (but, don't add to data frame)
+natSpawners.obs<-data.frame(CoEscpDat.Natural$yr, CoEscpDat.Natural$CU, CoEscpDat.Natural$Escp)
+names(natSpawners.obs)<-c("year", "CU", "spawners")
+cor_mat_nat<-natSpawners.obs %>% pivot_wider(names_from = CU, names_prefix="CU", values_from=spawners) %>% select(-year) %>% cor()
+natSpwnCorrValues.Obs<-cor_mat_nat[lower.tri(cor_mat_nat)==TRUE]
+
+
+
+tmp<-data.frame(OM_Name = "Observed",SpwnCorrValues = SpwnCorrValues.Obs)
+
+
+
+ 
 # Save LRPs for all OM scenarios
 write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
 # 

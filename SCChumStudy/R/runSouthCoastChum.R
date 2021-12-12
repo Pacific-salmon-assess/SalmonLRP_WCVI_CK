@@ -495,15 +495,11 @@ md <- read.csv("DataIn/LRP_compare_methods.csv", header=TRUE)
 md$AboveLRP <- ifelse(md$lrp_status=="above", TRUE, FALSE)
 
 # Make new names for scenarios
-snames <- c("1. Percentile- 4 CUs full",
-            "2. Percentile- 5 CUs partial",
-            "3. Decision Tree- 4 CUs full",
-            "4. Decision Tree-  5 CUs full",
-            "5. Decision Tree- 7 CUs partial",
-            "6. Decision Tree- 5 CUs partial")
-skey <- data.frame(id = sort(unique(md$scenario)), name=snames) 
-md$data_name <- skey$name[match(md$scenario, skey$id)]
+#snames <- unique(md$scenario_name)
+#skey <- data.frame(id = sort(unique(md$scenario)), name=snames) 
+md$data_name <- md$scenario_name
 plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
+
 
 # --------------------------------------------------------------#
 # Plot ricker, SMSY, Sgen estimates from integrated model
@@ -637,8 +633,11 @@ chum_dat_w <- ChumEscpDat %>% select(CU_Name, Escp, yr) %>% pivot_wider(names_fr
 cormat <- cor(chum_dat_w[ ,-1])
 cormat<-as.matrix(cormat)
 
+# save correlation matrix
+write.csv(cormat, "DataOut/chum-escapement-correlation-matrix.csv")
+
 png("Figures/fig_chum_spawners_corr.png", width=6, height=6, units="in", res=500)
-corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower")
+corrplot(cormat, method="circle", addCoef.col="black", tl.col = "black", insig="p-value", type="lower", diag=FALSE)
 dev.off()
 
 # Load, summarize and save diagnostics---------
@@ -692,4 +691,5 @@ hitRatio_LOO<-NA
     ylab("Density") +
     theme_classic()
   dev.off()
+  
   

@@ -144,11 +144,11 @@ Run_Ricker_LRP <- function(SRDat, EscDat, BMmodel, Bern_Logistic,
   }
   
   # Call optimization:
-  if(TMB_Inputs$extra_eval_iter==TRUE) # extra evaluations and iterations for chum case study to get convergence for Ricker parameters
+  if(TMB_Inputs$extra_eval_iter==TRUE){ # extra evaluations and iterations for chum case study to get convergence for Ricker parameters
     opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e10, iter.max = 1e10))
-  else 
+  }else{ 
     opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
-  
+  }
   # Parameter estimate after phase 1 optimization:
   pl <- obj$env$parList(opt$par) # Parameter estimates after phase 1
   

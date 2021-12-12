@@ -228,7 +228,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
   for(pp in 1:length(ps)){
   
      ## Run with Bernoulli LRP model with individual model Ricker
-     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
@@ -240,7 +240,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      #                bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
      
      ## Run with Bernoulli LRP model with individual model Ricker, with prior on capacity
-     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T,codeDir=codeDir)
@@ -253,7 +253,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      #            bootstrapMode = F, plotLRP=T,runLogisticDiag=T)
 
      ## Run using distribibutional benchmark for CUs based on 50% of subpopulations within a CU > 1000 fish   
-     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
+     runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
                     bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
@@ -485,7 +485,7 @@ yearList<-2017:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_Surv",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurv_50",plotAveLine=TRUE, ymax=6)
 
-yearList<-2015:2020
+yearList<-2017:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_IndivRicker_SurvCap",p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.IndivRickerSurvCap_50",plotAveLine=TRUE, ymax=5)
 
@@ -493,7 +493,7 @@ plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", B
 # plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "SR_HierRicker_Surv",p=probThresh, Dir=cohoDir,
 #                      inputPrefix="Bern.HierRickerSurv_50",plotAveLine=TRUE, ymax=6)
 
-yearList<-2015:2020
+yearList<-2017:2020
 plotAggStatus_byNCUs(year=yearList, nCUList=c(5,4,3), LRPmodel="BernLogistic", BMmodel = "ThreshAbund_Subpop1000_ST", p=probThresh, Dir=cohoDir,
                      inputPrefix="Bern.SPopAbundThreshST_50", plotAveLine=TRUE,ymax=8)
 
@@ -540,7 +540,10 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=fit), col="black", size=1) +
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
-      geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data,
+       aes(x = xx, y = yy)) +
+      #geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),], 
+      #  aes(x = xx, y = yy), shape=4, stroke = 2) +
       xlab("Aggregate Spawner Abundance") + ylab("Pr(All CUs > Lower Benchmark)") +
       coord_cartesian(ylim=c(0,1)) +
       theme_classic()
@@ -599,6 +602,8 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
       geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),],
+       aes(x = xx, y = yy), shape=4, stroke = 2) +
       annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill=colList[pp], alpha = .2) +
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
@@ -663,6 +668,8 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
       geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),],
+       aes(x = xx, y = yy), shape=4, stroke = 2) +
       annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill=colList[pp], alpha = .2) +
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
@@ -745,6 +752,8 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(mapping=aes(x=xx, y=upr), col="grey85") +
       geom_line(mapping=aes(x=xx, y=lwr), col="grey85") +
       geom_point(data=LRP_List[[1]]$Logistic_Data, aes(x = xx, y = yy)) +
+      geom_point(data=LRP_List[[1]]$Logistic_Data[which.max(LRP_List[[1]]$Logistic_Data$yr),],
+       aes(x = xx, y = yy), shape=4, stroke = 2) +
       annotate("rect", xmin = LRP_List[[pp]]$LRP$lwr, xmax = LRP_List[[pp]]$LRP$upr, ymin=0, ymax=plotMultiP[pp], fill=colList[pp], alpha = .2) +
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
@@ -774,7 +783,7 @@ ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), p
 
 LRP_plotall<-plot_grid(LRP_plot1,LRP_plot2,LRP_plot3)
 ggsave(paste(cohoDir, "/Figures/","coho-all-LogisticLRP.png",sep=""), plot = LRP_plotall,
-       width = 10, height = 8)  
+       width = 8, height = 7)  
 
 # =================================================================================================================
 # (6b) NOT YET WORKING: Create table of 2020 estimates
