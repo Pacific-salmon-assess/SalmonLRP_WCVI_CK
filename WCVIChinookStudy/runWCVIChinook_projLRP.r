@@ -1971,8 +1971,8 @@ probThresh <- 0.5
 # dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
 # ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
 
-GroupName <- "sameSREPhCor"#"sameProdhCor"#"evenhCor"
-OMsToIncludeName <- paste("CUAbove_", GroupName, sep="")
+GroupName <- "sameProdhCor"#"sameSREPhCor"##"evenhCor"#"sameSREPhCor"#"sameProdhCor"#
+OMsToIncludeName <- paste("testCUAbove_", GroupName, sep="")
 
 
 OMsToInclude<-c(
@@ -1985,24 +1985,24 @@ OMsToInclude<-c(
   # "ER0.35even_hCor",
   # "ER0.40even_hCor",
   # "ER0.45even_hCor")
-"ER0.05sameSREP_hCor",
-"ER0.10sameSREP_hCor",
-"ER0.15sameSREP_hCor",
-"ER0.20sameSREP_hCor",
-"ER0.25sameSREP_hCor",
-"ER0.25sameSREP_hCor",
-"ER0.35sameSREP_hCor",
-"ER0.40sameSREP_hCor",
-"ER0.45sameSREP_hCor")
-# "ER0.05sameProd_hCor",
-# "ER0.10sameProd_hCor",
-# "ER0.15sameProd_hCor",
-# "ER0.20sameProd_hCor",
-# "ER0.25sameProd_hCor",
-# "ER0.25sameProd_hCor",
-# "ER0.35sameProd_hCor",
-# "ER0.40sameProd_hCor",
-# "ER0.45sameProd_hCor")
+# "ER0.05sameSREP_hCor",
+# "ER0.10sameSREP_hCor",
+# "ER0.15sameSREP_hCor",
+# "ER0.20sameSREP_hCor",
+# "ER0.25sameSREP_hCor",
+# "ER0.25sameSREP_hCor",
+# "ER0.35sameSREP_hCor",
+# "ER0.40sameSREP_hCor",
+# "ER0.45sameSREP_hCor")
+"ER0.05sameProd_hCor",
+"ER0.10sameProd_hCor",
+"ER0.15sameProd_hCor",
+"ER0.20sameProd_hCor",
+"ER0.25sameProd_hCor",
+"ER0.25sameProd_hCor",
+"ER0.35sameProd_hCor",
+"ER0.40sameProd_hCor",
+"ER0.45sameProd_hCor")
 
 LRP <- NA
 
@@ -2083,7 +2083,7 @@ for (OM in 1:length(OMsToInclude)){
         xlim(0,3.5)
 
       library(gridExtra)
-      arrange
+      # arrange
       # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
 
       gSREP <- ggplot(parsDF, aes(x = SREP)) +
@@ -2168,9 +2168,9 @@ for (OM in 1:length(OMsToInclude)){
   lrp.lwd <- 1
   abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
   i <- 1
-  if (i==1)    abline(v=LRP[i], col="orange", lwd=lrp.lwd)
+  if (i==1)    abline(v=LRP[i], col="orange", lwd=lrp.lwd)#"orange"#E69F00", "#56B4E9",
   if(OM<7) { if (i==2)
-    abline(v=LRP[i], col=viridis(4, alpha=0.3)[3], lwd=lrp.lwd) }
+    abline(v=LRP[i], col="#56B4E9", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3]
   abline(h=0.66, lty=2)
   abline(h=0.9, lty=2)
   abline(h=0.99, lty=2)
