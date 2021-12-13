@@ -1602,8 +1602,18 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
-  "baseER")
+  # "baseER")
   #"ER0",
+  "ER0.05",
+  "ER0.10",
+  "ER0.15",
+  "ER0.2",
+  "ER0.25",
+  # "ER0.30",
+  "baseER",
+  "ER0.35",
+  "ER0.4",
+  "ER0.45")
   # "ER0.05even_hCor",
   # "ER0.10even_hCor",
   # "ER0.15even_hCor",
@@ -1625,7 +1635,7 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven-hCor"#"ERs"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERstest"#"ERsEven-hCor"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
@@ -1712,11 +1722,14 @@ for (OM in 1:length(OMsToInclude)){
            ylim=c(0,1),
            cex=0.5, cex.lab=1,#1.5,
            xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
+           yaxt <- "s"
     }# End of if(length(OMsToInclude)==1){
 
     if(length(OMsToInclude)==9){
-      par(mar=c(2.8,3,0.6,1))
+      par(mar=c(2.8,3,0.6,0.6))
       xMax <- 50000
+      if(OM %in% c(1,4,7)) yaxt <- "s"
+      if(OM %in% c(2,3,5,6,8,9)) yaxt <- "n"
       if(OM<7){
         xaxt <- "n"#par(xaxt="n")
       }
@@ -1725,9 +1738,12 @@ for (OM in 1:length(OMsToInclude)){
       }
     }# End of if(length(OMsToInclude)==9){
     if(length(OMsToInclude)==3){
-        par(mar=c(2.8,3,1,1))
+        par(mar=c(2.8,2.5,0.1,1))
         xaxt <- "s"
         xMax <- 70000
+        if(OM>1) yaxt <- "n"
+        if(OM==1) yaxt <- "s"
+
       }
 
       if(length(OMsToInclude)>1){
@@ -1735,7 +1751,10 @@ for (OM in 1:length(OMsToInclude)){
              xlim=c(0, xMax ),
              ylim=c(0,1),
              cex=0.3, cex.lab=1,#1.5,
-             xlab="", ylab="", xaxt=xaxt)
+             xlab="", ylab="", xaxt=xaxt, yaxt=yaxt)
+            aty <- seq(0, 1, 0.2)
+            if(OM %in% c(2,3,5,6,8,9)) axis(side =2,  at=aty, labels = FALSE)
+
 
       }
 
@@ -1766,7 +1785,7 @@ for (OM in 1:length(OMsToInclude)){
 
         if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
                         line=1.8,at=0.5, cex=1) }
-        if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=40000,
+        if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=25000,
                          cex=0.7) }
 
       }# End of if(length(OMsToInclude)==9){
@@ -1793,9 +1812,12 @@ for (OM in 1:length(OMsToInclude)){
       text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
 
       if(OM==1) {mtext("Prob(all inlets)>lower benchmark", side=2,
-                       line=1.8,at=0.4, cex=0.55) }
-      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=40000,
+                       line=1.8,at=0.4, cex=0.55)
+                  yaxt <- "s"}
+      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=25000,
                        cex=0.7) }
+      if(OM>1)  yaxt <- "n"
+
 
     }# End of if(length(OMsToInclude)==3){
 
