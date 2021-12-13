@@ -1604,16 +1604,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05",
-  "ER0.10",
-  "ER0.15",
-  "ER0.2",
-  "ER0.25",
-  # "ER0.30",
-  "baseER",
-  "ER0.35",
-  "ER0.4",
-  "ER0.45")
+  # "ER0.05",
+  # "ER0.10",
+  # "ER0.15",
+  # "ER0.2",
+  # "ER0.25",
+  # # "ER0.30",
+  # "baseER",
+  # "ER0.35",
+  # "ER0.4",
+  # "ER0.45")
   # "ER0.05even_hCor",
   # "ER0.10even_hCor",
   # "ER0.15even_hCor",
@@ -1624,9 +1624,9 @@ OMsToInclude<-c(
   # "ER0.35even_hCor",
   # "ER0.40even_hCor",
   # "ER0.45even_hCor")
-  # "alphaScalar0.75",
-  # "baseERn10000",
-  # "alphaScalar1.5")
+  "alphaScalar0.75",
+  "baseER",#"baseERn10000",
+  "alphaScalar1.5")
   # "cvER0",
   # "baseER",
   # "cvER0.17")
@@ -1635,8 +1635,8 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERstest"#"ERsEven-hCor"#"ERs"
-if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERs"#"ERsEven-hCor"#"ERs"
+if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphastest"#"cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
 
@@ -1814,7 +1814,7 @@ for (OM in 1:length(OMsToInclude)){
       if(OM==1) {mtext("Prob(all inlets)>lower benchmark", side=2,
                        line=1.8,at=0.4, cex=0.55)
                   yaxt <- "s"}
-      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=25000,
+      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=30000,
                        cex=0.7) }
       if(OM>1)  yaxt <- "n"
 
