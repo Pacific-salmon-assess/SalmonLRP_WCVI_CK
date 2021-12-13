@@ -1245,14 +1245,14 @@ factor(SpwnCorr.df$OM_Name,levels = c(
   # "baseER"),
    "baseERn10000",
   # "baseERn10000",
-  "agePpnConst",
-  "agePpnVar",
-  # "baseERn10000",
+    # "baseERn10000",
   "cvER0",
   "cvER0.085",
   # "baseERn10000",
   # "baseERn10000",
-  "cvER0.17"),
+  "cvER0.17",
+  "agePpnConst",
+  "agePpnVar"),
 
  ordered = TRUE)
 
@@ -1271,11 +1271,11 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                              "recCorSca0",
                              "recCorSca0.5",
                              "baseERn10000",
-                             "agePpnConst",
-                             "agePpnVar",
                              "cvER0",
                              "cvER0.085",
-                             "cvER0.17"),
+                             "cvER0.17",
+                            "agePpnConst",
+                            "agePpnVar"),
 
                        labels=c("Observed",
                             # "0",
@@ -1288,11 +1288,11 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             "1",
                             # #"const\ndeviations\nover years",
                             # # #"annual\ndeviations\nover years")) +)) +
-                            "Variable\nage ppn\namong\ninlets",
-                            "Constant\nage ppn\namong\ninlets" ,
                             "0",
                             "0.085\nCV in exploitation rates",#)) +
-                            "0.17" )) +
+                            "0.17",
+                            "Variable\nage ppn\namong\ninlets",
+                            "Constant\nage ppn\namong\ninlets" )) +
 
 
 
