@@ -1291,8 +1291,8 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             "1",
                             # #"const\ndeviations\nover years",
                             # # #"annual\ndeviations\nover years")) +)) +
-                            "Variable\nage ppn\namong\ninlets",
-                            "Constant\nage ppn\namong\ninlets" )) +
+                            "Constant\nage ppn\namong\ninlets",
+                            "Variable\nage ppn\namong\ninlets" )) +
 
 
 
