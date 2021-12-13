@@ -1240,17 +1240,17 @@ SpwnCorr.df <- SpwnCorr.df %>% add_row(tmp.Age) %>% add_row(tmp.cvER)
 
 
 factor(SpwnCorr.df$OM_Name,levels = c(
-   "recCorSca0",
+  "cvER0",
+  "cvER0.085",
+  "cvER0.17",
+  "recCorSca0",
    "recCorSca0.5",
   # "baseER"),
    "baseERn10000",
   # "baseERn10000",
     # "baseERn10000",
-  "cvER0",
-  "cvER0.085",
   # "baseERn10000",
   # "baseERn10000",
-  "cvER0.17",
   "agePpnConst",
   "agePpnVar"),
 
@@ -1268,12 +1268,12 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             # # "cvER0.21.annualcvERCU")
                             # "cvER0.42"),
                             # "baseERn10000",
-                             "recCorSca0",
+                            "cvER0",
+                            "cvER0.085",
+                            "cvER0.17",
+                            "recCorSca0",
                              "recCorSca0.5",
                              "baseERn10000",
-                             "cvER0",
-                             "cvER0.085",
-                             "cvER0.17",
                             "agePpnConst",
                             "agePpnVar"),
 
@@ -1284,13 +1284,13 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             # # #"annual\ndeviations\nover years")) +
                             # "0.17" )) +
                             "0",
+                            "0.085\nCV in exploitation rates",#)) +
+                            "0.17",
+                            "0",
                             "0.5\nScalar for recruitment deviations",
                             "1",
                             # #"const\ndeviations\nover years",
                             # # #"annual\ndeviations\nover years")) +)) +
-                            "0",
-                            "0.085\nCV in exploitation rates",#)) +
-                            "0.17",
                             "Variable\nage ppn\namong\ninlets",
                             "Constant\nage ppn\namong\ninlets" )) +
 
