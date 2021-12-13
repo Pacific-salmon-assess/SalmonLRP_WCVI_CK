@@ -1602,18 +1602,18 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
-  # "baseER")
+  "baseER")
   #"ER0",
-  "ER0.05even_hCor",
-  "ER0.10even_hCor",
-  "ER0.15even_hCor",
-  "ER0.20even_hCor",
-  "ER0.25even_hCor",
-  "ER0.30even_hCor",
-  #"baseER",
-  "ER0.35even_hCor",
-  "ER0.40even_hCor",
-  "ER0.45even_hCor")
+  # "ER0.05even_hCor",
+  # "ER0.10even_hCor",
+  # "ER0.15even_hCor",
+  # "ER0.20even_hCor",
+  # "ER0.25even_hCor",
+  # "ER0.30even_hCor",
+  # #"baseER",
+  # "ER0.35even_hCor",
+  # "ER0.40even_hCor",
+  # "ER0.45even_hCor")
   # "alphaScalar0.75",
   # "baseERn10000",
   # "alphaScalar1.5")
@@ -1805,9 +1805,9 @@ for (OM in 1:length(OMsToInclude)){
     if (length(OMsToInclude != 9)) lrp.lwd <- 2
     abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
     if(OMsToInclude[OM]!="alphaScalar1.5") { if (i==1)
-      abline(v=LRP[i], col="orange", lwd=lrp.lwd) }
+      abline(v=LRP[i], col="#E69F00", lwd=lrp.lwd) }# "orange" "#E69F00",
     if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==2)
-      abline(v=LRP[i], col=viridis(4, alpha=0.3)[3], lwd=lrp.lwd) }
+      abline(v=LRP[i], col="#56B4E9", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
     # abline(h=0.9, lty=2)
     # abline(h=0.99, lty=2)
 
@@ -1945,15 +1945,16 @@ SMU_SumDf <- SMU_SumDf %>% add_column(Status=Status) %>% filter(Year >= 1990)
 SMUPlot <- ggplot(SMU_SumDf) +
   geom_path(aes(y=SiteEsc, x=Year), colour='black', alpha=0.5) +
   geom_point(aes(y=Value, x=Year, colour=Status)) +
-  geom_hline(aes(yintercept=LRPproj_50), colour="orange") +
-  geom_hline(aes(yintercept=LRPproj_66), colour="#66FFB2") + #, linetype=2) +
+  geom_hline(aes(yintercept=LRPproj_50), colour="#E69F00") + #orange") +
+  geom_hline(aes(yintercept=LRPproj_66), colour="#56B4E9") + #"#66FFB2") + #, linetype=2) +
   ylab("Escapement") +
   scale_colour_manual(guide = NULL, breaks = c("None", "Amber", "Green", "Red"), values=c("gray", "gray", "gray","red")) +
   facet_wrap(~interaction(Stock), scales = "free_y") +
-  theme_classic()
+  theme_classic() +
+  theme(strip.text = element_blank())
 SMUPlot
 # ggsave("Figures/chinook-SMU-timeseries.png", plot=SMUPlot, width = 6,
-#        height = 4, units = "in")
+#         height = 4, units = "in")
 
 
 # ===================================================================
