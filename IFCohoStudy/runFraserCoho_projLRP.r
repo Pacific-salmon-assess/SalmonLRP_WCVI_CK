@@ -104,6 +104,9 @@ setwd(cohoDir)
  colnames(CoEscpDat.Natural)[colnames(CoEscpDat.Natural)=="CU_ID"] <- "CU"
  colnames(CoEscpDat.Natural)[colnames(CoEscpDat.Natural)=="MU_Name"] <- "MU"
  
+ AggEscp.Natural <- CoEscpDat.Natural %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
+   mutate(Gen_Mean = rollapply(Agg_Escp, 3, gm_mean, fill = NA, align="right"))
+ 
  
  
 # ======================================================================
@@ -208,6 +211,7 @@ setwd(codeDir)
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 set.seed(100)
+
 
 scenarioName <- "Ricker"
 BMmodel <- "SR_IndivRicker_Surv"
@@ -389,6 +393,7 @@ OMsToInclude<-c("Ricker", "Ricker_priorCap", "RickerHM", "RickerHM_priorCap",
                 "Ricker_0.25sigGamma","Ricker_0.5sigGamma","Ricker_0.75sigGamma","Ricker_1.0sigGamma",
                 "Ricker_ER2.5","Ricker_ER22.5","Ricker_ER32.5")
 
+
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 
@@ -403,7 +408,9 @@ for (p in 1:length(probThreshList)) {
     # Read in samSim outputs for OM
     filename<-paste("projLRPDat_",OMsToInclude[i],".csv",sep="")
     projLRPDat<-read.csv(here(cohoDir, "SamSimOutputs", "simData",filename))
-    projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+    #projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num)+4)
+    
+    projLRPDat<-projLRPDat %>% filter(year > max(SRDat$yr_num) + 4)
     
     # Create bins for projected spawner abundances
     binSize<-200 # Note: bin size is currently set here
@@ -569,11 +576,13 @@ write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs.csv", sep="/"), row.names=
 
 
 # =============================================================================
-# (5.2) Plot LRP estimates relative to observed aggregate abudance time series
+# (5.2) Plot LRP estimates relative to observed aggregate abundance time series
 # =============================================================================
 
 
-AggEscp<-AggEscp %>% filter(yr >= 2000)
+#AggEscp<-AggEscp %>% filter(yr >= 2000)
+
+AggEscp.Natural<-AggEscp.Natural %>% filter(yr >= 2000)
 
 LRP_Ests <- read.csv(paste(projOutDir2, "ProjectedLRPs.csv", sep="/"))
 
@@ -589,9 +598,9 @@ png(paste(cohoDir,"/Figures/coho-EscpSeries-wProjLRP.png", sep=""), width=450, h
 
 par(mar=c(4,4,1,1))
 
-plot(AggEscp$yr, AggEscp$Gen_Mean, typ="l", ylim=c(0,max(AggEscp$Gen_Mean)), bty="l",
-     xlab="Year", ylab="Aggregate Abundance", cex.lab=1.3, lwd=2, cex.axis=1.1)
-points(AggEscp$yr, AggEscp$Gen_Mean,pch=19,col="grey30", cex=1)
+plot(AggEscp.Natural$yr, AggEscp.Natural$Gen_Mean, typ="l", ylim=c(0,max(AggEscp.Natural$Gen_Mean)), bty="l",
+     xlab="Year", ylab="Aggregate Spawner Abundance", cex.lab=1.3, lwd=2, cex.axis=1.1)
+points(AggEscp.Natural$yr, AggEscp.Natural$Gen_Mean,pch=19,col="grey30", cex=1)
 
 
 abline(h=LRP_Ricker0.5, col=colList[1],lty=1, lwd=2)
@@ -617,7 +626,7 @@ dev.off()
 # ==================================================================
 
 
-OMsToInclude<-c("test")
+OMsToInclude<-c("Ricker", "Ricker_priorCap")
 
 for (i in 1:length(OMsToInclude)) {
  
@@ -632,21 +641,39 @@ for (i in 1:length(OMsToInclude)) {
   
   # Function to plot spawner abundance projections, by CU
   makeCUSpawnerProjPlot<- function(i, projSpwnDat, CUNames) {
-    plotDat<-projSpwnDat %>% filter(CU==i) %>% group_by(year, expRate) %>% 
+  
+    CU.name<-NA
+     
+    if(as.character(CUNames[i]) == "Middle_Fraser") CU.name<-"Middle Fraser"
+    if(as.character(CUNames[i]) == "South_Thompson") CU.name<-"South Thompson"
+    if(as.character(CUNames[i]) == "North_Thompson") CU.name<-"North Thompson"
+    if(as.character(CUNames[i]) == "Lower_Thompson") CU.name<-"Lower Thompson"
+    if(as.character(CUNames[i]) == "Fraser_Canyon") CU.name<-"Fraser Canyon"
+    
+    plotDat<-projSpwnDat %>% filter(CU==i) %>% group_by(year) %>% 
       summarise(medSpawn=median(spawners), lwr=quantile(spawners,0.10),upr=quantile(spawners,0.90))
-    p <- ggplot(data=plotDat, mapping=aes(x=year,y=medSpawn, colour=factor(expRate))) +
-      geom_ribbon(data=plotDat, aes(ymin = lwr, ymax = upr, x=year, fill=factor(expRate)), alpha=0.2) +
+    # plotDat<-projSpwnDat %>% filter(CU==i) %>% group_by(year, expRate) %>% 
+    #   summarise(medSpawn=median(spawners), lwr=quantile(spawners,0.10),upr=quantile(spawners,0.90))
+    #p <- ggplot(data=plotDat, mapping=aes(x=year,y=medSpawn, colour=factor(expRate))) +
+     p <- ggplot(data=plotDat, mapping=aes(x=year,y=medSpawn)) +
+      geom_ribbon(data=plotDat, aes(ymin = lwr, ymax = upr, x=year), alpha=0.2) +
       geom_line(mapping=aes(x=year, y=medSpawn)) +
       geom_line(data=plotDat %>% filter(year < 18), col="black", size=1) +
-      ggtitle(CUNames[i]) +
+      ggtitle(CU.name) +
       xlab("Year") + ylab("Spawners") +
-      theme_classic()  
+      theme_classic() +
+       theme(axis.text=element_text(size=20), #change font size of axis text
+           axis.title=element_text(size=20), #change font size of axis titles
+           plot.title=element_text(size=20)) #change font size of plot title
+
+     #text=element_text(size=20)
+          
   }
   
   ps<-lapply(1:length(unique(SRDat$CU_Name)), makeCUSpawnerProjPlot, projSpwnDat = projCUSpDat.i,CUNames=unique(SRDat$CU_Name))
   
-  pdf(paste(cohoDir,"/Figures/ProjectedLRPs/", OMsToInclude[i], "_CUSpawnerProj.pdf", sep=""), 
-      width=9, height=6)
+  png(paste(cohoDir,"/Figures/ProjectedLRPs/coho-CUSpawnerProj-",OMsToInclude[i],".png",sep=""),res=80, 
+      width=850, height=750)
   do.call(grid.arrange,  ps)
   dev.off()
   
@@ -1198,11 +1225,10 @@ ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="
  colnames(cormat) <- CUNames
 
  png(filename=paste(cohoDir, "/Figures/coho-RecuitResidCorrelation-", Mod, ".png", sep=""), width=4, height=4.5, units="in", res=500)
-  corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower")
+  corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower",addCoef.col="black", tl.col = "black")
  dev.off()
 
- 
- 
+
  
  
  

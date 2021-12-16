@@ -1325,10 +1325,10 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
     # theme(axis.text=element_text(size=12),
     #       axis.title=element_text(size=14,face="bold"))
     
-    if (length(Dat2$yTrunc[Dat2$yTrunc==TRUE]) > 0) {
+    #if (length(Dat2$yTrunc[Dat2$yTrunc==TRUE]) > 0) {
         # add additional points to show when ylim truncated
-        g<-g+geom_point(data=Dat2[Dat2$yTrunc==TRUE,], aes(x=nCUs.jit, y = rep(ymax,length(nCUs.jit))), shape=17, size=2)
-    }
+    #    g<-g+geom_point(data=Dat2[Dat2$yTrunc==TRUE,], aes(x=nCUs.jit, y = rep(ymax,length(nCUs.jit))), shape=17, size=2)
+    #}
     
     if (aveLine == TRUE) {
 

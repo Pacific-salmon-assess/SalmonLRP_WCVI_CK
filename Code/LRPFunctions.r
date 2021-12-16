@@ -628,6 +628,7 @@ Run_ProjRicker_LRP<-function(SRDat, EscDat, BMmodel, LRPmodel, useGenMean, genYr
                      variableCU=FALSE, ricPars=ricPars, cuCustomCorrMat = corMatrix,
                      dirName="test.co", nTrials=1000, makeSubDirs=FALSE, random=FALSE)
 
+  
 
   # Read-in projection outputs to create spawner abundance plots
   
