@@ -412,7 +412,12 @@ colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/")
 # png(filename=paste(wcviCKDir, "/Figures/SpawnerCorrelation.png", sep=""), width=4, height=4.5, units="in", res=500)
 par(xpd=TRUE)
 
-corrplot(corMat, method="circle", p.mat=corMat, insig="p-value", type="lower", mar=c(5,4,3,2))
+#corrplot(corMat, method="circle", p.mat=corMat, insig="p-value", type="lower", mar=c(5,4,3,2))
+
+# LW: I think if we add addCoef.col="black", tl.col = "black" to the corrplot function we should get the correlation coefficient numbers in all the cells. And tl.col="black" just makes the CU names black instead of red
+#  LW: if we want to remove the cells with correlation values= 1 (e.g., a CU is perfectly correlated with itself), we can add diag=FALSE argument.
+
+corrplot(corMat, method="circle", p.mat=corMat,  type="lower", addCoef.col="black", tl.col = "black", diag=FALSE, mar=c(0,0,0,0), tl.cex=0.9, cl.cex=0.7,  insig="p-value")
 # dev.off()
 
 #write.csv(corMat[lower.tri(corMat)==TRUE], "DataOut/WCVI_Spawner_cors.csv", row.names=FALSE)

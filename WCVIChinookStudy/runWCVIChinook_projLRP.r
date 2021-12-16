@@ -1133,14 +1133,14 @@ if(calcTau){
 
 
 OMsToTest<-c(
-  "recCorSca0",
-  "recCorSca0.5",
-  "baseERn10000")
+   "recCorSca0",
+   "recCorSca0.5",
+   "baseERn10000",#)
   # "baseERn10000",
-  # "agePpnConst")
-    # "cvER0",
+  "agePpnConst",
+    "cvER0",
     # "baseERn10000",
-    # "cvER0.17")
+     "cvER0.17")
 
 LRPFileName <- "ProjectedLRPs_cvERage.csv"
 
@@ -1231,23 +1231,28 @@ SpwnCorr.df<-rbind(SpwnCorr.df,tmp)
 if(len > 12000) {ind <- is.na(SpwnCorr.df$highlight)} else ind <- rep(FALSE,len)
 
 # Save LRPs for all OM scenarios
-write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names=F)
-#SpwnCorr.df <- read.csv(paste(projOutDir2, "SpwnCorr.df.csv", sep="/"))
-
-
+write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorrAllSAs.df.csv", sep="/"), row.names=F)
+#SpwnCorr.df <- read.csv(paste(projOutDir2, "SpwnCorrAllSAs.df.csv", sep="/"))
+tmp.Age <- SpwnCorr.df %>% filter(OM_Name=="baseERn10000") %>% mutate(OM_Name="agePpnVar")
+tmp.cvER <- SpwnCorr.df %>% filter(OM_Name=="baseERn10000") %>% mutate(OM_Name="cvER0.085")
+SpwnCorr.df <- SpwnCorr.df %>% add_row(tmp.Age) %>% add_row(tmp.cvER)
 #LRPs <- read.csv(paste(wcviCKDir,"/DataOut/ProjectedLRPs/", LRPFileName, sep="")) %>% pull(LRP)
 
 
 factor(SpwnCorr.df$OM_Name,levels = c(
+  "cvER0",
+  "cvER0.085",
+  "cvER0.17",
   "recCorSca0",
-  "recCorSca0.5",
+   "recCorSca0.5",
   # "baseER"),
-  "baseERn10000"),
+   "baseERn10000",
   # "baseERn10000",
-  # "agePpnConst"),
-  # "cvER0",
+    # "baseERn10000",
   # "baseERn10000",
-  # "cvER0.17"),
+  # "baseERn10000",
+  "agePpnConst",
+  "agePpnVar"),
 
  ordered = TRUE)
 
@@ -1256,21 +1261,21 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
   geom_boxplot(width=0.5, outlier.shape=NA) + ylim(-0.25,1)+
   geom_jitter(data=SpwnCorr.df[!ind, ],
               position=position_jitter(0.2), col="dark grey", alpha=0.95,
-              size=0.2) +
+              size=0.1) +
   scale_x_discrete(limits=c("Observed",
                             # "cvER0",
                             # "cvER0.21baseERn10000",
                             # # "cvER0.21.annualcvERCU")
                             # "cvER0.42"),
                             # "baseERn10000",
-                            # "agePpnConst"),
+                            "cvER0",
+                            "cvER0.085",
+                            "cvER0.17",
                             "recCorSca0",
-                            "recCorSca0.5",
-                            "baseERn10000"),
-
-                            # "cvER0",
-                            # "baseERn10000",
-                            # "cvER0.17"),
+                             "recCorSca0.5",
+                             "baseERn10000",
+                            "agePpnConst",
+                            "agePpnVar"),
 
                        labels=c("Observed",
                             # "0",
@@ -1279,10 +1284,15 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             # # #"annual\ndeviations\nover years")) +
                             # "0.17" )) +
                             "0",
-                            "0.5",
-                            "1")) +
-                            # "Variable\nAge Ppn\nAmong Inlets",
-                            # "Constant\nAge Ppn\nAmong Inlets" )) +
+                            "0.085\nCV in exploitation rates",#)) +
+                            "0.17",
+                            "0",
+                            "0.5\nScalar for recruitment deviations",
+                            "1",
+                            # #"const\ndeviations\nover years",
+                            # # #"annual\ndeviations\nover years")) +)) +
+                            "Constant\nage ppn\namong\ninlets",
+                            "Variable\nage ppn\namong\ninlets" )) +
 
 
 
@@ -1290,7 +1300,14 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
   # xlab("Scalar for Ricker Residual Correlation Matrix") +
   xlab("") +
   ylab("Pairwise correlations in spawners among inlets") +
-  theme(axis.text=element_text(size=7),  axis.title=element_text(size=8)) #+
+  theme(axis.text=element_text(size=5),
+        axis.title=element_text(size=8))#,
+        # axis.text.x = element_text(hjust = 0))
+  # theme(panel.grid.major.x = element_blank(),
+  #       panel.grid.minor.x = element_blank(),
+  #       plot.margin = unit(c(1, 1, 4, 1), "lines")) +
+  # coord_cartesian(expand = FALSE, clip = "off") +
+  # annotate(geom = "text", x = 3, y = -0.3, label = "Scalar for recruitment\ndeviations", size = 0.5)
   # annotate("text", x = c(1.5,2:4), y = -0.2, label =c("LRP:",LRPs), size=3)
   # annotate("text", x = c(1.4,2:12), y = -0.2, label =c("LRP:",LRPs), size=2)
   # annotate("text", x = c(1.5,2:3), y = -0.2, label =c("LRP:",LRPs), size=5)
@@ -1299,7 +1316,9 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
 
 
 
-ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor-recCorSca.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor-recCorSca.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
+#        width = 4, height = 3, units = "in")
+ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
        width = 4, height = 3, units = "in")
 
 # summary(SpwnCorr.df %>% filter(OM_Name=="cvER0.21.cvERSMU0.42.agePpnConst.recCorSca0.1.n100.mcmc") %>% pull(SpwnCorrValues))
@@ -1585,19 +1604,29 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05even_hCor",
-  "ER0.10even_hCor",
-  "ER0.15even_hCor",
-  "ER0.20even_hCor",
-  "ER0.25even_hCor",
-  "ER0.30even_hCor",
-  #"baseER",
-  "ER0.35even_hCor",
-  "ER0.40even_hCor",
-  "ER0.45even_hCor")
-  # "alphaScalar0.75",
-  # "baseERn10000",
-  # "alphaScalar1.5")
+  # "ER0.05",
+  # "ER0.10",
+  # "ER0.15",
+  # "ER0.2",
+  # "ER0.25",
+  # # "ER0.30",
+  # "baseER",
+  # "ER0.35",
+  # "ER0.4",
+  # "ER0.45")
+  # "ER0.05even_hCor",
+  # "ER0.10even_hCor",
+  # "ER0.15even_hCor",
+  # "ER0.20even_hCor",
+  # "ER0.25even_hCor",
+  # "ER0.30even_hCor",
+  # #"baseER",
+  # "ER0.35even_hCor",
+  # "ER0.40even_hCor",
+  # "ER0.45even_hCor")
+  "alphaScalar0.75",
+  "baseER",#"baseERn10000",
+  "alphaScalar1.5")
   # "cvER0",
   # "baseER",
   # "cvER0.17")
@@ -1606,8 +1635,8 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven-hCor"#"ERs"
-if(length(OMsToInclude)==3) OMsToIncludeName <- "cvER"#"cvER"#"Alphas"#"cvER"#"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERs"#"ERsEven-hCor"#"ERs"
+if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphastest"#"cvER"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
 
@@ -1693,11 +1722,14 @@ for (OM in 1:length(OMsToInclude)){
            ylim=c(0,1),
            cex=0.5, cex.lab=1,#1.5,
            xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
+           yaxt <- "s"
     }# End of if(length(OMsToInclude)==1){
 
     if(length(OMsToInclude)==9){
-      par(mar=c(2.8,3,0.6,1))
+      par(mar=c(2.8,3,0.6,0.6))
       xMax <- 50000
+      if(OM %in% c(1,4,7)) yaxt <- "s"
+      if(OM %in% c(2,3,5,6,8,9)) yaxt <- "n"
       if(OM<7){
         xaxt <- "n"#par(xaxt="n")
       }
@@ -1706,9 +1738,12 @@ for (OM in 1:length(OMsToInclude)){
       }
     }# End of if(length(OMsToInclude)==9){
     if(length(OMsToInclude)==3){
-        par(mar=c(2.8,3,1,1))
+        par(mar=c(2.8,2.5,0.1,1))
         xaxt <- "s"
         xMax <- 70000
+        if(OM>1) yaxt <- "n"
+        if(OM==1) yaxt <- "s"
+
       }
 
       if(length(OMsToInclude)>1){
@@ -1716,7 +1751,10 @@ for (OM in 1:length(OMsToInclude)){
              xlim=c(0, xMax ),
              ylim=c(0,1),
              cex=0.3, cex.lab=1,#1.5,
-             xlab="", ylab="", xaxt=xaxt)
+             xlab="", ylab="", xaxt=xaxt, yaxt=yaxt)
+            aty <- seq(0, 1, 0.2)
+            if(OM %in% c(2,3,5,6,8,9)) axis(side =2,  at=aty, labels = FALSE)
+
 
       }
 
@@ -1747,7 +1785,7 @@ for (OM in 1:length(OMsToInclude)){
 
         if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
                         line=1.8,at=0.5, cex=1) }
-        if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=40000,
+        if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=25000,
                          cex=0.7) }
 
       }# End of if(length(OMsToInclude)==9){
@@ -1774,9 +1812,12 @@ for (OM in 1:length(OMsToInclude)){
       text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
 
       if(OM==1) {mtext("Prob(all inlets)>lower benchmark", side=2,
-                       line=1.8,at=0.4, cex=0.55) }
-      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=40000,
+                       line=1.8,at=0.4, cex=0.55)
+                  yaxt <- "s"}
+      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=30000,
                        cex=0.7) }
+      if(OM>1)  yaxt <- "n"
+
 
     }# End of if(length(OMsToInclude)==3){
 
@@ -1786,9 +1827,9 @@ for (OM in 1:length(OMsToInclude)){
     if (length(OMsToInclude != 9)) lrp.lwd <- 2
     abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
     if(OMsToInclude[OM]!="alphaScalar1.5") { if (i==1)
-      abline(v=LRP[i], col="orange", lwd=lrp.lwd) }
+      abline(v=LRP[i], col="#E69F00", lwd=lrp.lwd) }# "orange" "#E69F00",
     if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==2)
-      abline(v=LRP[i], col=viridis(4, alpha=0.3)[3], lwd=lrp.lwd) }
+      abline(v=LRP[i], col="#56B4E9", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
     # abline(h=0.9, lty=2)
     # abline(h=0.99, lty=2)
 
@@ -1926,15 +1967,16 @@ SMU_SumDf <- SMU_SumDf %>% add_column(Status=Status) %>% filter(Year >= 1990)
 SMUPlot <- ggplot(SMU_SumDf) +
   geom_path(aes(y=SiteEsc, x=Year), colour='black', alpha=0.5) +
   geom_point(aes(y=Value, x=Year, colour=Status)) +
-  geom_hline(aes(yintercept=LRPproj_50), colour="orange") +
-  geom_hline(aes(yintercept=LRPproj_66), colour="#66FFB2") + #, linetype=2) +
+  geom_hline(aes(yintercept=LRPproj_50), colour="#E69F00") + #orange") +
+  geom_hline(aes(yintercept=LRPproj_66), colour="#56B4E9") + #"#66FFB2") + #, linetype=2) +
   ylab("Escapement") +
   scale_colour_manual(guide = NULL, breaks = c("None", "Amber", "Green", "Red"), values=c("gray", "gray", "gray","red")) +
   facet_wrap(~interaction(Stock), scales = "free_y") +
-  theme_classic()
+  theme_classic() +
+  theme(strip.text = element_blank())
 SMUPlot
 # ggsave("Figures/chinook-SMU-timeseries.png", plot=SMUPlot, width = 6,
-#        height = 4, units = "in")
+#         height = 4, units = "in")
 
 
 # ===================================================================
@@ -1952,8 +1994,8 @@ probThresh <- 0.5
 # dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
 # ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
 
-GroupName <- "sameSREPhCor"
-OMsToIncludeName <- paste("CUAbove_", GroupName, sep="")
+GroupName <- "sameProdhCor"#"sameSREPhCor"##"evenhCor"#"sameSREPhCor"#"sameProdhCor"#
+OMsToIncludeName <- paste("testCUAbove_", GroupName, sep="")
 
 
 OMsToInclude<-c(
@@ -1966,24 +2008,24 @@ OMsToInclude<-c(
   # "ER0.35even_hCor",
   # "ER0.40even_hCor",
   # "ER0.45even_hCor")
-"ER0.05sameSREP_hCor",
-"ER0.10sameSREP_hCor",
-"ER0.15sameSREP_hCor",
-"ER0.20sameSREP_hCor",
-"ER0.25sameSREP_hCor",
-"ER0.25sameSREP_hCor",
-"ER0.35sameSREP_hCor",
-"ER0.40sameSREP_hCor",
-"ER0.45sameSREP_hCor")
-# "ER0.05sameProd_hCor",
-# "ER0.10sameProd_hCor",
-# "ER0.15sameProd_hCor",
-# "ER0.20sameProd_hCor",
-# "ER0.25sameProd_hCor",
-# "ER0.25sameProd_hCor",
-# "ER0.35sameProd_hCor",
-# "ER0.40sameProd_hCor",
-# "ER0.45sameProd_hCor")
+# "ER0.05sameSREP_hCor",
+# "ER0.10sameSREP_hCor",
+# "ER0.15sameSREP_hCor",
+# "ER0.20sameSREP_hCor",
+# "ER0.25sameSREP_hCor",
+# "ER0.25sameSREP_hCor",
+# "ER0.35sameSREP_hCor",
+# "ER0.40sameSREP_hCor",
+# "ER0.45sameSREP_hCor")
+"ER0.05sameProd_hCor",
+"ER0.10sameProd_hCor",
+"ER0.15sameProd_hCor",
+"ER0.20sameProd_hCor",
+"ER0.25sameProd_hCor",
+"ER0.25sameProd_hCor",
+"ER0.35sameProd_hCor",
+"ER0.40sameProd_hCor",
+"ER0.45sameProd_hCor")
 
 LRP <- NA
 
@@ -2060,17 +2102,18 @@ for (OM in 1:length(OMsToInclude)){
                        position="identity", bins=30, alpha=0.4) +
         # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
         #                 alpha=0.4) +
-        labs(title="(a) Productivity (log alpha)")+
+        labs(title="(a) Productivity (log alpha)", x="log alpha")+
         xlim(0,3.5)
 
       library(gridExtra)
-      arrange
+      # arrange
       # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
 
       gSREP <- ggplot(parsDF, aes(x = SREP)) +
         geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
                        position="identity", bins=30, alpha=0.4) +
-        labs(title="(b) SREP") +
+        #labs(title="(b) SREP") +
+        labs(title=expression((b)~S[REP]), x=expression(S[REP])) +
         xlim(0,50000)
       # ggsave(filename = paste("Figures/", GroupName, "_SREPHist.png", sep="") , plot=gSREP)
       gSRpars <- grid.arrange(galpha, gSREP)
@@ -2148,9 +2191,9 @@ for (OM in 1:length(OMsToInclude)){
   lrp.lwd <- 1
   abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
   i <- 1
-  if (i==1)    abline(v=LRP[i], col="orange", lwd=lrp.lwd)
+  if (i==1)    abline(v=LRP[i], col="orange", lwd=lrp.lwd)#"orange"#E69F00", "#56B4E9",
   if(OM<7) { if (i==2)
-    abline(v=LRP[i], col=viridis(4, alpha=0.3)[3], lwd=lrp.lwd) }
+    abline(v=LRP[i], col="#56B4E9", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3]
   abline(h=0.66, lty=2)
   abline(h=0.9, lty=2)
   abline(h=0.99, lty=2)
