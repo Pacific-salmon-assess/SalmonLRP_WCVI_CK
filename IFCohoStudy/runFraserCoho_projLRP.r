@@ -963,14 +963,22 @@ ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="
  
  # Step 9a: Create plot showing alphas ===================================
  
- 
- 
  cuNames<-data.frame("stk"=1:5, "CU" = CU_list)
  cuNames$CU[cuNames$CU == "Middle_Fraser"]<-"Middle Fraser"
  cuNames$CU[cuNames$CU == "Fraser_Canyon"]<-"Fraser Canyon"
  cuNames$CU[cuNames$CU == "Lower_Thompson"]<-"Lower_Thompson"
  cuNames$CU[cuNames$CU == "North_Thompson"]<-"North Thompson"
  cuNames$CU[cuNames$CU == "South_Thompson"]<-"South Thompson"
+ 
+ Mod <- "SR_IndivRicker_Surv"
+ OM<-"Ricker"
+ 
+ muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+ muLSurv <- muLSurv$muLSurv
+ 
+ post<-read.csv(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/",OM,"/",Mod,"_mcmc.csv", sep=""))
+ adjProd<-exp(post$alpha + post$gamma * rep(muLSurv, length=nrow(post)))
+ post<- post %>% add_column(adjProd = adjProd)
  
  post2<-left_join(post,cuNames)
  
@@ -986,15 +994,39 @@ ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="
  plot_beta<-ggplot(plotDF, aes(beta, fill=CU, colour=CU)) + geom_density(alpha=0.1) + 
    xlab("Ricker beta parameter") + ylab("Density")
  
- 
  ggsave(paste(cohoDir,"/Figures/coho-alphaPosts.png",sep=""), plot = plot_alpha,width = 5, height = 3.5, units = "in")
  ggsave(paste(cohoDir,"/Figures/coho-adjProdPosts.png",sep=""), plot = plot_adjProd,width = 5, height = 3.5, units = "in")
  
  
- # 
- # ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep=""), plot = g,
- #        width = 4.5, height = 3.5, units = "in")
- # 
+ 
+ # Repeat above, but for Ricker_priorCap model
+ 
+ Mod <- "SR_IndivRicker_SurvCap"
+ OM<-"Ricker_priorCap"
+ 
+ muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
+ muLSurv <- muLSurv$muLSurv
+ 
+ post<-read.csv(paste("C:/github/SalmonLRP_RetroEval/IFCohoStudy/SamSimInputs/",OM,"/",Mod,"_mcmc.csv", sep=""))
+ adjProd<-exp(post$alpha + post$gamma * rep(muLSurv, length=nrow(post)))
+ post<- post %>% add_column(adjProd = adjProd)
+ 
+ post2<-left_join(post,cuNames)
+ 
+ plotDF <- post2 %>% select(CU,alpha, adjProd, beta) 
+ plotDF$CU<-as.factor(plotDF$CU)
+ 
+ plot_alpha<-ggplot(plotDF, aes(alpha, fill=CU, colour=CU)) + geom_density(alpha=0.1) + 
+   xlim(0,6) + xlab("Ricker alpha parameter") + ylab("Density")
+ 
+ plot_adjProd<-ggplot(plotDF, aes(adjProd, fill=CU, colour=CU)) + geom_density(alpha=0.1) + 
+   xlim(0,15) + xlab("Adjusted alpha parameter") + ylab("Density")
+ 
+ plot_beta<-ggplot(plotDF, aes(beta, fill=CU, colour=CU)) + geom_density(alpha=0.1) + 
+   xlab("Ricker beta parameter") + ylab("Density")
+ 
+ ggsave(paste(cohoDir,"/Figures/coho-alphaPosts-priorCap.png",sep=""), plot = plot_alpha,width = 5, height = 3.5, units = "in")
+ ggsave(paste(cohoDir,"/Figures/coho-adjProdPosts-priorCap.png",sep=""), plot = plot_adjProd,width = 5, height = 3.5, units = "in")
  
  
  
@@ -1003,11 +1035,11 @@ ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="
  # =============================================================================================
 
  
- Mod <- "SR_IndivRicker_SurvCap"
- OM<-"Ricker_priorCap"
+ #Mod <- "SR_IndivRicker_SurvCap"
+ #OM<-"Ricker_priorCap"
  
- # Mod <- "SR_IndivRicker_Surv"
- # OM<-"Ricker"
+ Mod <- "SR_IndivRicker_Surv"
+ OM<-"Ricker"
  
  muLSurv<-SRDat  %>% group_by(CU_ID) %>% summarise(muLSurv=mean(log(STAS_Age_3)))
  muLSurv <- muLSurv$muLSurv
