@@ -960,7 +960,43 @@ ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="
    dev.off()
  }
  
-
+ 
+ # Step 9a: Create plot showing alphas ===================================
+ 
+ 
+ 
+ cuNames<-data.frame("stk"=1:5, "CU" = CU_list)
+ cuNames$CU[cuNames$CU == "Middle_Fraser"]<-"Middle Fraser"
+ cuNames$CU[cuNames$CU == "Fraser_Canyon"]<-"Fraser Canyon"
+ cuNames$CU[cuNames$CU == "Lower_Thompson"]<-"Lower_Thompson"
+ cuNames$CU[cuNames$CU == "North_Thompson"]<-"North Thompson"
+ cuNames$CU[cuNames$CU == "South_Thompson"]<-"South Thompson"
+ 
+ post2<-left_join(post,cuNames)
+ 
+ plotDF <- post2 %>% select(CU,alpha, adjProd, beta) 
+ plotDF$CU<-as.factor(plotDF$CU)
+ 
+ plot_alpha<-ggplot(plotDF, aes(alpha, fill=CU, colour=CU)) + geom_density(alpha=0.1) + 
+   xlim(0,6) + xlab("Ricker alpha parameter") + ylab("Density")
+ 
+ plot_adjProd<-ggplot(plotDF, aes(adjProd, fill=CU, colour=CU)) + geom_density(alpha=0.1) + 
+   xlim(0,15) + xlab("Adjusted alpha parameter") + ylab("Density")
+ 
+ plot_beta<-ggplot(plotDF, aes(beta, fill=CU, colour=CU)) + geom_density(alpha=0.1) + 
+   xlab("Ricker beta parameter") + ylab("Density")
+ 
+ 
+ ggsave(paste(cohoDir,"/Figures/coho-alphaPosts.png",sep=""), plot = plot_alpha,width = 5, height = 3.5, units = "in")
+ ggsave(paste(cohoDir,"/Figures/coho-adjProdPosts.png",sep=""), plot = plot_adjProd,width = 5, height = 3.5, units = "in")
+ 
+ 
+ # 
+ # ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep=""), plot = g,
+ #        width = 4.5, height = 3.5, units = "in")
+ # 
+ 
+ 
  
  # =============================================================================================
  # (9.1) Save posterior quantiles

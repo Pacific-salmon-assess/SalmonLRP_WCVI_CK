@@ -1672,7 +1672,7 @@ plotAgeProp_byCU<-function(CUages, outDir, plotName) {
   
   g<-ggplot(CUages,aes(x=Year, y=age3, col=CU_Names)) + geom_line(size=1.1) +
     theme_classic() +
-    xlab("Year") + ylab("Proportion Age 3") + labs(color='Conservation Unit')  +
+    xlab("Brood Year") + ylab("Proportion Age 3") + labs(color='Conservation Unit')  +
     theme(legend.position = c(0.2, 0.25)) +
     scale_color_manual(values=colList) +
     theme(axis.text=element_text(size=11),
