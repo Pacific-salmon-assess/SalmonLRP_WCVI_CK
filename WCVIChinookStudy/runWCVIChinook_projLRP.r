@@ -1793,7 +1793,7 @@ for (OM in 1:length(OMsToInclude)){
 
     if(length(OMsToInclude)==3){
 
-      panel.title <- c("0.75 x productivity", "Base productivity",
+      panel.title <- c("0.75 x productivity", "Current productivity",
                         "1.5 x productivity")
       # panel.title <- c("cv = 0", "cv = 0.085",
       #                  "cv = 0.17")
