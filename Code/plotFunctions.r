@@ -1325,10 +1325,10 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
     # theme(axis.text=element_text(size=12),
     #       axis.title=element_text(size=14,face="bold"))
     
-    if (length(Dat2$yTrunc[Dat2$yTrunc==TRUE]) > 0) {
+    #if (length(Dat2$yTrunc[Dat2$yTrunc==TRUE]) > 0) {
         # add additional points to show when ylim truncated
-        g<-g+geom_point(data=Dat2[Dat2$yTrunc==TRUE,], aes(x=nCUs.jit, y = rep(ymax,length(nCUs.jit))), shape=17, size=2)
-    }
+    #    g<-g+geom_point(data=Dat2[Dat2$yTrunc==TRUE,], aes(x=nCUs.jit, y = rep(ymax,length(nCUs.jit))), shape=17, size=2)
+    #}
     
     if (aveLine == TRUE) {
 
@@ -1672,7 +1672,7 @@ plotAgeProp_byCU<-function(CUages, outDir, plotName) {
   
   g<-ggplot(CUages,aes(x=Year, y=age3, col=CU_Names)) + geom_line(size=1.1) +
     theme_classic() +
-    xlab("Year") + ylab("Proportion Age 3") + labs(color='Conservation Unit')  +
+    xlab("Brood Year") + ylab("Proportion Age 3") + labs(color='Conservation Unit')  +
     theme(legend.position = c(0.2, 0.25)) +
     scale_color_manual(values=colList) +
     theme(axis.text=element_text(size=11),
