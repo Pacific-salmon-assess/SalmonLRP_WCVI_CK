@@ -498,6 +498,7 @@ md$AboveLRP <- ifelse(md$lrp_status=="above", TRUE, FALSE)
 #snames <- unique(md$scenario_name)
 #skey <- data.frame(id = sort(unique(md$scenario)), name=snames) 
 md$data_name <- md$scenario_name
+md$data_name <- sub("Prop", "CUbased", md$data_name )
 plotStatusBarsChum_byYear(Status_DF = md, AggEscp=AggEscp, fName="fig_compare_LRP_methods")
 
 
