@@ -1052,14 +1052,14 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     # Would use this if wanted to show the proportion of CUs above Sgen
     #Name <- paste(propName,Ps[pp]*100)
     Status <- Inlet_Status_Summ$Prop >= Ps[pp]
-    New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Prop: Sgen", AboveLRP=Status)
-    New_Rows2 <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "Prop: Scanner", AboveLRP=Status)
+    New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "CUbased: Sgen", AboveLRP=Status)
+    New_Rows2 <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "CUbased: Scanner", AboveLRP=Status)
     Status_DF <- rbind(Status_DF, New_Rows, New_Rows2)
   }
  
   # Step 4: Add row to Status_DF for 2011 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
-    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop: WSP-2014", AboveLRP = WSP_AboveLRP)
+    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "CUbased: WSP-2014", AboveLRP = WSP_AboveLRP)
     Status_DF <- rbind(Status_DF, New_Row)
     Status_DF <- arrange(Status_DF, Name)
   }
