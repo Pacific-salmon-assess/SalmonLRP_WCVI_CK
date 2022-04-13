@@ -1636,7 +1636,7 @@ OMsToInclude<-c(
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
 if(length(OMsToInclude)==9) OMsToIncludeName <- "ERs"#"ERsEven-hCor"#"ERs"
-if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphastest"#"cvER"#"cvER"#"Alphas"#"cvER"#"
+if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphas"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
 
@@ -1738,7 +1738,7 @@ for (OM in 1:length(OMsToInclude)){
       }
     }# End of if(length(OMsToInclude)==9){
     if(length(OMsToInclude)==3){
-        par(mar=c(2.8,2.5,0.1,1))
+        par(mar=c(2.8,2.5,1.1,1))
         xaxt <- "s"
         xMax <- 70000
         if(OM>1) yaxt <- "n"
@@ -1793,11 +1793,11 @@ for (OM in 1:length(OMsToInclude)){
 
     if(length(OMsToInclude)==3){
 
-      # panel.title <- c("0.75 x productivity", "Base productivty",
-      #                  "1.5 x productivity")
-      panel.title <- c("cvER = 0", "cvER = 0.085",
-                       "cvER = 0.17")
-      mtext(text=panel.title[OM], side=3, line=0, at=20000, cex=0.5)
+      panel.title <- c("0.75 x productivity", "Current productivity",
+                        "1.5 x productivity")
+      # panel.title <- c("cv = 0", "cv = 0.085",
+      #                  "cv = 0.17")
+      mtext(text=panel.title[OM], side=3, line=0.2, at=15000, cex=0.5)
 
       LRP_50 <- (read.csv(paste(wcviCKDir,
                               "/DataOut/ProjectedLRPs/ProjectedLRPs",

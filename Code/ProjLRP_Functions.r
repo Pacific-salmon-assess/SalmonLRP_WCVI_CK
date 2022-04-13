@@ -111,6 +111,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
     write.csv(recDatTrim, paste(scenInputDir,"recDatTrim.csv", sep="/"), row.names=F)
   } else {recDatTrim <- NULL}
 
+  
   # If there are no recruitment data, then pull correlation matrix from inputs
   if(is.null(SRDat) || all(is.na(SRDat$Recruits)) ){
     corMatrix <- corMat
@@ -893,7 +894,7 @@ get_MCMC_Fit<-function (scenarioName, obj, init, upper, lower, nMCMC, Scale) {
 
 
 # # Fit mcmc with STAN to get parameter estimates for projections ===============================
-fitmcmc <- tmbstan(obj, chains=3, iter=nMCMC, init=init, thin=1,
+fitmcmc <- tmbstan(obj, chains=3, iter=nMCMC, init=init, thin=5,
                    control = list(adapt_delta = 0.99),upper=upper, lower=lower)
 
 
