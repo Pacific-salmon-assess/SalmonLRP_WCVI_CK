@@ -26,6 +26,8 @@
 #     (12) Make Projected Curve Comparison Plots Among Scenarios
 # ===============================================================================
 
+#useFrenchCaptions<-FALSE
+useFrenchCaptions<-TRUE
 
 library(rsample)
 library(tidyverse)
@@ -147,7 +149,7 @@ setwd(cohoDir)
  # write.csv(CUPars, "SamSimInputs/CUPars.csv", row.names=F)
  # 
  # Save plot of annual age proportions by CU
- plotAgeProp_byCU(CUages, outDir = paste(cohoDir,"Figures",sep="/"), plotName="coho-ObsAgeProp-byCU")
+ plotAgeProp_byCU(CUages, outDir = paste(cohoDir,"Figures",sep="/"), plotName="coho-ObsAgeProp-byCU", useFrenchCaptions==useFrenchCaptions)
 
  
  
@@ -873,14 +875,29 @@ dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","Ricker","Ricke
 
 
 
+if (useFrenchCaptions == FALSE) {
+  Xlab<-"Sensitivity Analysis Scenario"
+  Ylab<-"Between-CU Correlation"
+  labs<-c("Obs","0(base)", "0.0225sig", "0.045sig", "0.0625sig", "0.09sig")
+  plotName<-paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep="")
+}
+
+if (useFrenchCaptions == TRUE) {
+  Xlab<-"Scénario d’analyse de sensibilité"
+  Ylab<-"Corrélation entre les UC"
+  labs<-c("Obs.","0(base)", "0.0225sig", "0.045sig", "0.0625sig", "0.09sig")
+  plotName<-paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,"-FN.png",sep="")
+}
+
 g <- ggplot(dat,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) + geom_boxplot(width=0.5) +
   scale_x_discrete(limits=c("Observed","Ricker", "Ricker_0.25sigGamma", "Ricker_0.5sigGamma","Ricker_0.75sigGamma",
                             "Ricker_1.0sigGamma"),
-                   labels=c("Obs","0(base)", "0.0225sig", "0.045sig", "0.0625sig", "0.09sig")) +
-                    xlab("Sensitivity Analysis Scenario") + ylab("Between-CU Correlation")
+                   labels=labs) +
+                    xlab(Xlab) + ylab(Ylab)
 
 
-ggsave(paste(cohoDir,"/Figures/coho-corrEffect_sigGamma",probThresh,".png",sep=""), plot = g,
+
+ggsave(plotName, plot = g,
        width = 4.5, height = 3.5, units = "in")
 
 
