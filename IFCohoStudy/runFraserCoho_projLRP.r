@@ -596,12 +596,26 @@ LRP_RickerCap0.5<- LRP_Ests[LRP_Ests$OM=="Ricker_priorCap" & LRP_Ests$ProbThresh
 LRP_Ricker0.66<- LRP_Ests[LRP_Ests$OM=="Ricker" & LRP_Ests$ProbThresh==0.66,]$LRP
 LRP_RickerCap0.66<- LRP_Ests[LRP_Ests$OM=="Ricker_priorCap" & LRP_Ests$ProbThresh==0.66,]$LRP
 
-png(paste(cohoDir,"/Figures/coho-EscpSeries-wProjLRP.png", sep=""), width=450, height=350)
+
+if (useFrenchCaptions==FALSE) {
+  Xlab<-"Year"
+  Ylab="Aggregate Spawner Abundance"
+  legendLabs<-c("Ricker", "Ricker_priorCap") 
+  png(paste(cohoDir,"/Figures/coho-EscpSeries-wProjLRP.png", sep=""), width=450, height=350)
+}
+
+if (useFrenchCaptions==TRUE) {
+  Xlab<-"Année"
+  Ylab="Abondance agrégée des géniteurs"
+  legendLabs<-c("Ricker", "Ricker_aprioriCap")
+  png(paste(cohoDir,"/Figures/coho-EscpSeries-wProjLRP-FN.png", sep=""), width=450, height=350)
+}
+
 
 par(mar=c(4,4,1,1))
 
 plot(AggEscp.Natural$yr, AggEscp.Natural$Gen_Mean, typ="l", ylim=c(0,max(AggEscp.Natural$Gen_Mean)), bty="l",
-     xlab="Year", ylab="Aggregate Spawner Abundance", cex.lab=1.3, lwd=2, cex.axis=1.1)
+     xlab=Xlab, ylab=Ylab, cex.lab=1.3, lwd=2, cex.axis=1.1)
 points(AggEscp.Natural$yr, AggEscp.Natural$Gen_Mean,pch=19,col="grey30", cex=1)
 
 
@@ -615,8 +629,10 @@ abline(h=LRP_RickerCap0.5, col=colList[1],lty=2,lwd=2)
 #        col = c(colList[1], colList[2], colList[1], colList[2]), 
 #        lty=c(1,1,2,2), bty="n")
 
+
+
 legend(x=2000, y=10000,cex=1.3,
-       legend=c("Ricker", "Ricker_priorCap"),
+       legend=legendLabs,
        col = c(colList[1], colList[1]),
        lty=c(1,2), bty="n", lwd=c(2,2))
 
@@ -785,7 +801,7 @@ ggsave(paste(cohoDir,"/Figures/LRP_ntrials_p",probThresh,".png",sep=""), plot = 
 
 # # ---- Code to compare observed and projected among-CU correlations in spawner abundance
 
-OMsToTest<-c("Ricker", "Ricker_0.5sigGamma","Ricker_0.75sigGamma",
+OMsToTest<-c("Ricker", "Ricker_0.25sigGamma", "Ricker_0.5sigGamma","Ricker_0.75sigGamma",
              "Ricker_1.0sigGamma")
 
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
@@ -867,7 +883,7 @@ write.csv(SpwnCorr.df, paste(projOutDir2, "SpwnCorr.df.csv", sep="/"), row.names
 # ggsave(paste(cohoDir,"/Figures/coho-corrEffect_cvER",probThresh,".png",sep=""), plot = g,
 #        width = 4.5, height = 3.5, units = "in")
 
- 
+SpwnCorr.df<-read.csv(paste(projOutDir2, "SpwnCorr.df.csv", sep="/")) 
 
 
 dat<-as_tibble(SpwnCorr.df) %>% filter(OM_Name %in% c("Observed","Ricker","Ricker_0.25sigGamma", "Ricker_0.5sigGamma","Ricker_0.75sigGamma",
@@ -1281,16 +1297,26 @@ ggsave(plotName, plot = g,
 # (11) Plot Correlation Matrices for Recruitment Residuals
 # ==================================================================
      
- Mod<-"Ricker_priorCap"
+ Mod<-"Ricker"
  cormat<-read.csv(paste(cohoDir,"/SamSimInputs/",Mod,"/corrMat.csv", sep=""), header=F)
      
  CUNames <- unique(SRDat$CU_Name)
- CUNames[CUNames=="Middle_Fraser"]<-"Middle Fraser"
- CUNames[CUNames=="Fraser_Canyon"]<-"Fraser Canyon"
- CUNames[CUNames=="Lower_Thompson"]<-"Lower Thompson"
- CUNames[CUNames=="South_Thompson"]<-"South Thompson"
- CUNames[CUNames=="North_Thompson"]<-"North Thompson"
  
+ if (useFrenchCaptions==FALSE) { 
+  CUNames[CUNames=="Middle_Fraser"]<-"Middle Fraser"
+  CUNames[CUNames=="Fraser_Canyon"]<-"Fraser Canyon"
+  CUNames[CUNames=="Lower_Thompson"]<-"Lower Thompson"
+  CUNames[CUNames=="South_Thompson"]<-"South Thompson"
+  CUNames[CUNames=="North_Thompson"]<-"North Thompson"
+ }
+ 
+ if (useFrenchCaptions==TRUE) { 
+   CUNames[CUNames=="Middle_Fraser"]<-"Moyen Fraser"
+   CUNames[CUNames=="Fraser_Canyon"]<-"Canyon du Fraser"
+   CUNames[CUNames=="Lower_Thompson"]<-"Thompson inférieure"
+   CUNames[CUNames=="South_Thompson"]<-"Thompson Sud"
+   CUNames[CUNames=="North_Thompson"]<-"Thompson Nord"
+ }
      
  # Plot correlation matrix to show scenarios
   # -- Method 1: ggplot
@@ -1309,7 +1335,14 @@ ggsave(plotName, plot = g,
  rownames(cormat) <- CUNames
  colnames(cormat) <- CUNames
 
- png(filename=paste(cohoDir, "/Figures/coho-RecuitResidCorrelation-", Mod, ".png", sep=""), width=4, height=4.5, units="in", res=500)
+ if (useFrenchCaptions==FALSE) {
+  plotName<-paste(cohoDir, "/Figures/coho-RecuitResidCorrelation-", Mod, ".png", sep="")
+ }
+ if (useFrenchCaptions==TRUE) {
+   plotName<-paste(cohoDir, "/Figures/coho-RecuitResidCorrelation-", Mod, "-FN.png", sep="")
+ }
+    
+ png(filename=plotName, width=4, height=4.5, units="in", res=500)
   corrplot(cormat, method="circle", p.mat=cormat, insig="p-value", type="lower",addCoef.col="black", tl.col = "black")
  dev.off()
 
@@ -1326,10 +1359,24 @@ ggsave(plotName, plot = g,
  
  # # Comparison 1: Among SR models ========================
  # OMsToPlot<-c("Ricker", "Ricker_priorCap", "Combined")
- # png(paste(cohoDir,"/Figures/", "coho-projLRPCurve-byOM.png", sep=""),
+ # 
+ # if (useFrenchCaptions == FALSE) { 
+ #   plotName<-paste(cohoDir,"/Figures/", "coho-projLRPCurve-byOM.png", sep="")
+ # }
+ # if (useFrenchCaptions == TRUE) { 
+ #   plotName<-paste(cohoDir,"/Figures/", "coho-projLRPCurve-byOM-FN.png", sep="")
+ # }
+ #   
+ # png(plotName,
  #     width=450, height=450)
  # par(mfrow=c(2,2), mar=c(2,2,2,1), oma=c(2,2,0,0))
- # LabelsToPlot<-OMsToPlot
+ # 
+ # if (useFrenchCaptions==FALSE) {
+ #  LabelsToPlot<-OMsToPlot
+ # } 
+ # if (useFrenchCaptions==TRUE) {
+ #   LabelsToPlot<-c("Ricker", "Ricker-aprioriCap", "Combinés")
+ # }
  # headerText<-"none"
 
  # #Comparison 2: Among sigGamma scenarios ========================
@@ -1345,11 +1392,22 @@ ggsave(plotName, plot = g,
  #Comparison 3: Among ER scenarios ========================
  OMsToPlot<-c("Ricker_ER2.5", "Ricker",
               "Ricker_ER22.5", "Ricker_ER32.5")
- png(paste(cohoDir,"/Figures/", "coho-projLRPCurve-byER.png", sep=""),
-     width=450, height=450)
+ if (useFrenchCaptions==FALSE) {
+   headerText<-"ER"
+    png(paste(cohoDir,"/Figures/", "coho-projLRPCurve-byER.png", sep=""),
+      width=450, height=450)
+ }
+ 
+ if (useFrenchCaptions==TRUE) {
+   headerText<-"TE"
+   png(paste(cohoDir,"/Figures/", "coho-projLRPCurve-byER-FN.png", sep=""),
+       width=450, height=450)
+ }
+
  par(mfrow=c(2,2), mar=c(2,2,2,1), oma=c(2,2,0,0))
  LabelsToPlot<-c(2.5, 12.5, 22.5, 32.5)
- headerText<-"ER"
+ 
+
  
  
  
@@ -1448,14 +1506,20 @@ ggsave(plotName, plot = g,
  }
  
  if (headerText == "ER") {
-   mtext(paste ("ER =",LabelsToPlot[i]), side = 3, outer = FALSE, line=0.5)
+   mtext(paste (headerText, "=", LabelsToPlot[i]), side = 3, outer = FALSE, line=0.5)
  }
  
  }  # end of OM loop
  
- mtext("Aggregate Spawner Abundances", side = 1, outer = TRUE, line=0.5, cex=1.2, font=1)
- mtext("Pr (All CUs > Lower Benchmark)", side = 2, outer = TRUE, line=0.5, cex=1.2, font=1)
+ if (useFrenchCaptions==FALSE) {
+  mtext("Aggregate Spawner Abundances", side = 1, outer = TRUE, line=0.5, cex=1.2, font=1)
+  mtext("Pr (All CUs > Lower Benchmark)", side = 2, outer = TRUE, line=0.5, cex=1.2, font=1)
+ }
  
+ if (useFrenchCaptions==TRUE) {
+   mtext("Abondance agrégée des géniteurs", side = 1, outer = TRUE, line=0.5, cex=1.2, font=1)
+   mtext("Pr(toutes les UC > PRI)", side = 2, outer = TRUE, line=0.5, cex=1.2, font=1)
+ } 
  
  dev.off()
  

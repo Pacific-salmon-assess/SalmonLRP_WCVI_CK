@@ -712,7 +712,7 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
 
 plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, 
                                     multiDimList, projLRPList = NULL, mutliDimList, ps_Prop,
-                                    WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName) {
+                                    WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName,useFrenchCaptions=FALSE) {
 
   
   Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
@@ -728,10 +728,19 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     
     
     # Labels if only using IM models:
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Abund: Logistic:Sgen-Ricker"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Abund: Logistic:Sgen-priorCap"
-    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Abund: Logistic:IFCRT"
+    if (useFrenchCaptions==FALSE) {
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Abund: Logistic:Sgen-Ricker"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Abund: Logistic:Sgen-priorCap"
+      if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Abund: Logistic:IFCRT"
+    }
+    if (useFrenchCaptions==TRUE) {
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Abond: Logistique:Ggén-Ricker"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Abond: Logistique:Ggén-aprioriCap"
+      if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Abond: Logistique:ERCFI"
+    }
     
+    
+      
     # If including probability in label:
     # name3<-strsplit(modelFitList[mm], "_")[[1]][2]
     # retroResults$Name <- paste(name1,name3,sep="_")
@@ -793,9 +802,16 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       
       
       # Labels if only using IM models:
-      if (OM.j == "Ricker") name1<-"Abund: Proj:Sgen-Ricker"
-      if (OM.j == "Ricker_priorCap") name1<-"Abund: Proj:Sgen-priorCap"
-      
+      if (useFrenchCaptions==FALSE) {
+        if (OM.j == "Ricker") name1<-"Abund: Proj:Sgen-Ricker"
+        if (OM.j == "Ricker_priorCap") name1<-"Abund: Proj:Sgen-priorCap"
+      }
+      # Labels if only using IM models:
+      if (useFrenchCaptions==TRUE) {
+        if (OM.j == "Ricker") name1<-"Abond: Proj:Ggén-Ricker"
+        if (OM.j == "Ricker_priorCap") name1<-"Abond: Proj:Ggén-aprioriCap"
+      }
+        
       # If includuding probability in label:
       # name2<-probThresh.j * 100
       # Name <- paste(name1,name2,sep=" ")
@@ -833,11 +849,21 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     
 
      if(SRmodName =="Bern.IndivRickerSurv") {
-       propName<-"Prop: Sgen-Ricker"
+       if (useFrenchCaptions==FALSE) {
+        propName<-"CUbased: Sgen-Ricker"
+       }
+       if (useFrenchCaptions==TRUE) {
+         propName<-"ÉtatUC: Ggén-Ricker"
+       }
        fitName<-"AllEsts_Indiv_Ricker_Surv"
      }
      if(SRmodName =="Bern.IndivRickerSurvCap") {
-       propName<-"Prop: Sgen-priorCap"
+       if (useFrenchCaptions==FALSE) {
+        propName<-"CUbased: Sgen-priorCap"
+       }
+       if (useFrenchCaptions==TRUE) {
+         propName<-"ÉtatUC: Ggén-aprioriCap"
+       }
        fitName<-"AllEsts_Indiv_Ricker_Surv_priorCap"
      }
      #if(SRmodName =="Bern.SPopAbundThreshST")  {
@@ -890,9 +916,15 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
 
   IFCRTstatus<-aggregate(stpropIFCRT$status,list(year=stpropIFCRT$yr),sum)
   
-  IFCRTrows<-data.frame(LRP_estYr=2020,
-   retroYear = IFCRTstatus$year , Name="Prop: IFCRT" , AboveLRP=!as.logical(IFCRTstatus$x))
-
+  if (useFrenchCaptions==FALSE) {
+    IFCRTrows<-data.frame(LRP_estYr=2020,
+    retroYear = IFCRTstatus$year , Name="CUbased: IFCRT" , AboveLRP=!as.logical(IFCRTstatus$x))
+  }
+  if (useFrenchCaptions==TRUE) {
+    IFCRTrows<-data.frame(LRP_estYr=2020,
+                          retroYear = IFCRTstatus$year , Name="ÉtatUC: ERCFI" , AboveLRP=!as.logical(IFCRTstatus$x))
+  } 
+  
   Status_DF <- rbind(Status_DF, IFCRTrows)
 
   # Step 4: Add mutlidimensional results (optional)
@@ -910,9 +942,16 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     }
     
   
-    if (OM.j == "Ricker") name1<-"Prop: Scanner-Ricker"
-    if (OM.j == "Ricker_priorCap") name1<-"Prop: Scanner-priorCap"
-      
+    if (useFrenchCaptions==FALSE) {
+      if (OM.j == "Ricker") name1<-"CUbased: Scanner-Ricker"
+      if (OM.j == "Ricker_priorCap") name1<-"CUbased: Scanner-priorCap"
+    }
+    if (useFrenchCaptions==TRUE) {
+      if (OM.j == "Ricker") name1<-"ÉtatUC: Explorateur-Ricker"
+      if (OM.j == "Ricker_priorCap") name1<-"ÉtatUC: Explorateur-aprioriCap"
+    }
+    
+    
     multiDimResults<-as_tibble(read.csv(paste(Dir,"/DataOut/multiDimStatusEsts_",OM.j,".csv", sep="")))
     
     # Loop over years and summarize status as above (True) or below (False) the LRP for each year
@@ -932,7 +971,13 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   
   # Step 5: Add row to Status_DF for 2014 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
-    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop: WSP-2014", AboveLRP = WSP_AboveLRP)
+    if (useFrenchCaptions==FALSE) {
+      New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "CUbased: WSP-2014", AboveLRP = WSP_AboveLRP)
+    }
+    if (useFrenchCaptions==TRUE) {
+      New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "ÉtatUC: PSS-2014", AboveLRP = WSP_AboveLRP)
+    }
+    
     Status_DF <- rbind(Status_DF, New_Row)
     Status_DF <- arrange(Status_DF, Name)
   }
@@ -943,14 +988,23 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   methods <- unique(Status_DF$Name)
   
   # Hack to re-order methods for plotting ===============
-  methods<-c("Prop: WSP-2014", "","Prop: Scanner-Ricker", "Prop: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
-             "Prop: Scanner-priorCap", "Prop: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
-             "Prop: IFCRT", "Abund: Logistic:IFCRT") 
-             
+  if (useFrenchCaptions==FALSE) {
+    methods<-c("CUbased: WSP-2014", "","CUbased: Scanner-Ricker", "CUbased: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
+             "CUbased: Scanner-priorCap", "CUbased: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
+             "CUbased: IFCRT", "Abund: Logistic:IFCRT") 
+  }
+  if (useFrenchCaptions==TRUE) {
+    methods<-c("ÉtatUC: PSS-2014", "","ÉtatUC: Explorateur-Ricker", "ÉtatUC: Ggén-Ricker", "Abond: Logistique:Ggén-Ricker", "Abond: Proj:Ggén-Ricker", "",
+               "ÉtatUC: Explorateur-aprioriCap", "ÉtatUC: Ggén-aprioriCap","Abond: Logistique:Ggén-aprioriCap", "Abond: Proj:Ggén-aprioriCap", "",
+               "ÉtatUC: ERCFI", "Abond: Logistique:ERCFI") 
+  }
+              
+
+  
   # --- set-up pdf to save to
   #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
-  png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=700, height=580)
-  par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
+  png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=770, height=638)
+  par( oma=c(3,11,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
   
   # ---- specify colouts 
   #  cols <- c( "#FF0900", "#08AB0B") # (red, green)
@@ -1016,9 +1070,10 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   #sapply(seq(2000,2015,by=5), addVertLines_major,low=low,high=high,n=length(methods))
  
   # add x-axis label
+  methodLabel<-ifelse(useFrenchCaptions==FALSE, "Method","Méthode")
   axis(1)
   mtext(side = 1, "Year", outer = T, cex=1.2)
-  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4, cex=1.2)
+  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline(Method)), xpd=NA, pos=4, cex=1.2)
   
   # legend( "topright", bty="n", lty=c(1,1,1,1), lwd=c(2,2,4,2) , 
   #         col=c("black", "grey", "#08AB0B", Tcols[1]),

@@ -199,7 +199,7 @@ LRdiagnostics <- function(SMUlogisticData, nCU, All_Ests, p, Bern_logistic, dir,
   # statistic indicates a lack of linearity in the relationship between 
   # aggregate abundances and log-odds (Fox et al. 2016, p. 326-328).
 
-  
+ 
   data <- list()
   data$N_Stks <- nCU
   digits <- count.dig(SMUlogisticData$SMU_Esc)

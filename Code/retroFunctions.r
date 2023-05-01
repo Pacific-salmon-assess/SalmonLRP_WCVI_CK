@@ -79,6 +79,7 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
   if (file.exists(figDir) == FALSE){
     dir.create(figDir)
   }
+
   
   # Loop over years ===============================================
   for (yy in 1:length(yearList)) {
@@ -309,7 +310,6 @@ runAnnualRetro<-function(EscpDat, SRDat, startYr, endYr, BroodYrLag, genYrs, p =
       SMUlogisticData <- LRP_Mod$Logistic_Data %>% rename(ppn=yy, SMU_Esc=xx, 
                                                           Years=yr)
       
-
       logisticDiagStats<-LRdiagnostics(SMUlogisticData=SMUlogisticData, 
                  nCU=length(unique(EscpDat$CU_Name)), All_Ests = LRP_Mod$All_Ests,
                   p=p, Bern_logistic = useBern_Logistic, dir=paste(figDir,"/",sep=""),
@@ -366,11 +366,13 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
   
   for (nn in 1:length(nCUList)) {
     
+    
     nCUs<-nCUList[nn]
     CU_combn<-combn(CU_Names,nCUs)
     
     for (ii in 1:ncol(CU_combn)) {
       
+    
       # Select CUs for this replicate
       CUs.ii<-CU_combn[,ii]
       
@@ -429,18 +431,17 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
             new.df<-left_join(out$LRPs,AggEscp.ii, by = c("retroYear" = "yr"))
             nCUs<-rep(nCUList[nn],nrow(new.df))
             iCombn<-rep(ii,nrow(new.df))
-            status<-new.df$Gen_Mean/new.df$LRP
-            se<-(new.df$LRP_upr-new.df$LRP) / 1.96 # back-calculate what SE on LRP estimate was
-            cv<-se/new.df$LRP # calculate CV as SE / LRP
+            status<-new.df$Gen_Mean/as.numeric(new.df$LRP)
+            se<-(as.numeric(new.df$LRP_upr)-as.numeric(new.df$LRP)) / 1.96 # back-calculate what SE on LRP estimate was
+            cv<-as.numeric(se)/as.numeric(new.df$LRP) # calculate CV as SE / LRP
             new.df<-data.frame(iCombn, nCUs, new.df, status, se, cv)
             output.df<-rbind(output.df, new.df)
           }
 
       
+      
     } # End of nReps loop 
     
-    
-
     outputDir<-paste(outDir,"/DataOut/nCUCombinations",sep="")
     
     if (file.exists(outputDir) == FALSE){
@@ -452,5 +453,6 @@ runNCUsRetro <- function(nCUList, EscpDat, SRDat, startYr, endYr, BroodYrLag, ge
   
   } # End of nCUs loop
   
+ 
   
 }
