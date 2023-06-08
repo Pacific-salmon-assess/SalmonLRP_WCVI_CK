@@ -1652,10 +1652,13 @@ OMsToInclude<-c(
   # "ER0.35even_hCor",
   # "ER0.40even_hCor",
   # "ER0.45even_hCor")
-  "alphaScalar0.75",
-  "baseER",#"baseERn10000",
-  "alphaScalar1.5")
-  # "cvER0",
+
+  # "alphaScalar0.75",
+  # "baseER",#"baseERn10000",
+  # "alphaScalar1.5")
+  "baseER")
+
+# "cvER0",
   # "baseER",
   # "cvER0.17")
 
@@ -1735,6 +1738,7 @@ for (OM in 1:length(OMsToInclude)){
 
         png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToIncludeName,
                   "-ProjLRPCurve-ALLp.png", sep=""), width=plot.width,
+                  # "-ProjLRPCurve-ALLpFR.png", sep=""), width=plot.width,
             height=plot.height,
             units="in", res=300)#500
         if(length(OMsToInclude)==9) layout(matrix(c(1:9), 3, 3, byrow = TRUE))
@@ -1750,7 +1754,8 @@ for (OM in 1:length(OMsToInclude)){
            ylim=c(0,1),
            cex=0.5, cex.lab=1,#1.5,
            xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
-           yaxt <- "s"
+           # xlab="Abondance agrégée", ylab="Prob(tous les inlets) > PRI")
+          yaxt <- "s"
     }# End of if(length(OMsToInclude)==1){
 
     if(length(OMsToInclude)==9){
@@ -1875,7 +1880,7 @@ for (OM in 1:length(OMsToInclude)){
 
   }
 
-  # Save LRPs for all OM scenarios
+  # # Save LRPs for all OM scenarios
   write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
                             "_ALLp.csv", sep=""), row.names=F)
   # Save LRP projection summaries used for calculating and plotting LRP (Optional)
