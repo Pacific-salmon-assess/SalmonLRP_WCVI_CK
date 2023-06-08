@@ -122,11 +122,14 @@ inletPlot <- ggplot(wcviInletsDF) +
   geom_point(aes(y=Value, x=Year, colour=Status)) +
   geom_hline(aes(yintercept=SGEN), colour="orange") +
   #geom_hline(aes(yintercept=UBM), colour="black", linetype=2) +
-  ylab("Escapement") +
+  # ylab("Échappées") +
+  # xlab("Année") +
   scale_colour_manual(guide = NULL, breaks = c("None", "Amber", "Green", "Red"), values=c("gray", "gray", "gray","red")) +
   facet_wrap(~interaction(Stock), scales = "free_y") +
   theme_classic()
 # ggsave("Figures/chinook-inlet-timeseries.png", plot=inletPlot, width = 6,
+#        height = 4, units = "in")
+# ggsave("Figures/chinook-inlet-timeseriesFR.png", plot=inletPlot, width = 6,
 #        height = 4, units = "in")
 
 
