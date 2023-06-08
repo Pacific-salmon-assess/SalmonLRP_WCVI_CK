@@ -1136,14 +1136,28 @@ if(calcTau){
 
 
 OMsToTest<-c(
-   "recCorSca0",
-   "recCorSca0.5",
-   "baseERn10000",#)
+  "cvER0",
+  "cvER0.085",
+  "cvER0.17",
+  "recCorSca0",
+  "recCorSca0.5",
+  # "baseER"),
+  "baseERn10000",
+  # "baseERn10000",
+  # "baseERn10000",
+  # "baseERn10000",
   # "baseERn10000",
   "agePpnConst",
-    "cvER0",
-    # "baseERn10000",
-     "cvER0.17")
+  "agePpnVar")
+
+  #  "recCorSca0",
+  #  "recCorSca0.5",
+  #  "baseERn10000",#)
+  # # "baseERn10000",
+  # "agePpnConst",
+  #   "cvER0",
+  #   # "baseERn10000",
+  #    "cvER0.17")
 
 LRPFileName <- "ProjectedLRPs_cvERage.csv"
 
@@ -1208,7 +1222,9 @@ for (i in 1:length(Years)){
   Inlet_Sum.df <-   Inlet_Sum.df.long %>%
     filter(BroodYear %in% c(Year.Start : (Year.Start + 20) ) ) %>%
     dplyr::select(-c(CU_Name, Inlet_ID, Recruits)) %>%
-    pivot_wider(id_cols= c (Inlet_Name, BroodYear),
+    # pivot_wider(id_cols= c (Inlet_Name, BroodYear),
+    #             names_from=Inlet_Name, values_from=Spawners) %>%
+    pivot_wider(id_cols= c (BroodYear),
                 names_from=Inlet_Name, values_from=Spawners) %>%
     dplyr::select(-BroodYear) %>% na.omit()
 
@@ -1264,7 +1280,7 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
   geom_boxplot(width=0.5, outlier.shape=NA) + ylim(-0.25,1)+
   geom_jitter(data=SpwnCorr.df[!ind, ],
               position=position_jitter(0.2), col="dark grey", alpha=0.95,
-              size=0.1) +
+              size=0.01) +
   scale_x_discrete(limits=c("Observed",
                             # "cvER0",
                             # "cvER0.21baseERn10000",
@@ -1280,7 +1296,9 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             "agePpnConst",
                             "agePpnVar"),
 
-                       labels=c("Observed",
+                       labels=c(
+                            "Observed",
+                            # "Observées",
                             # "0",
                             # "0.085",
                             # #"const\ndeviations\nover years",
@@ -1288,23 +1306,27 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
                             # "0.17" )) +
                             "0",
                             "0.085\nCV in exploitation rates",#)) +
+                            # "0.085\nCV des taux d’exploitation",#)) +
                             "0.17",
                             "0",
                             "0.5\nScalar for recruitment deviations",
+                            # "0.5\nScalaire pour les écarts\nde recrutement",
                             "1",
                             # #"const\ndeviations\nover years",
                             # # #"annual\ndeviations\nover years")) +)) +
                             "Constant\nage ppn\namong\ninlets",
+                            # "Prop. âge\nconstant\nentre\nles inlets", #U+0302
                             "Variable\nage ppn\namong\ninlets" )) +
-
+                            # "Prop. âge\nvariable\nentre\nles inlets" )) +
 
 
   # xlab("cv in Exploitation Rates among inlets") +
   # xlab("Scalar for Ricker Residual Correlation Matrix") +
   xlab("") +
+  # ylab("Corrélations par paires des géniteurs entre les inlets") +
   ylab("Pairwise correlations in spawners among inlets") +
   theme(axis.text=element_text(size=5),
-        axis.title=element_text(size=8))#,
+        axis.title=element_text(size=6))#,
         # axis.text.x = element_text(hjust = 0))
   # theme(panel.grid.major.x = element_blank(),
   #       panel.grid.minor.x = element_blank(),
@@ -1317,9 +1339,12 @@ g <- ggplot(SpwnCorr.df,aes(y=SpwnCorrValues,x=as.factor(OM_Name))) +
   # annotate("text", x = c(1.5,2:5), y = -0.2, label =c("LRP:",LRPs), size=4)
   # annotate("text", x = c(1.5,2:6), y = -0.2, label =c("LRP:",LRPs), size=4)
 
+g
 
 
 # ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor-recCorSca.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
+#        width = 4, height = 3, units = "in")
+# ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCorFR.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
 #        width = 4, height = 3, units = "in")
 ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor.png",sep=""), plot = g, #-recCorSca#-cvER#-Ages
        width = 4, height = 3, units = "in")
