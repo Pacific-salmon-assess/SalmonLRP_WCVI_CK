@@ -25,7 +25,10 @@ Pre-terminal exploitation rates for Robertson Creek CWT Hatchery Indicator Stock
 
 # ERs <- read.csv(paste(wcviCKDir, "/DataIn/ER.csv", sep="")
 ERs <- read.csv("DataIn/ER.csv")
-ggplot(ERs,aes(Year, ER)) + geom_point() + geom_line()
+ggplot(ERs,aes(Year, ER)) + geom_point() + 
+  # xlab("Année") +
+  # ylab("Taux d’exploitation") +
+  geom_line()
 
 ```
 
