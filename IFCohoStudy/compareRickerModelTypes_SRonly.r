@@ -1,3 +1,7 @@
+
+#useFrenchCaptions<-FALSE
+useFrenchCaptions<-TRUE
+
 biasCorrectEst<-TRUE
 
 # Make simplified version of TMB run code for demonstration
@@ -281,8 +285,10 @@ cap_priorMean<- cap*1.40
 print("Prior means for capacity in Indiv model, by CU:")
 print(cap_priorMean)
 
+pngNameSrep <- "coho-SrepPriorDist.png"
+if (useFrenchCaptions == TRUE) pngNameSrep <- "coho-SrepPriorDist-FN.png"
 
-png(paste(figDir, "/coho-SrepPriorDist.png", sep=""), width=480, height=300)
+png(paste(figDir, "/",pngNameSrep, sep=""), width=480, height=300)
 # Plot prior distributions, by CU
 xx<-seq(1,30,length=1000)
 
@@ -298,10 +304,21 @@ for (i in 1:5) {
   if (CU_Names[i] == "South_Thompson") plotName<-"South Thompson"
   if (CU_Names[i] == "Lower_Thompson") plotName<-"Lower Thompson"
   
+  if (useFrenchCaptions == TRUE) {
+    if (CU_Names[i] == "Middle_Fraser") plotName<-"Moyen Fraser"
+    if (CU_Names[i] == "Fraser_Canyon") plotName<-"Canyon du Fraser"
+    if (CU_Names[i] == "North_Thompson") plotName<-"Thompson Nord"
+    if (CU_Names[i] == "South_Thompson") plotName<-"Thompson Sud"
+    if (CU_Names[i] == "Lower_Thompson") plotName<-"Thompson inférieure"
+  }
+    
+  
+  Xlab<-"SRep"
+  if(useFrenchCaptions == TRUE) Xlab<-"GRem"
   
   yy<-dnorm(xx,mean=cap_priorMean[i],sqrt(2))
   plot(xx*1000,yy*1000, typ="l", lwd=2, 
-       ylab="", xlab="SRep", xlim=c(x.plotMin[i], x.plotMax[i]), axes=F, cex.lab=1.5)
+       ylab="", xlab=Xlab, xlim=c(x.plotMin[i], x.plotMax[i]), axes=F, cex.lab=1.5)
   abline(v=cap[i]*1000,lty=2, col="red")
   title(main=plotName, cex.main=1.8)
   axis(side = 1,labels=T, cex.axis=1.5)
@@ -912,6 +929,12 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
   
   Ylab = "Recruits"
   Xlab = "Spawners"
+  
+  if (useFrenchCaptions==TRUE) {
+    Ylab = "Recrues"
+    Xlab = "Géniteurs"
+  }
+  
   dat<-plotDat %>% filter(CU_ID == i)
   dat_cap<-plotDat_cap %>% filter(CU_ID == i)
   SR_dat <- SRDat %>% filter(CU_ID == i)
@@ -921,6 +944,17 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
   
   if (i == 1) yMax<-max(c(SR_dat$Recruits,SR_dat$Spawners))*2
 
+  CUname<-unique(SRDat$CU_Name[SRDat$CU_ID==i])
+  
+  # Specify CU names for french translation
+  if (useFrenchCaptions == TRUE) {
+    if(i == 0) CUname<-"Moyen Fraser"
+    if(i == 1) CUname<-"Canyon du Fraser"
+    if(i == 2) CUname<-"Thompson inférieure"
+    if(i == 3) CUname<-"Thompson Nord"
+    if(i == 4) CUname<-"Thompson Sud"
+  }
+  
   # Create plot
   p <- ggplot(data=dat, mapping=aes(x=Pred_Spwn,y=Pred_Rec)) +
     # add hier surv model
@@ -938,18 +972,19 @@ makeSRplots<-function(i,plotDat,plotDat_cap, SRDat) {
     # add replacement line
     geom_line(mapping=aes(x=Pred_Spwn, y=Pred_Spwn), col="red") +
     # add title, labels, theme
-    ggtitle(unique(SRDat$CU_Name[SRDat$CU_ID==i])) +
+    ggtitle(CUname) +
     xlab(Xlab) + ylab(Ylab) +
     xlim(0, xMax) + ylim(0, yMax) +
     theme_classic()
 
-  
 }
 
 # Create multi-panel plots of SR fits for IM and IM_cap model =====================
 
+pngName<-ifelse(useFrenchCaptions==FALSE, "coho-compare-SRFits-IM.png", "coho-compare-SRFits-IM-FN.png")
+
 ps<-lapply(CUID_list, makeSRplots, plotDat=plotDat_IM, plotDat_cap=plotDat_IM_cap, SRDat=SRDat)
-png(paste(figDir, "coho-compare-SRFits-IM.png", sep="/"))
+png(paste(figDir, pngName, sep="/"))
 do.call(grid.arrange,  ps)
 dev.off()
  

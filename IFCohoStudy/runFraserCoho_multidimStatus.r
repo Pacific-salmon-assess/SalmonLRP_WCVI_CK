@@ -1,3 +1,5 @@
+#useFrenchCaptions<-FALSE
+useFrenchCaptions<-TRUE
 
 library(rsample)
 library(tidyverse)
@@ -120,7 +122,9 @@ for (m in 1:length(BMList)) {
 
   statusEst<-getMultiDimStatus(statusDat = statusDat, outDir=cohoDir, filename=paste("multiDimStatusEsts_",BMsource,".csv", sep=""))
 
-
-  plot_CU_Escp_withMultiStatus(statusEst, outDir=cohoDir, plotName=paste("coho-CU-EscpSeries-wMultiStatus",BMsource, sep="_"))
+  plotName<-paste("coho-CU-EscpSeries-wMultiStatus",BMsource, sep="_")
+  if(useFrenchCaptions==TRUE) plotName<-paste("coho-CU-EscpSeries-wMultiStatus",BMsource,"FN",sep="_")
+  
+  plot_CU_Escp_withMultiStatus(statusEst, outDir=cohoDir, plotName=plotName,useFrenchCaptions=useFrenchCaptions)
 
 }

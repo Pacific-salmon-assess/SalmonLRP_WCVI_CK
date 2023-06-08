@@ -230,8 +230,9 @@ plot_CU_Escp_withStatus<-function(Dat, Dir, plotName, SgenFileName=NULL) {
 
 
 
-plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName) {
+plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName,useFrenchCaptions=FALSE) {
   
+  if(useFrenchCaptions==TRUE) plotName<-paste("coho-Subpop-EscpSeries-wStatus","FN",sep="-")
   
   escpDat <- Dat %>% group_by(Subpop_Name, CU_Name, yr) %>% summarise(Escp=sum(Escp)) %>% 
     mutate(Gen_Mean = rollapply(Escp, 3, gm_mean, fill = NA, align="right")) 
@@ -241,26 +242,44 @@ plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName) {
  
   
   # Change some subpop names to make it prettier for plotting
+  if (useFrenchCaptions==FALSE) {
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower Middle Fraser"] <- "Lower Middle Fraser"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower North Thompson"] <- "Lower North Thomp."
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle and Lower Shuswap Rivers"] <- "Mid. and L.Shuswap Rivers"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Shuswap Lake Tributaries"] <- "Shuswap Lake Tribs."
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle North Thompson"] <- "Middle North Thomp."
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Upper North Thompson"] <- "Upper North Thomp."
   
-  statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower Middle Fraser"] <- "Lower Middle Fraser"
-  statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower North Thompson"] <- "Lower North Thomp."
-  statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle and Lower Shuswap Rivers"] <- "Mid. and L.Shuswap Rivers"
-  statusDat$Subpop_Name[statusDat$Subpop_Name == "Shuswap Lake Tributaries"] <- "Shuswap Lake Tribs."
-  statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle North Thompson"] <- "Middle North Thomp."
-  statusDat$Subpop_Name[statusDat$Subpop_Name == "Upper North Thompson"] <- "Upper North Thomp."
+    statusDat$CU_Name[statusDat$CU_Name == "South_Thompson"] <- "South Thompson"
+    statusDat$CU_Name[statusDat$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
+    statusDat$CU_Name[statusDat$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
+    statusDat$CU_Name[statusDat$CU_Name == "North_Thompson"] <- "North Thompson"
+    statusDat$CU_Name[statusDat$CU_Name == "Lower_Thompson"] <- "Lower Thompson"
+  }
   
-  statusDat$CU_Name[statusDat$CU_Name == "South_Thompson"] <- "South Thompson"
-  statusDat$CU_Name[statusDat$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
-  statusDat$CU_Name[statusDat$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
-  statusDat$CU_Name[statusDat$CU_Name == "North_Thompson"] <- "North Thompson"
-  statusDat$CU_Name[statusDat$CU_Name == "Lower_Thompson"] <- "Lower Thompson"
+  
+  if (useFrenchCaptions==TRUE) {
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower Middle Fraser"] <- "Moyen Fraser inférieur"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower North Thompson"] <- "Thomp. Nord inférieure"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle and Lower Shuswap Rivers"] <- "Cours inf. et moy. Shuswap"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Shuswap Lake Tributaries"] <- "Affluents lac Shuswap"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Middle North Thompson"] <- "Thompson Nord moy."
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Upper North Thompson"] <- "Thomp. Nord supérieure"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Adams Drainage"] <-"Adams"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Lower Thompson"] <-"Thompson inférieure"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Fraser Canyon"] <-"Canyon du Fraser"
+    statusDat$Subpop_Name[statusDat$Subpop_Name == "Upper Middle Fraser"] <-"Moyen Fraser supérieur"
+    
+    
+    statusDat$CU_Name[statusDat$CU_Name == "South_Thompson"] <- "Thompson Sud"
+    statusDat$CU_Name[statusDat$CU_Name == "Fraser_Canyon"] <- "Canyon du Fraser"
+    statusDat$CU_Name[statusDat$CU_Name == "Middle_Fraser"] <- "Moyen Fraser"
+    statusDat$CU_Name[statusDat$CU_Name == "North_Thompson"] <- "Thompson Nord"
+    statusDat$CU_Name[statusDat$CU_Name == "Lower_Thompson"] <- "Thompson inférieure"
+  }
   
   write.csv(statusDat,
     paste(Dir,"/DataOut/ModelFits/IFCRTstatusbyCU.csv", sep=""), row.names =F)
-
-
-
-
 
   #g<-ggplot(statusDat) +
   #  geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
@@ -275,6 +294,13 @@ plot_Subpop_Escp_withStatus <- function(Dat, Dir, plotName) {
   pp<-list()
   for(n in seq_along(cus)){
 
+    Xlab<-"Year"
+    Ylab<-"\n Escapement"
+    if (useFrenchCaptions==TRUE) {
+      Xlab<-"Année"
+      Ylab<-"\n Échappées"
+    }
+      
     statusDato <-statusDat %>% filter(CU_Name==cus[n]) 
     g<-ggplot(statusDato) +
       geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
@@ -366,14 +392,25 @@ plot_Subpop_Escp_Over_Time <-function(Dat, Dir, plotName, samePlot = T, withThre
 }
 
 
-plot_CU_Escp_withMultiStatus<-function(statusEsts,outDir,plotName) {
+plot_CU_Escp_withMultiStatus<-function(statusEsts,outDir,plotName,useFrenchCaptions=FALSE ) {
   
   # Rename to make prettier for plotting
-  statusEsts$CU_Name[statusEsts$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
-  statusEsts$CU_Name[statusEsts$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
-  statusEsts$CU_Name[statusEsts$CU_Name == "North_Thompson"] <- "N. Thompson"
-  statusEsts$CU_Name[statusEsts$CU_Name == "South_Thompson"] <- "S. Thompson"
-  statusEsts$CU_Name[statusEsts$CU_Name == "Lower_Thompson"] <- "L. Thompson"
+  if (useFrenchCaptions==FALSE) {
+    statusEsts$CU_Name[statusEsts$CU_Name == "Fraser_Canyon"] <- "Fraser Canyon"
+    statusEsts$CU_Name[statusEsts$CU_Name == "Middle_Fraser"] <- "Middle Fraser"
+    statusEsts$CU_Name[statusEsts$CU_Name == "North_Thompson"] <- "N. Thompson"
+    statusEsts$CU_Name[statusEsts$CU_Name == "South_Thompson"] <- "S. Thompson"
+    statusEsts$CU_Name[statusEsts$CU_Name == "Lower_Thompson"] <- "L. Thompson"
+  }
+  
+  # Special case with French captions
+  if (useFrenchCaptions==TRUE) {
+    statusEsts$CU_Name[statusEsts$CU_Name == "Fraser_Canyon"] <- "Canyon du Fraser"
+    statusEsts$CU_Name[statusEsts$CU_Name == "Middle_Fraser"] <- "Moyen Fraser"
+    statusEsts$CU_Name[statusEsts$CU_Name == "North_Thompson"] <- "Thompson N."
+    statusEsts$CU_Name[statusEsts$CU_Name == "South_Thompson"] <- "Thompson S."
+    statusEsts$CU_Name[statusEsts$CU_Name == "Lower_Thompson"] <- "Thompson I."
+  }
   
  # LRPStatus <- statusEsts %>% summarise(LRPStatus=ifelse(rapidStatus=="Red", "Below", "Above"))
 #  status<-as.data.frame(LRPStatus)$LRPStatus
@@ -382,11 +419,19 @@ plot_CU_Escp_withMultiStatus<-function(statusEsts,outDir,plotName) {
   
   statusEsts<-statusEsts %>% add_column(LRPStatus=status)
   
+  Ylab<-"Escapement"
+  Xlab<-"Year"
+  
+  if(useFrenchCaptions==TRUE) {
+    Ylab<-"Échappées"
+    Xlab<-"Année"
+  }
+  
   g<-ggplot(statusEsts) +
     geom_path(aes(y=Escp, x=yr), colour='black', alpha=0.5) +
     geom_point(aes(y=Gen_Mean, x=yr, colour=LRPStatus)) +
     geom_hline(aes(yintercept=Sgen), colour="orange") +
-    ylab("Escapement") + xlab("Year") +
+    ylab(Ylab) + xlab(Xlab) +
     scale_colour_manual(guide = NULL, breaks = c("Above", "Below"), values=c("gray40", "red")) +
     facet_wrap(~interaction(CU_Name), scales = "free_y") +
     theme_classic()
@@ -519,7 +564,7 @@ plotAnnualRetro_CompareProbs<-function(Dat, Names, L_Names = NA, pList, outDir, 
 #=============================================================================
 
 
-plotAnnualRetro_CompareMethods<-function(Dat, Names, L_Names = NA, pList, outDir, useGenMean, genYrs) {
+plotAnnualRetro_CompareMethods<-function(Dat, Names, L_Names = NA, pList, outDir, useGenMean, genYrs, useFrenchCaptions) {
   
   if(is.na(L_Names[1])){
     L_Names <- Names
@@ -528,12 +573,25 @@ plotAnnualRetro_CompareMethods<-function(Dat, Names, L_Names = NA, pList, outDir
   # Calculate aggregate escapement (note: CUs with no LBM but with escapement data will be included)
   Dat.AggEscp <-  Dat %>% group_by(yr) %>%  summarise(Agg_Escp = sum(Escp))
   
-  if(useGenMean == T){
-    Dat.AggEscp$Agg_Escp <- rollapply(Dat.AggEscp$Agg_Escp, genYrs, gm_mean, fill = NA, align="right")
-    Ylab <- "Abundance"
-  } else {
-    Ylab <- "Agg. Escapement"
+  if (useFrenchCaptions==FALSE) {
+    if(useGenMean == T){
+     Dat.AggEscp$Agg_Escp <- rollapply(Dat.AggEscp$Agg_Escp, genYrs, gm_mean, fill = NA, align="right")
+      Ylab <- "Abundance"
+    } else {
+      Ylab <- "Agg. Escapement"
+    }
+    Xlab<-"Year"
   }
+  
+  if (useFrenchCaptions==TRUE) {
+    if(useGenMean == T){
+      Dat.AggEscp$Agg_Escp <- rollapply(Dat.AggEscp$Agg_Escp, genYrs, gm_mean, fill = NA, align="right")
+      Ylab <- "Abondance"
+    } else {
+      Ylab <- "Abondance agrégée"
+    }
+    Xlab<-"Année"
+  } 
   
   # Extract retrospective LRP estimates
   for (i in 1:length(Names)) {
@@ -563,7 +621,7 @@ plotAnnualRetro_CompareMethods<-function(Dat, Names, L_Names = NA, pList, outDir
       #geom_ribbon(data = LRPs, aes(x=retroYear, y=LRP, colour = Mod, ymin = LRP_lwr, ymax = LRP_upr, fill = Mod), alpha = 0.3) +
       geom_ribbon(data = LRPs, aes(x=retroYear, y=LRP, ymin = LRP_lwr, ymax = LRP_upr, fill = Model), alpha = 0.3) +
       geom_line(data = LRPs,aes(x=retroYear, y=LRP, colour = Model), size = 1.2) +
-      xlab("Year") + ylab(Ylab) +
+      xlab(Xlab) + ylab(Ylab) +
       theme_classic() +
       #ggtitle(paste("Probability = ", pList[i], "%", Sep="")) +
       theme(legend.position = c(0.2, 0.2))
@@ -571,14 +629,22 @@ plotAnnualRetro_CompareMethods<-function(Dat, Names, L_Names = NA, pList, outDir
     annual_LRP_plot
   }
   
+  
   # Make multi-panel plot
  # pLRPs<-lapply(1:length(L_Names), plotByModel, Dat = LRPs, L_Names)
    pLRPs<-lapply(1:length(pList), plotByProb, Dat = LRPs, pList=pList)
    
    pMulti<-do.call(grid.arrange,  pLRPs)
   
+   if (useFrenchCaptions==FALSE) {
+     plotName<-"coho_LRP_compareRetro.png"
+   }
+   if (useFrenchCaptions==TRUE) {
+     plotName<-"coho_LRP_compareRetro-FN.png"
+   }
+   
   # Save multi=panel plot
-  ggsave(paste(outDir,"/Figures/coho_LRP_compareRetro.png",sep=""), plot = pMulti, 
+  ggsave(paste(outDir,"/Figures/",plotName,sep=""), plot = pMulti, 
          units="in", width=5.5, height=4.4) 
   
 }
@@ -646,7 +712,7 @@ plotLogistic <- function(Data, Preds, LRP, useGenMean = F, plotName, outDir, p=0
 
 plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,EscpDat,  modelFitList, 
                                     multiDimList, projLRPList = NULL, mutliDimList, ps_Prop,
-                                    WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName) {
+                                    WSP_estYr=NULL, WSP_AboveLRP=NULL, outDir, fName,useFrenchCaptions=FALSE) {
 
   
   Status_DF <- data.frame(LRP_estYr = numeric(), retroYear=numeric(), Name = character(), AboveLRP = character())
@@ -662,10 +728,19 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     
     
     # Labels if only using IM models:
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Abund: Logistic:Sgen-Ricker"
-    if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Abund: Logistic:Sgen-priorCap"
-    if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Abund: Logistic:IFCRT"
+    if (useFrenchCaptions==FALSE) {
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Abund: Logistic:Sgen-Ricker"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Abund: Logistic:Sgen-priorCap"
+      if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Abund: Logistic:IFCRT"
+    }
+    if (useFrenchCaptions==TRUE) {
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_Surv") name1<-"Abond: Logistique:Ggén-Ricker"
+      if (retroResults$BMmodel[1] == "SR_IndivRicker_SurvCap") name1<-"Abond: Logistique:Ggén-aprioriCap"
+      if (retroResults$BMmodel[1] == "ThreshAbund_Subpop1000_ST") name1<-"Abond: Logistique:ERCFI"
+    }
     
+    
+      
     # If including probability in label:
     # name3<-strsplit(modelFitList[mm], "_")[[1]][2]
     # retroResults$Name <- paste(name1,name3,sep="_")
@@ -727,9 +802,16 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
       
       
       # Labels if only using IM models:
-      if (OM.j == "Ricker") name1<-"Abund: Proj:Sgen-Ricker"
-      if (OM.j == "Ricker_priorCap") name1<-"Abund: Proj:Sgen-priorCap"
-      
+      if (useFrenchCaptions==FALSE) {
+        if (OM.j == "Ricker") name1<-"Abund: Proj:Sgen-Ricker"
+        if (OM.j == "Ricker_priorCap") name1<-"Abund: Proj:Sgen-priorCap"
+      }
+      # Labels if only using IM models:
+      if (useFrenchCaptions==TRUE) {
+        if (OM.j == "Ricker") name1<-"Abond: Proj:Ggén-Ricker"
+        if (OM.j == "Ricker_priorCap") name1<-"Abond: Proj:Ggén-aprioriCap"
+      }
+        
       # If includuding probability in label:
       # name2<-probThresh.j * 100
       # Name <- paste(name1,name2,sep=" ")
@@ -767,11 +849,21 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     
 
      if(SRmodName =="Bern.IndivRickerSurv") {
-       propName<-"Prop: Sgen-Ricker"
+       if (useFrenchCaptions==FALSE) {
+        propName<-"CUbased: Sgen-Ricker"
+       }
+       if (useFrenchCaptions==TRUE) {
+         propName<-"ÉtatUC: Ggén-Ricker"
+       }
        fitName<-"AllEsts_Indiv_Ricker_Surv"
      }
      if(SRmodName =="Bern.IndivRickerSurvCap") {
-       propName<-"Prop: Sgen-priorCap"
+       if (useFrenchCaptions==FALSE) {
+        propName<-"CUbased: Sgen-priorCap"
+       }
+       if (useFrenchCaptions==TRUE) {
+         propName<-"ÉtatUC: Ggén-aprioriCap"
+       }
        fitName<-"AllEsts_Indiv_Ricker_Surv_priorCap"
      }
      #if(SRmodName =="Bern.SPopAbundThreshST")  {
@@ -824,9 +916,15 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
 
   IFCRTstatus<-aggregate(stpropIFCRT$status,list(year=stpropIFCRT$yr),sum)
   
-  IFCRTrows<-data.frame(LRP_estYr=2020,
-   retroYear = IFCRTstatus$year , Name="Prop: IFCRT" , AboveLRP=!as.logical(IFCRTstatus$x))
-
+  if (useFrenchCaptions==FALSE) {
+    IFCRTrows<-data.frame(LRP_estYr=2020,
+    retroYear = IFCRTstatus$year , Name="CUbased: IFCRT" , AboveLRP=!as.logical(IFCRTstatus$x))
+  }
+  if (useFrenchCaptions==TRUE) {
+    IFCRTrows<-data.frame(LRP_estYr=2020,
+                          retroYear = IFCRTstatus$year , Name="ÉtatUC: ERCFI" , AboveLRP=!as.logical(IFCRTstatus$x))
+  } 
+  
   Status_DF <- rbind(Status_DF, IFCRTrows)
 
   # Step 4: Add mutlidimensional results (optional)
@@ -844,9 +942,16 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
     }
     
   
-    if (OM.j == "Ricker") name1<-"Prop: Scanner-Ricker"
-    if (OM.j == "Ricker_priorCap") name1<-"Prop: Scanner-priorCap"
-      
+    if (useFrenchCaptions==FALSE) {
+      if (OM.j == "Ricker") name1<-"CUbased: Scanner-Ricker"
+      if (OM.j == "Ricker_priorCap") name1<-"CUbased: Scanner-priorCap"
+    }
+    if (useFrenchCaptions==TRUE) {
+      if (OM.j == "Ricker") name1<-"ÉtatUC: Explorateur-Ricker"
+      if (OM.j == "Ricker_priorCap") name1<-"ÉtatUC: Explorateur-aprioriCap"
+    }
+    
+    
     multiDimResults<-as_tibble(read.csv(paste(Dir,"/DataOut/multiDimStatusEsts_",OM.j,".csv", sep="")))
     
     # Loop over years and summarize status as above (True) or below (False) the LRP for each year
@@ -866,7 +971,13 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   
   # Step 5: Add row to Status_DF for 2014 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
-    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "Prop: WSP-2014", AboveLRP = WSP_AboveLRP)
+    if (useFrenchCaptions==FALSE) {
+      New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "CUbased: WSP-2014", AboveLRP = WSP_AboveLRP)
+    }
+    if (useFrenchCaptions==TRUE) {
+      New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "ÉtatUC: PSS-2014", AboveLRP = WSP_AboveLRP)
+    }
+    
     Status_DF <- rbind(Status_DF, New_Row)
     Status_DF <- arrange(Status_DF, Name)
   }
@@ -877,14 +988,23 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   methods <- unique(Status_DF$Name)
   
   # Hack to re-order methods for plotting ===============
-  methods<-c("Prop: WSP-2014", "","Prop: Scanner-Ricker", "Prop: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
-             "Prop: Scanner-priorCap", "Prop: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
-             "Prop: IFCRT", "Abund: Logistic:IFCRT") 
-             
+  if (useFrenchCaptions==FALSE) {
+    methods<-c("CUbased: WSP-2014", "","CUbased: Scanner-Ricker", "CUbased: Sgen-Ricker", "Abund: Logistic:Sgen-Ricker", "Abund: Proj:Sgen-Ricker", "",
+             "CUbased: Scanner-priorCap", "CUbased: Sgen-priorCap","Abund: Logistic:Sgen-priorCap", "Abund: Proj:Sgen-priorCap", "",
+             "CUbased: IFCRT", "Abund: Logistic:IFCRT") 
+  }
+  if (useFrenchCaptions==TRUE) {
+    methods<-c("ÉtatUC: PSS-2014", "","ÉtatUC: Explorateur-Ricker", "ÉtatUC: Ggén-Ricker", "Abond: Logistique:Ggén-Ricker", "Abond: Proj:Ggén-Ricker", "",
+               "ÉtatUC: Explorateur-aprioriCap", "ÉtatUC: Ggén-aprioriCap","Abond: Logistique:Ggén-aprioriCap", "Abond: Proj:Ggén-aprioriCap", "",
+               "ÉtatUC: ERCFI", "Abond: Logistique:ERCFI") 
+  }
+              
+
+  
   # --- set-up pdf to save to
   #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
-  png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=700, height=580)
-  par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
+  png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=770, height=638)
+  par( oma=c(3,11,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
   
   # ---- specify colouts 
   #  cols <- c( "#FF0900", "#08AB0B") # (red, green)
@@ -950,9 +1070,10 @@ plotStatusBarsCoho_byYear<-function(LRP_estYr, retroYears, Dir, genYrs,AggEscp,E
   #sapply(seq(2000,2015,by=5), addVertLines_major,low=low,high=high,n=length(methods))
  
   # add x-axis label
+  methodLabel<-ifelse(useFrenchCaptions==FALSE, "Method","Méthode")
   axis(1)
   mtext(side = 1, "Year", outer = T, cex=1.2)
-  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4, cex=1.2)
+  text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline(Method)), xpd=NA, pos=4, cex=1.2)
   
   # legend( "topright", bty="n", lty=c(1,1,1,1), lwd=c(2,2,4,2) , 
   #         col=c("black", "grey", "#08AB0B", Tcols[1]),
@@ -1309,12 +1430,21 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
     Dat2$yTrunc<-ymaxFlag
     Dat2$status_upr[Dat2$status_upr > ymax] <- ymax
     
+    if (useFrenchCaptions==FALSE) {
+      Xlab<-"Number of CUs"
+      Ylab<-"Aggregate Status" 
+    }
+    
+    if (useFrenchCaptions==TRUE) {
+      Xlab<-"Nombre d’UC"
+      Ylab<-"État agrégé" 
+    }
    
     g<-ggplot(Dat2, aes(x=nCUs.jit, y=status)) +
         scale_x_reverse(breaks=unique(Dat2$nCUs)) +
         geom_errorbar(aes(x=nCUs.jit, ymax = status_upr, ymin = status_lwr), width = 0, size = 0.8, colour="grey") +
         geom_point(size=2.5) +   
-        labs(title=year, x = "Number of CUs", y = "Aggregate Status") +
+        labs(title=year, x = Xlab, y = Ylab) +
         theme_classic() +
         theme(axis.text=element_text(size=16), axis.title=element_text(size=16), plot.title = element_text(hjust = 0.5, size=16, face="bold")) +
         ylim(0,ymax) + 
@@ -1354,7 +1484,12 @@ plotAggStatus_byNCUs <- function(yearList, nCUList, LRPmodel, BMmodel, p, Dir, i
   outName1<-str_split(inputPrefix, "[.]")[[1]][2]
   outName2<-paste(str_split(outName1, "_")[[1]][1],str_split(outName1, "_")[[1]][2],sep="-") 
   
-   plotName <- paste("coho-StatusByNCUs-",outName2, sep="")
+  if(useFrenchCaptions == FALSE) { 
+    plotName <- paste("coho-StatusByNCUs-",outName2, sep="")
+  }
+  if(useFrenchCaptions == TRUE) { 
+    plotName <- paste("coho-StatusByNCUs-",outName2,"-FN", sep="")
+  }
   
    png(paste(outputDir,"/", plotName, ".png", sep=""), width=580, height=600)
    
@@ -1653,16 +1788,24 @@ plotPostHist<-function(x, post, parName, CUNames) {
 
 
 
-plotAgeProp_byCU<-function(CUages, outDir, plotName) {
+plotAgeProp_byCU<-function(CUages, outDir, plotName,useFrenchCaptions) {
 
   
+  if (useFrenchCaptions== FALSE) {
+    CUages$CU_Names[CUages$CU_Names=="Fraser_Canyon"]<-"Fraser Canyon"
+    CUages$CU_Names[CUages$CU_Names=="Lower_Thompson"]<-"Lower Thompson"
+    CUages$CU_Names[CUages$CU_Names=="Middle_Fraser"]<-"Middle Fraser"
+    CUages$CU_Names[CUages$CU_Names=="North_Thompson"]<-"North Thompson"
+    CUages$CU_Names[CUages$CU_Names=="South_Thompson"]<-"South Thompson"
+  }
   
-  CUages$CU_Names[CUages$CU_Names=="Fraser_Canyon"]<-"Fraser Canyon"
-  CUages$CU_Names[CUages$CU_Names=="Lower_Thompson"]<-"Lower Thompson"
-  CUages$CU_Names[CUages$CU_Names=="Middle_Fraser"]<-"Middle Fraser"
-  CUages$CU_Names[CUages$CU_Names=="North_Thompson"]<-"North Thompson"
-  CUages$CU_Names[CUages$CU_Names=="South_Thompson"]<-"South Thompson"
-
+  if (useFrenchCaptions== TRUE) {
+    CUages$CU_Names[CUages$CU_Names=="Fraser_Canyon"]<-"Canyon du Fraser"
+    CUages$CU_Names[CUages$CU_Names=="Lower_Thompson"]<-"Thompson inférieure"
+    CUages$CU_Names[CUages$CU_Names=="Middle_Fraser"]<-"Moyen Fraser"
+    CUages$CU_Names[CUages$CU_Names=="North_Thompson"]<-"Thompson Nord"
+    CUages$CU_Names[CUages$CU_Names=="South_Thompson"]<-"Thompson Sud"
+  }
   
   
   #cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -1670,15 +1813,28 @@ plotAgeProp_byCU<-function(CUages, outDir, plotName) {
   colList<-c("#999999","#E69F00", "#56B4E9", "#009E73", "#D55E00")
   
   
+  if (useFrenchCaptions==FALSE) {
+    Xlab<-"Brood Year"
+    Ylab<-"Proportion Age 3"
+    labsTitle<-'Conservation Unit'
+    plotName<-paste(outDir,"/",plotName,".png",sep="")
+  }
+  if (useFrenchCaptions==TRUE) {
+    Xlab<-"Année d’éclosion"
+    Ylab<-"Proportion de poissons d’âge 3"
+    labsTitle<-'Unité de conservation'
+    plotName<-paste(outDir,"/",plotName,"-FN.png",sep="")
+  }
+  
   g<-ggplot(CUages,aes(x=Year, y=age3, col=CU_Names)) + geom_line(size=1.1) +
     theme_classic() +
-    xlab("Brood Year") + ylab("Proportion Age 3") + labs(color='Conservation Unit')  +
+    xlab(Xlab) + ylab(Ylab) + labs(color=labsTitle)  +
     theme(legend.position = c(0.2, 0.25)) +
     scale_color_manual(values=colList) +
     theme(axis.text=element_text(size=11),
           axis.title=element_text(size=12,face="bold"))
   
-  ggsave(paste(outDir,"/",plotName,".png",sep=""), plot = g,
+  ggsave(plotName, plot = g,
          width = 5.25, height = 4.25, units = "in") 
   
   

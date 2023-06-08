@@ -21,6 +21,9 @@
 
 # ===================================================================================================
 
+#s<-FALSE
+useFrenchCaptions<-TRUE
+
 library(rsample)
 library(tidyverse)
 library(ggplot2)
@@ -146,7 +149,7 @@ AggEscp <- CoEscpDat %>% group_by(yr) %>% summarise(Agg_Escp = sum(Escp)) %>%
  plot_CU_Escp_withStatus(CoEscpDat, cohoDir, plotName="coho-CU-EscpSeries-wStatus", SgenFileName="ModelFits/AllEsts_Indiv_Ricker_Surv")
  
  
- plot_Subpop_Escp_withStatus(Dat=CoEscpDat_bySubpop, Dir=cohoDir, plotName="coho-Subpop-EscpSeries-wStatus")
+ plot_Subpop_Escp_withStatus(Dat=CoEscpDat_bySubpop, Dir=cohoDir, plotName="coho-Subpop-EscpSeries-wStatus",useFrenchCaptions=useFrenchCaptions)
  
  
 # ==================================================================================================================
@@ -231,7 +234,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_Surv", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurv_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=F, codeDir=codeDir)
            
      # ## Run with Bernoulli LRP model with hierarchical Ricker
      # runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2015, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
@@ -243,7 +246,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      runAnnualRetro(EscpDat=CoEscpDat, SRDat=CoSRDat, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "SR_IndivRicker_SurvCap", LRPmodel="BernLogistic", integratedModel=T,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_IM_priorCap, outDir=cohoDir, RunName = paste("Bern.IndivRickerSurvCap_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T,codeDir=codeDir)
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=F,codeDir=codeDir)
 
      # Run with Bernoulli LRP model with hierarchical Ricker, with prior on capacity
      # CW : I am getting an error when running this, since we will not be using these for now, I'll comment it out
@@ -256,7 +259,7 @@ TMB_Inputs_Subpop <- list(Scale = 1000, extra_eval_iter=FALSE)
      runAnnualRetro(EscpDat=CoEscpDat_bySubpop, SRDat=NULL, startYr=2010, endYr=2020, BroodYrLag=4, genYrs=3, p = ps[pp],
                     BMmodel = "ThreshAbund_Subpop1000_ST", LRPmodel="BernLogistic", LRPfile="LRP_Logistic_Only",integratedModel=F,
                     useGenMean=F, TMB_Inputs=TMB_Inputs_Subpop, outDir=cohoDir, RunName = paste("Bern.SPopAbundThreshST_",ps[pp]*100, sep=""),
-                    bootstrapMode = F, plotLRP=T,runLogisticDiag=T, codeDir=codeDir)
+                    bootstrapMode = F, plotLRP=T,runLogisticDiag=F, codeDir=codeDir)
 
      # ## CW: Run using multidimensional rapid assessments results  (in progress)  
      # runAnnualRetro(EscpDat=CoEscpDat_bySubpop, #do not know what to insert here
@@ -422,7 +425,9 @@ modelFitList<-c("Bern.IndivRickerSurv",
                 "Bern.SPopAbundThreshST")
 
 # Label names
-L_Names<-c("Sgen:LRP", "Sgen_priorCap:LRP", "Dist:LRP")  
+L_Names<-c("Sgen-Ricker", "Sgen-priorCap", "IFCRT")  
+
+if (useFrenchCaptions==TRUE) L_Names<-c("Ggén-Ricker", "Ggén-aprioriCap", "ERCFI")  
 
 #pList<-c(50, 66, 90, 99)
 
@@ -432,7 +437,7 @@ pList<-c(50)
 #plotAnnualRetro_CompareProbs(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
 
 # Compare among methods:
-plotAnnualRetro_CompareMethods(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3)
+plotAnnualRetro_CompareMethods(Dat=EscpDat.yy, Names = modelFitList, pList=pList, L_Names = L_Names, outDir=cohoDir, useGenMean = T, genYrs = 3, useFrenchCaptions)
 
 
 
@@ -589,6 +594,16 @@ LRP_List<-list()
 
 colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
 
+if (useFrenchCaptions==FALSE) {
+  Xlab<-"Aggregate Spawner Abundance"
+  Ylab<-"Pr(All CUs > Lower Benchmark)"
+}
+
+if (useFrenchCaptions==TRUE) {
+  Xlab<-"Abondance agrégée des géniteurs"
+  Ylab<-"Pr(toutes les UC > PRI)"
+}
+
 for (pp in 1:length(plotMultiP)) {
   
   LRP_List[[pp]] <- Run_Ricker_LRP(SRDat = Dat, EscDat = EscDat, BMmodel = BMmodel, Bern_Logistic = TRUE, 
@@ -608,7 +623,7 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
       #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) +
-      xlab("Aggregate Spawner Abundance") + ylab("Pr(All CUs > Lower Benchmark)") +
+      xlab(Xlab) + ylab(Ylab) +
       coord_cartesian(ylim=c(0,1)) +
       theme_classic()
   } else {
@@ -621,11 +636,17 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot1 <- LRP_plot + ggtitle("Logistic:Sgen-Ricker") +
+if (useFrenchCaptions==FALSE) plotTitle1<-"Logistic:Sgen-Ricker"
+if (useFrenchCaptions==TRUE) plotTitle1<-"Logistique : Ggén-Ricker"
+
+LRP_plot1 <- LRP_plot + ggtitle(plotTitle1) +
       geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
+if (useFrenchCaptions==FALSE) plotName<-"coho-IM2020-LogisticLRP.png"
+if (useFrenchCaptions==TRUE) plotName<-"coho-IM2020-LogisticLRP-FN.png"
+
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-IM2020-LogisticLRP.png",sep=""), plot = LRP_plot1,
+ggsave(paste(cohoDir, "/Figures/",plotName,sep=""), plot = LRP_plot1,
        width = 4, height = 3, units = "in")  
 
 
@@ -687,11 +708,18 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot2 <- LRP_plot + ggtitle("Logistic:Sgen-priorCap") +
+if (useFrenchCaptions==FALSE) plotTitle2<-"Logistic:Sgen-priorCap"
+if (useFrenchCaptions==TRUE) plotTitle2<-"Logistique : Ggén-aprioriCap"
+
+LRP_plot2 <- LRP_plot + ggtitle(plotTitle2) +
 geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-IMCap2020-LogisticLRP.png",sep=""), plot = LRP_plot2,
+
+if (useFrenchCaptions==FALSE) plotName<-"coho-IMCap2020-LogisticLRP.png"
+if (useFrenchCaptions==TRUE) plotName<-"coho-IMCap2020-LogisticLRP-FN.png"
+
+ggsave(paste(cohoDir, "/Figures/",plotName,sep=""), plot = LRP_plot2,
        width = 4, height = 3, units = "in")  
 
 
@@ -738,11 +766,11 @@ LRP_List<-list()
 
 colList<-c("#E69F00", "#56B4E9", "#009E73", "#D55E00")
 
+
 for (pp in 1:length(plotMultiP)) {
   
   LRP_List[[pp]] <- Run_LRP(Dat=LBM_status_byCU, Mod = "LRP_Logistic_Only", useBern_Logistic = TRUE, 
                             useGenMean = FALSE, genYrs = genYrs, p = plotMultiP[pp],  TMB_Inputs)
-  
   
   if (pp == 1) {
     # Create plot using first p value
@@ -758,7 +786,7 @@ for (pp in 1:length(plotMultiP)) {
       geom_line(dat=data.frame(x=rep(LRP_List[[pp]]$LRP$fit,2),y=c(0,plotMultiP[pp])),aes(x=x,y=y), color=colList[pp],size=1) +
       geom_hline(yintercept= plotMultiP[pp], linetype="dotted", color="black", size = 0.5) +
       #geom_line(dat=data.frame(x=c(0,LRP_List[[pp]]$LRP$fit),y=rep(plotMultiP[pp],2)),aes(x=x,y=y), color=colList[pp], linetype = "dotted",size=0.8) +
-      xlab("Aggregate Spawner Abundance") + ylab("Pr(All CUs > Lower Benchmark)") +
+      xlab(Xlab) + ylab(Ylab) +
       coord_cartesian(ylim=c(0,1)) +
       theme_classic()
   } else {
@@ -771,18 +799,28 @@ for (pp in 1:length(plotMultiP)) {
   
 }
 
-LRP_plot3 <- LRP_plot + ggtitle("Logistic:IFCRT LRP") +
+if (useFrenchCaptions==FALSE) plotTitle3<-"Logistic:IFCRT LRP"
+if (useFrenchCaptions==TRUE) plotTitle3<-"Logistique : ERCFI PRL"
+
+LRP_plot3 <- LRP_plot + ggtitle(plotTitle3) +
 geom_line(mapping=aes(x=xx, y=fit), col="black", size=1)
 
 
+if (useFrenchCaptions==FALSE) plotName<-"coho-ThreshAb2020-LogisticLRP.png"
+if (useFrenchCaptions==TRUE) plotName<-"coho-ThreshAb2020-LogisticLRP-FN.png"
+
 # Save plot
-ggsave(paste(cohoDir, "/Figures/","coho-ThreshAb2020-LogisticLRP.png",sep=""), plot = LRP_plot3,
+ggsave(paste(cohoDir, "/Figures/",plotName,sep=""), plot = LRP_plot3,
        width = 4, height = 3, units = "in")  
 
 
 
 LRP_plotall<-plot_grid(LRP_plot1,LRP_plot2,LRP_plot3)
-ggsave(paste(cohoDir, "/Figures/","coho-all-LogisticLRP.png",sep=""), plot = LRP_plotall,
+
+if (useFrenchCaptions==FALSE) plotName<-"coho-all-LogisticLRP.png"
+if (useFrenchCaptions==TRUE) plotName<-"coho-all-LogisticLRP-FN.png"
+
+ggsave(paste(cohoDir, "/Figures/",plotName,sep=""), plot = LRP_plotall,
        width = 8, height = 7)  
 
 # =================================================================================================================

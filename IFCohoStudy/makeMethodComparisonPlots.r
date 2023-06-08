@@ -17,6 +17,8 @@ library(tmbstan)
 library(here)
 library(zoo)
 
+useFrenchCaptions<-TRUE
+
 setwd('..')
 rootDir<-getwd()
 codeDir<-paste(rootDir,"/Code",sep="")
@@ -99,9 +101,18 @@ WSP_AboveLRP<-TRUE
 LRP_estYr<-2020
 retroYears<-2000:LRP_estYr
 
+if (useFrenchCaptions==FALSE) {
+  fname<-paste("coho-statusPlot_withBars",LRP_estYr,sep="")
+}
+
+if (useFrenchCaptions==TRUE) {
+  fname<-paste("coho-statusPlot_withBars",LRP_estYr,"-FN",sep="")
+}
+
 plotStatusBarsCoho_byYear(LRP_estYr, retroYears, Dir=cohoDir, genYrs=3, AggEscp, EscpDat=CoEscpDat, 
                   modelFitList=modelFitList, projLRPList=projLRPList, multiDimList=multiDimList, ps_Prop=ps_Prop,
                   WSP_estYr=WSP_estYr, WSP_AboveLRP=WSP_AboveLRP,
-                  outDir = cohoDir, fName = paste("coho-statusPlot_withBars",LRP_estYr,sep=""))
+                  outDir = cohoDir, fName = fname, 
+                  useFrenchCaptions=useFrenchCaptions)
 
 
