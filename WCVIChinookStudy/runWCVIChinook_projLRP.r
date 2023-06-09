@@ -1656,11 +1656,11 @@ OMsToInclude<-c(
   # "alphaScalar0.75",
   # "baseER",#"baseERn10000",
   # "alphaScalar1.5")
-  "baseER")
+  # "baseER")
 
-# "cvER0",
-  # "baseER",
-  # "cvER0.17")
+"cvER0",
+"baseER",
+"cvER0.17")
 
 
 
@@ -1737,8 +1737,8 @@ for (OM in 1:length(OMsToInclude)){
         }
 
         png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToIncludeName,
-                  "-ProjLRPCurve-ALLp.png", sep=""), width=plot.width,
-                  # "-ProjLRPCurve-ALLpFR.png", sep=""), width=plot.width,
+                  # "-ProjLRPCurve-ALLp.png", sep=""), width=plot.width,
+                  "-ProjLRPCurve-ALLpFR.png", sep=""), width=plot.width,
             height=plot.height,
             units="in", res=300)#500
         if(length(OMsToInclude)==9) layout(matrix(c(1:9), 3, 3, byrow = TRUE))
@@ -1826,10 +1826,10 @@ for (OM in 1:length(OMsToInclude)){
 
     if(length(OMsToInclude)==3){
 
-      panel.title <- c("0.75 x productivity", "Current productivity",
-                        "1.5 x productivity")
-      # panel.title <- c("cv = 0", "cv = 0.085",
-      #                  "cv = 0.17")
+      # panel.title <- c("0.75 x productivity", "Current productivity",
+      #                   "1.5 x productivity")
+      panel.title <- c("cv = 0", "cv = 0.085",
+                       "cv = 0.17")
       mtext(text=panel.title[OM], side=3, line=0.2, at=15000, cex=0.5)
 
       LRP_50 <- (read.csv(paste(wcviCKDir,
@@ -1841,14 +1841,20 @@ for (OM in 1:length(OMsToInclude)){
                                 OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
                   pull(LRP))[2]
 
-      text(x=40000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
-      text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
+      # text(x=40000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
+      # text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
+      text(x=40000, y=0.15, labels=paste("PRL(p=0,5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
+      text(x=40000, y=0.05, labels=paste("PRL(p=0,66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
 
-      if(OM==1) {mtext("Prob(all inlets)>lower benchmark", side=2,
+      if(OM==1) {
+                  # mtext("Prob(all inlets)>lower benchmark", side=2,
+                        mtext("Prob(tous les inlets) > PRI", side=2,
+
                        line=1.8,at=0.4, cex=0.55)
                   yaxt <- "s"}
-      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=30000,
-                       cex=0.7) }
+      # if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=30000,
+      if(OM==2) {mtext("Abondance agrégée", side=1, line=1.8, at=30000,
+                          cex=0.7) }
       if(OM>1)  yaxt <- "n"
 
 
@@ -1880,12 +1886,14 @@ for (OM in 1:length(OMsToInclude)){
 
   }
 
-  # # Save LRPs for all OM scenarios
-  write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
-                            "_ALLp.csv", sep=""), row.names=F)
-  # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-  write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude[OM],
-                                   "_Allp.csv", sep=""), row.names=F)
+  # # # Save LRPs for all OM scenarios
+
+  # UNCOMMENT THIS AFTER FINSIHING FRENCH TRANSLATIION!!
+  # write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
+  #                           "_ALLp.csv", sep=""), row.names=F)
+  # # Save LRP projection summaries used for calculating and plotting LRP (Optional)
+  # write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude[OM],
+  #                                  "_Allp.csv", sep=""), row.names=F)
 
 
 }# End of for OM in 1:length(OMsToInclude)
@@ -2006,9 +2014,13 @@ SMUPlot <- ggplot(SMU_SumDf) +
   scale_colour_manual(guide = NULL, breaks = c("None", "Amber", "Green", "Red"), values=c("gray", "gray", "gray","red")) +
   facet_wrap(~interaction(Stock), scales = "free_y") +
   theme_classic() +
+  # xlab("Année") +
+  # ylab("Échappées") +
   theme(strip.text = element_blank())
 SMUPlot
 # ggsave("Figures/chinook-SMU-timeseries.png", plot=SMUPlot, width = 6,
+#         height = 4, units = "in")
+# ggsave("Figures/chinook-SMU-timeseriesFR.png", plot=SMUPlot, width = 6,
 #         height = 4, units = "in")
 
 
