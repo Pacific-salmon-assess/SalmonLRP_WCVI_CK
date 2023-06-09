@@ -1203,7 +1203,7 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
   
   # --- set-up pdf to save to
   #pdf(paste(outDir,"/Figures/", fName, ".pdf", sep=""), width=8.5, height=6.5)
-  png(paste(outDir,"/Figures/", fName, ".png", sep=""), width=700, height=580)
+  png(paste(outDir,"/Figures/", fName, "FR.png", sep=""), width=700, height=580)
   par( oma=c(3,10,5,3), mar=c(3,3,3,3), lend=2, xpd=T)
   
   # ---- specify colouts 
@@ -1277,7 +1277,8 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
   
   # add x-axis label
   axis(1)
-  mtext(side = 1, "Year", outer = T)
+  # mtext(side = 1, "Year", outer = T)
+  mtext(side = 1, "Année", outer = T)
   text(x=(Xlow-((Xhigh-Xlow)/2)),y=0.6,labels=bquote(underline("Method")), xpd=NA, pos=4)
   
   # legend( "topright", bty="n", lty=c(1,1,1,1), lwd=c(2,2,4,2) , 
