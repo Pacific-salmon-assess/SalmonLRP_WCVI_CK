@@ -1632,16 +1632,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  "ER0.05",
-  "ER0.10",
-  "ER0.15",
-  "ER0.2",
-  "ER0.25",
-  # "ER0.30",
-  "baseER",
-  "ER0.35",
-  "ER0.4",
-  "ER0.45")
+  # "ER0.05",
+  # "ER0.10",
+  # "ER0.15",
+  # "ER0.2",
+  # "ER0.25",
+  # # "ER0.30",
+  # "baseER",
+  # "ER0.35",
+  # "ER0.4",
+  # "ER0.45")
   # "ER0.05even_hCor",
   # "ER0.10even_hCor",
   # "ER0.15even_hCor",
@@ -1652,6 +1652,37 @@ OMsToInclude<-c(
   # "ER0.35even_hCor",
   # "ER0.40even_hCor",
   # "ER0.45even_hCor")
+
+
+"ER0.05even_hCor",
+"ER0.10even_hCor",
+"ER0.15even_hCor",
+"ER0.20even_hCor",
+"ER0.25even_hCor",
+"ER0.25even_hCor",
+"ER0.35even_hCor",
+"ER0.40even_hCor",
+"ER0.45even_hCor")
+# "ER0.05sameSREP_hCor",
+# "ER0.10sameSREP_hCor",
+# "ER0.15sameSREP_hCor",
+# "ER0.20sameSREP_hCor",
+# "ER0.25sameSREP_hCor",
+# "ER0.25sameSREP_hCor",
+# "ER0.35sameSREP_hCor",
+# "ER0.40sameSREP_hCor",
+# "ER0.45sameSREP_hCor")
+# "ER0.05sameProd_hCor",
+# "ER0.10sameProd_hCor",
+# "ER0.15sameProd_hCor",
+# "ER0.20sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.35sameProd_hCor",
+# "ER0.40sameProd_hCor",
+# "ER0.45sameProd_hCor")
+
+
 
   # "alphaScalar0.75",
   # "baseER",#"baseERn10000",
@@ -1666,7 +1697,7 @@ OMsToInclude<-c(
 
 
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
-if(length(OMsToInclude)==9) OMsToIncludeName <- "ERs"#"ERsEven-hCor"#"ERs"
+if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven-hCor"#ERs"#"ERsEven-hCor"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphas"#"cvER"#"Alphas"#"cvER"#"
 
 LRP <- NA
@@ -1896,12 +1927,12 @@ for (OM in 1:length(OMsToInclude)){
 
   # # # Save LRPs for all OM scenarios
 
-  # UNCOMMENT THIS AFTER FINSIHING FRENCH TRANSLATIION!!
-  write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
-                            "_ALLp.csv", sep=""), row.names=F)
-  # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-  write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude[OM],
-                                   "_Allp.csv", sep=""), row.names=F)
+  # # UNCOMMENT THIS AFTER FINSIHING FRENCH TRANSLATIION!!
+  # write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
+  #                           "_ALLp.csv", sep=""), row.names=F)
+  # # Save LRP projection summaries used for calculating and plotting LRP (Optional)
+  # write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude[OM],
+  #                                  "_Allp.csv", sep=""), row.names=F)
 
 
 }# End of for OM in 1:length(OMsToInclude)
@@ -2150,27 +2181,27 @@ for (OM in 1:length(OMsToInclude)){
                            alpha=CUdat$medAlpha[,1], beta=CUdat$medBeta[,1],
                            SREP=CUdat$medAlpha[,1]/CUdat$medBeta[,1])
       parsDF <- parsDF %>% filter(SREP>0) %>% filter(SREP<50000)
-      galpha <- ggplot(parsDF, aes(x = alpha)) +
-        geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
-                       position="identity", bins=30, alpha=0.4) +
-        # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
-        #                 alpha=0.4) +
-        labs(title="(a) Productivity (log alpha)", x="log alpha")+
-        xlim(0,3.5)
-
-      library(gridExtra)
-      # arrange
-      # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
-
-      gSREP <- ggplot(parsDF, aes(x = SREP)) +
-        geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
-                       position="identity", bins=30, alpha=0.4) +
-        #labs(title="(b) SREP") +
-        labs(title=expression((b)~S[REP]), x=expression(S[REP])) +
-        xlim(0,50000)
-      # ggsave(filename = paste("Figures/", GroupName, "_SREPHist.png", sep="") , plot=gSREP)
-      gSRpars <- grid.arrange(galpha, gSREP)
-      ggsave(filename = paste("Figures/", GroupName, "-SRHist.png", sep="") , plot=gSRpars)
+      # galpha <- ggplot(parsDF, aes(x = alpha)) +
+      #   geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+      #                  position="identity", bins=30, alpha=0.4) +
+      #   # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+      #   #                 alpha=0.4) +
+      #   labs(title="(a) Productivity (log alpha)", x="log alpha")+
+      #   xlim(0,3.5)
+      #
+      # library(gridExtra)
+      # # arrange
+      # # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
+      #
+      # gSREP <- ggplot(parsDF, aes(x = SREP)) +
+      #   geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+      #                  position="identity", bins=30, alpha=0.4) +
+      #   #labs(title="(b) SREP") +
+      #   labs(title=expression((b)~S[REP]), x=expression(S[REP])) +
+      #   xlim(0,50000)
+      # # ggsave(filename = paste("Figures/", GroupName, "_SREPHistFR.png", sep="") , plot=gSREP)
+      # gSRpars <- grid.arrange(galpha, gSREP)
+      # # ggsave(filename = paste("Figures/", GroupName, "-SRHistFR.png", sep="") , plot=gSRpars)
 
 
     }# End of if OM==9
@@ -2186,7 +2217,7 @@ for (OM in 1:length(OMsToInclude)){
       }
 
       png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToIncludeName,
-              "-ProjLRPCurve-Allp.png", sep=""), width=plot.width,
+              "-ProjLRPCurve-AllpFR.png", sep=""), width=plot.width,
         height=plot.height,
         units="in", res=300)#500
       layout(matrix(c(1:9), 3, 3, byrow = TRUE))
