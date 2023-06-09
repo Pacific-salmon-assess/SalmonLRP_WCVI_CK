@@ -1632,16 +1632,16 @@ probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as 
 OMsToInclude<-c(
   # "baseER")
   #"ER0",
-  # "ER0.05",
-  # "ER0.10",
-  # "ER0.15",
-  # "ER0.2",
-  # "ER0.25",
-  # # "ER0.30",
-  # "baseER",
-  # "ER0.35",
-  # "ER0.4",
-  # "ER0.45")
+  "ER0.05",
+  "ER0.10",
+  "ER0.15",
+  "ER0.2",
+  "ER0.25",
+  # "ER0.30",
+  "baseER",
+  "ER0.35",
+  "ER0.4",
+  "ER0.45")
   # "ER0.05even_hCor",
   # "ER0.10even_hCor",
   # "ER0.15even_hCor",
@@ -1656,11 +1656,11 @@ OMsToInclude<-c(
   # "alphaScalar0.75",
   # "baseER",#"baseERn10000",
   # "alphaScalar1.5")
-  # "baseER")
+  # # "baseER")
 
-"cvER0",
-"baseER",
-"cvER0.17")
+# "cvER0",
+# "baseER",
+# "cvER0.17")
 
 
 
@@ -1812,13 +1812,19 @@ for (OM in 1:length(OMsToInclude)){
                                   "/DataOut/ProjectedLRPs/ProjectedLRPs",
                                   OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
                      pull(LRP))[2]
-        text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.6)
-        if(OM<7)  text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.6)
+        # text(x=35000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.6)
+        # if(OM<7)  text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.6)
+        text(x=35000, y=0.15, labels=paste("PRL(p=0,5)= ", LRP_50), cex=0.6)
+        if(OM<7)  text(x=35000, y=0.05, labels=paste("PRL(p=0,66)= ", LRP_66), cex=0.6)
         #text(x=35000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.6)
 
-        if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
+        # if(OM==4) {mtext("Probability of all inlets > lower benchmark", side=2,
+        if(OM==4) {mtext("Probabilité que tous les inlets > PRI", side=2,
+
                         line=1.8,at=0.5, cex=1) }
-        if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=25000,
+        # if(OM==8) {mtext("Aggregate Abundance", side=1, line=1.8, at=25000,
+        if(OM==8) {mtext("Abondance agrégée", side=1, line=1.8, at=25000,
+
                          cex=0.7) }
 
       }# End of if(length(OMsToInclude)==9){
@@ -1828,8 +1834,10 @@ for (OM in 1:length(OMsToInclude)){
 
       # panel.title <- c("0.75 x productivity", "Current productivity",
       #                   "1.5 x productivity")
-      panel.title <- c("cv = 0", "cv = 0.085",
-                       "cv = 0.17")
+      panel.title <- c("0.75 x productivité", "Productivité actuelle",
+                        "1.5 x productivité")
+      # panel.title <- c("cv = 0", "cv = 0.085",
+      #                  "cv = 0.17")
       mtext(text=panel.title[OM], side=3, line=0.2, at=15000, cex=0.5)
 
       LRP_50 <- (read.csv(paste(wcviCKDir,
@@ -1841,19 +1849,19 @@ for (OM in 1:length(OMsToInclude)){
                                 OMsToInclude[OM], "_ALLp.csv", sep="") )%>%
                   pull(LRP))[2]
 
-      # text(x=40000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
-      # text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
-      text(x=40000, y=0.15, labels=paste("PRL(p=0,5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
-      text(x=40000, y=0.05, labels=paste("PRL(p=0,66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
+      text(x=40000, y=0.15, labels=paste("LRP(p=0.5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
+      text(x=40000, y=0.05, labels=paste("LRP(p=0.66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
+      # text(x=40000, y=0.15, labels=paste("PRL(p=0,5)= ", LRP_50), cex=0.4)#if (OM<3): alpha
+      # text(x=40000, y=0.05, labels=paste("PRL(p=0,66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
 
       if(OM==1) {
-                  # mtext("Prob(all inlets)>lower benchmark", side=2,
-                        mtext("Prob(tous les inlets) > PRI", side=2,
+                  mtext("Prob(all inlets)>lower benchmark", side=2,
+                        # mtext("Prob(tous les inlets) > PRI", side=2,
 
                        line=1.8,at=0.4, cex=0.55)
                   yaxt <- "s"}
-      # if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=30000,
-      if(OM==2) {mtext("Abondance agrégée", side=1, line=1.8, at=30000,
+      if(OM==2) {mtext("Aggregate Abundance", side=1, line=1.8, at=30000,
+      # if(OM==2) {mtext("Abondance agrégée", side=1, line=1.8, at=30000,
                           cex=0.7) }
       if(OM>1)  yaxt <- "n"
 

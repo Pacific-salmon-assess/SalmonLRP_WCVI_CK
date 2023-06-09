@@ -1113,7 +1113,8 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     dum<-projResults %>% filter(ProbThresh==pLRP[j])
     LRP<-dum$LRP
       
-    Name <- "Abund: Proj: Sgen" #paste("ProjLPR_p",pLRP[j], sep="")
+    # Name <- "Abund: Proj: Sgen" #paste("ProjLPR_p",pLRP[j], sep="")
+    Name <- "Abond: Proj: Ggén" #paste("ProjLPR_p",pLRP[j], sep="")
       
       
     # Loop over years and summarize status as above (True) or below (False) 
@@ -1173,14 +1174,17 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
     # Would use this if wanted to show the proportion of CUs above Sgen
     #Name <- paste(propName,Ps[pp]*100)
     Status <- Inlet_Status_Summ$Prop >= Ps[pp]
-    New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "CUbased: Sgen", AboveLRP=Status)
-    New_Rows2 <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "CUbased: Scanner", AboveLRP=Status)
+    # New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "CUbased: Sgen", AboveLRP=Status)
+    # New_Rows2 <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "CUbased: Scanner", AboveLRP=Status)
+    New_Rows <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "ÉtatUC: Explorateur", AboveLRP=Status)
+    New_Rows2 <- data.frame(LRP_estYr, retroYear = Inlet_Status_Summ$yr,  Name = "ÉtatUC: Ggén", AboveLRP=Status)
     Status_DF <- rbind(Status_DF, New_Rows, New_Rows2)
   }
  
   # Step 4: Add row to Status_DF for 2011 status assessment (Optional)
   if (!is.null(WSP_estYr)) {
-    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "CUbased: WSP-2014", AboveLRP = WSP_AboveLRP)
+    # New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "CUbased: WSP-2014", AboveLRP = WSP_AboveLRP)
+    New_Row <- data.frame(LRP_estYr,retroYear = WSP_estYr, Name = "ÉtatUC : PSS-2014", AboveLRP = WSP_AboveLRP)
     Status_DF <- rbind(Status_DF, New_Row)
     Status_DF <- arrange(Status_DF, Name)
   }
@@ -1222,7 +1226,8 @@ plotStatusBarsChinook_byYear<-function(LRP_estYr, retroYears,  genYrs,
   
   # --- create empty plotting region
   plot(1, type="n", xlab="", ylab="", xlim=c(Xlow, Xhigh), ylim=c(low-(high-low)/8*length(methods), high), axes=F,
-       main = paste("LRP Estimation Year = ",LRP_estYr, sep=""))
+       # main = paste("LRP Estimation Year = ",LRP_estYr, sep=""))
+       main = paste("Année d’estimation du PRL = ",LRP_estYr, sep=""))
   
   # --- add generational mean escapement
   lines(x=AggEscp$yr, y=AggEscp$Std, lwd=1.5)
