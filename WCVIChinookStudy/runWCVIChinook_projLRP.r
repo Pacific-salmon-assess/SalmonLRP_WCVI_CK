@@ -2078,20 +2078,21 @@ probThresh <- 0.5
 # dum <- SR.45 %>% filter(year>40) %>% filter(iteration==108)
 # ggplot(dum, aes(year,spawners))+geom_line(aes(colour=factor(CU)))
 
-GroupName <- "sameProdhCor"#"sameSREPhCor"##"evenhCor"#"sameSREPhCor"#"sameProdhCor"#
-OMsToIncludeName <- paste("testCUAbove_", GroupName, sep="")
+GroupName <- "evenhCor"#"sameProdhCor"#"sameSREPhCor"##"evenhCor"#"sameSREPhCor"#"sameProdhCor"#
+# OMsToIncludeName <- paste("testCUAbove_", GroupName, sep="")
+OMsToIncludeName <- paste("", GroupName, sep="")
 
 
 OMsToInclude<-c(
-  # "ER0.05even_hCor",
-  # "ER0.10even_hCor",
-  # "ER0.15even_hCor",
-  # "ER0.20even_hCor",
-  # "ER0.25even_hCor",
-  # "ER0.25even_hCor",
-  # "ER0.35even_hCor",
-  # "ER0.40even_hCor",
-  # "ER0.45even_hCor")
+  "ER0.05even_hCor",
+  "ER0.10even_hCor",
+  "ER0.15even_hCor",
+  "ER0.20even_hCor",
+  "ER0.25even_hCor",
+  "ER0.25even_hCor",
+  "ER0.35even_hCor",
+  "ER0.40even_hCor",
+  "ER0.45even_hCor")
 # "ER0.05sameSREP_hCor",
 # "ER0.10sameSREP_hCor",
 # "ER0.15sameSREP_hCor",
@@ -2101,15 +2102,15 @@ OMsToInclude<-c(
 # "ER0.35sameSREP_hCor",
 # "ER0.40sameSREP_hCor",
 # "ER0.45sameSREP_hCor")
-"ER0.05sameProd_hCor",
-"ER0.10sameProd_hCor",
-"ER0.15sameProd_hCor",
-"ER0.20sameProd_hCor",
-"ER0.25sameProd_hCor",
-"ER0.25sameProd_hCor",
-"ER0.35sameProd_hCor",
-"ER0.40sameProd_hCor",
-"ER0.45sameProd_hCor")
+# "ER0.05sameProd_hCor",
+# "ER0.10sameProd_hCor",
+# "ER0.15sameProd_hCor",
+# "ER0.20sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.25sameProd_hCor",
+# "ER0.35sameProd_hCor",
+# "ER0.40sameProd_hCor",
+# "ER0.45sameProd_hCor")
 
 LRP <- NA
 
@@ -2175,33 +2176,43 @@ for (OM in 1:length(OMsToInclude)){
     if(OM==9){
       filename2 <- paste("SamSimOutputs/simData/", OMsToInclude[OM],"/", OMsToInclude[OM], "_baseER_cuDat.RData",sep="")
       CUdat <- readRDS(file=filename2)
-      LowerBenchmark <- rep("above",length(CUdat$medAlpha[,1]))
-      LowerBenchmark[unique(itBelowBM)] <- "below"
+      # LowerBenchmark <- rep("above",length(CUdat$medAlpha[,1]))
+      # LowerBenchmark[unique(itBelowBM)] <- "below"
+      LowerBenchmark <- rep(".Au-dessus",length(CUdat$medAlpha[,1])) #Keep . for ordering alphabetically
+      LowerBenchmark[unique(itBelowBM)] <- "Au-dessous"
       parsDF <- data.frame(LowerBenchmark=factor(LowerBenchmark),
                            alpha=CUdat$medAlpha[,1], beta=CUdat$medBeta[,1],
                            SREP=CUdat$medAlpha[,1]/CUdat$medBeta[,1])
       parsDF <- parsDF %>% filter(SREP>0) %>% filter(SREP<50000)
-      # galpha <- ggplot(parsDF, aes(x = alpha)) +
-      #   geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
-      #                  position="identity", bins=30, alpha=0.4) +
-      #   # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
-      #   #                 alpha=0.4) +
-      #   labs(title="(a) Productivity (log alpha)", x="log alpha")+
-      #   xlim(0,3.5)
-      #
-      # library(gridExtra)
-      # # arrange
-      # # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
-      #
-      # gSREP <- ggplot(parsDF, aes(x = SREP)) +
-      #   geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
-      #                  position="identity", bins=30, alpha=0.4) +
-      #   #labs(title="(b) SREP") +
-      #   labs(title=expression((b)~S[REP]), x=expression(S[REP])) +
-      #   xlim(0,50000)
-      # # ggsave(filename = paste("Figures/", GroupName, "_SREPHistFR.png", sep="") , plot=gSREP)
-      # gSRpars <- grid.arrange(galpha, gSREP)
-      # # ggsave(filename = paste("Figures/", GroupName, "-SRHistFR.png", sep="") , plot=gSRpars)
+      galpha <- ggplot(parsDF, aes(x = alpha)) +
+        geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+                       position="identity", bins=30, alpha=0.4) +
+        # geom_density(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+        #                 alpha=0.4) +
+        # labs(title="(a) Productivity (log alpha)", x="log alpha")+
+        labs(title="(a) Productivité (log alpha)", x="log alpha")+
+        labs(colour="PRI") +
+        labs(fill = "PRI") +
+        ylab("Dénombrement")+
+        xlim(0,3.5)
+
+      library(gridExtra)
+      # arrange
+      # ggsave(filename = paste("Figures/", GroupName, "_alphaHist.png", sep="") , plot=galpha)
+
+      gSREP <- ggplot(parsDF, aes(x = SREP)) +
+        geom_histogram(aes(colour = LowerBenchmark, fill=LowerBenchmark),
+                       position="identity", bins=30, alpha=0.4) +
+        #labs(title="(b) SREP") +
+        ylab("Dénombrement")+
+        labs(colour="PRI") +
+        labs(fill = "PRI") +
+        # labs(title=expression((b)~S[REP]), x=expression(S[REP])) +
+        labs(title=expression((b)~G[REM]), x=expression(G[REM])) +
+        xlim(0,50000)
+      # ggsave(filename = paste("Figures/", GroupName, "_SREPHistFR.png", sep="") , plot=gSREP)
+      gSRpars <- grid.arrange(galpha, gSREP)
+      ggsave(filename = paste("Figures/", GroupName, "-SRHistFR.png", sep="") , plot=gSRpars)
 
 
     }# End of if OM==9
