@@ -1,3 +1,5 @@
+## April 20234: For WCVI CK, need to change CUpars and mcmc files that are 
+# read it, and make sure they are consistent with scenario being run
 
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
