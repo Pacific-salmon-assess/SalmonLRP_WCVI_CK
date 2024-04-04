@@ -43,6 +43,7 @@ library(viridis)
 library(here)
 library(zoo)
 library(corrplot)
+library(RColorBrewer)
 
 
 setwd('..')
@@ -77,12 +78,23 @@ sourceAll()
 #
 
 # ======================================================================
-#(1)  Read-in WCVI Chinook data aand plot:
+#(1)  Read-in WCVI Chinook data and plot:
 # =====================================================================
 setwd(wcviCKDir)
+remove.EnhStocks <- FALSE#TRUE#FALSE#TRUE
+CoreInd <- FALSE
+AllExMH <- TRUE#FALSE
 
+# Data to estimate correlation matrix
+if(!CoreInd & !AllExMH){
+  if(remove.EnhStocks) {wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")}
+  if(!remove.EnhStocks) {wcviCKSRDat <- read.csv("DataIn/Inlet_Sum_wEnh.csv")}
+}
+if(CoreInd){wcviCKSRDat <- read.csv("DataIn/Inlet_Sum_CoreInd.csv")}
+if(AllExMH){wcviCKSRDat <- read.csv("DataIn/Inlet_Sum_AllExMH.csv")}
 
-wcviCKSRDat <- read.csv("DataIn/Inlet_Sum.csv")
+# Get this file from Watershed-Area-Model/DataOut
+
 wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 wcviCKSRDat$CU_ID <- group_by(wcviCKSRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 
@@ -96,7 +108,12 @@ wcviInletsDF <- wcviCKSRDat %>% group_by(Inlet_Name) %>%
 wcviInletsDF <- wcviInletsDF %>% select(Year, Stock, SiteEsc, Value)
 
 wcviCK_inlet <- unique(wcviCKSRDat$Inlet_Name)
-wcviCKbench <- read.csv("DataIn/wcviRPs_noEnh.csv")
+
+# For plotting purposes only here: (these are old files, not used otherwise)
+if(remove.EnhStocks) wcviCKbench <- read.csv("DataIn/wcviRPs_noEnh.csv")
+if(!remove.EnhStocks) wcviCKbench <- read.csv("DataIn/wcviRPs_wEnh.csv")
+# San Juan is still wrong in this file, for enhanced stocks
+
 wcviCKbench <- wcviCKbench %>% filter(Stock %in% wcviCK_inlet) %>%
   select(Stock, SGEN)
 
@@ -211,15 +228,17 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 # correlation in recruitment residuals assuming no density dependence and
 # constant harvest. Only used if recruitment time-series are missing
 dum <- wcviCKSRDat %>% dplyr::select(CU_ID, BroodYear, Spawners)
-dum <- dum %>% pivot_wider(id_cols=c(CU_ID, BroodYear), names_from=CU_ID,
+dum <- dum %>% tidyr::pivot_wider(names_from=CU_ID, # 5Mar24 removed to fix error with new tidyr: id_cols=c(CU_ID, BroodYear),
                            values_from=Spawners) %>% dplyr::select (!BroodYear)
 dum <- dum %>% drop_na()
 corMat <- cor(dum)
 
 
-# Plot Bubble plot of correlations
+# Plot Bubble plot of correlations- See WCVI_CK_Projections.Rmd for better version
 # rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
 # colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
+# rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
+# colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
 #
 # # png(filename=paste(wcviCKDir, "/Figures/SpawnerCorrelation.png", sep=""), width=4, height=4.5, units="in", res=500)
 # corrplot(corMat, method="circle", p.mat=corMat, insig="p-value", type="lower")
@@ -261,6 +280,48 @@ setwd(codeDir)
 
 
 scenarioName <- "baseER"
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=50000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
+
+scenarioName <- "baseER_CoreInd"
+# Ran corMat above with Core indicators, 6, only (see line 83 and 220)
+# Created Ricker_mcmc_CoreInd (below)
+# created CUPars_CoreInd (ran waterhshed rps-bootstrapped again with CoreInd = T)
+# Changed ProjLRP_Functions to use these: CUPars_CoreInd and Ricker_mcmc_CoreInd
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=50000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
+
+scenarioName <- "baseER_AllExMH"
+# Ran corMat above with AllExMH, all esc indicators except 3 major hatcheries (see line 83 and 220)
+# Created Ricker_mcmc_AllExMH (below)
+# created CUPars_AllExMH (ran waterhshed rps-bootstrapped again with AllExMH = T)
+# Changed ProjLRP_Functions to use these: CUPars_AllExMH and Ricker_mcmc_AllExMH
+
+projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
+                                scenarioName=scenarioName,
+                                useGenMean = F, genYrs = genYrs,
+                                TMB_Inputs=NULL, outDir=wcviCKDir, runMCMC=T,
+                                nMCMC=NULL, nProj=50000, cvER = 0.085, cvERSMU=0.17,
+                                recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
+                                annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
+
+scenarioName <- "baseER_wEnh"
+# Ran corMat above with enh (see line 83 and 220)
+# Created Ricker_mcmc_wEnh_2024 (below)
+# created CUPars_wEnh (just added 2 more inlets in SWVI with same pars)
+# Changed ProjLRP_Functions to use these: CUPars_wEnh and Ricker_mcmc_wEnh_2024
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -910,6 +971,8 @@ for (i in 1:length(OMsToInclude)) {
 #   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_noEnh.csv"))
 # if (!remove.EnhStocks) SREP <- data.frame(read.csv(
 #   "c:/github/Watershed-Area-Model/DataOut/WCVI_SMSY_wEnh.csv"))
+# 15 March 2024. I recopied these files over to SalmonLRP_RetroEval with the
+#  correct San Juan values based on updated WA from March 2023 (D. McHugh)
 
 # For now, I have copied the SREP files to the SalmonLRP_RetroEval repository
 # If the watershed-area-model is updated, these files will need to be updated
@@ -918,22 +981,42 @@ createMCMCout <- FALSE
 setwd(wcviCKDir)
 alphaScalar <- 1
 SREPScalar <- 1
-evenPars <- TRUE
+evenPars <- FALSE#TRUE
+remove.EnhStocks <- FALSE#TRUE
+CoreInd <- FALSE #Core 6 indicators only
+AllExMH <- TRUE # all except major hatchery failities
 
 # Only need to run once to create mcmcOut.csv file with a given assumed
 # distribution of alpha and SREP
-Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+if(!CoreInd & !AllExMH) Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+if(CoreInd) Inlet_Names <- read.csv(paste("samSimInputs/CUPars_CoreInd.csv"))$stkName
+if(AllExMH) Inlet_Names <- read.csv(paste("samSimInputs/CUPars_AllExMH.csv"))$stkName
+
 CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
 CU_inlet[Inlet_Names=="Barkley",2] <- "WCVI South"#"Southwest_Vancouver_Island"
 CU_inlet[Inlet_Names=="Clayoquot",2] <- "WCVI South"#"Southwest_Vancouver_Island"
 CU_inlet[Inlet_Names=="Kyuquot",2] <- "WCVI Nootka & Kyuquot"#"Nootka_Kyuquot"
 CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "WCVI Nootka & Kyuquot"#"Nootka_Kyuquot"
 CU_inlet[Inlet_Names=="Quatsino",2] <- "WCVI North"#"Northwest_Vancouver_Island"
+CU_inlet[Inlet_Names=="San Juan",2] <- "WCVI South"#"Northwest_Vancouver_Island"
+
+if(!remove.EnhStocks & !CoreInd & !AllExMH){
+  Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+  Inlet_Names <- c(Inlet_Names,"Nitinat", "San Juan")
+  CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
+  CU_inlet[Inlet_Names=="Barkley",2] <- "WCVI South"#"Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Clayoquot",2] <- "WCVI South"#"Southwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Kyuquot",2] <- "WCVI Nootka & Kyuquot"#"Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "WCVI Nootka & Kyuquot"#"Nootka_Kyuquot"
+  CU_inlet[Inlet_Names=="Nitinat",2] <- "WCVI South"#"Northwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="San Juan",2] <- "WCVI South"#"Northwest_Vancouver_Island"
+  CU_inlet[Inlet_Names=="Quatsino",2] <- "WCVI North"#"Northwest_Vancouver_Island"
+}
+
 
 
 if(createMCMCout){
   set.seed(1)
-  remove.EnhStocks <- TRUE
   nTrials <- 50000
   # Set up matrix of random numbers to use for generating alphas, so that
   # the same random numbers are used for Ricka estimates with bias correction
@@ -943,32 +1026,79 @@ if(createMCMCout){
   # Pull SREP estimates from Watershed-Area model (see repository "Watershed-
   # Area-Model"). That model included a bias correction for back-transformation
   # from log-space
-  if (remove.EnhStocks) SREP <- data.frame(read.csv(
-    "DataIn/WCVI_SMSY_noEnh_wBC.csv"))
-  if (!remove.EnhStocks) SREP <- data.frame(read.csv(
-    "DataIn/WCVI_SMSY_wEnh_wBC.csv"))
+  if (CoreInd){
+    SREP <- data.frame(read.csv(
+      "DataIn/WCVI_SMSY_CoreInd.csv"))
+  }
+  if (AllExMH){
+    SREP <- data.frame(read.csv(
+      "DataIn/WCVI_SMSY_AllExMH.csv"))
+  }
+
+  if (!CoreInd & !AllExMH){
+    if (remove.EnhStocks) SREP <- data.frame(read.csv(
+      "DataIn/WCVI_SMSY_noEnh_wBC.csv"))
+    if (!remove.EnhStocks) SREP <- data.frame(read.csv(
+      "DataIn/WCVI_SMSY_wEnh_wBC.csv"))
+  }
 
 
 
   #Get lnaplha
+  if(!CoreInd & !AllExMH){
+    # lnalpha from Diana Dobson's run reconstruction coded in R/TMB with bias correction
+    lnalpha_inlet <- read.csv("samSimInputs/CUPars.csv") %>%
+      dplyr::select(alpha,stkName) %>%
+      rename(inlets=stkName, lnalpha=alpha)
+    lnalpha_nBC_inlet <- read.csv("samSimInputs/CUPars_nBC.csv") %>%
+      dplyr::select(alpha,stkName) %>%
+      rename(inlets=stkName, lnalpha_nBC=alpha)
+    lnalpha_inlet$lnalpha <- lnalpha_inlet$lnalpha * alphaScalar#1 #(value for life-stage model =1)
+    lnalpha_nBC_inlet$lnalpha_nBC <- lnalpha_nBC_inlet$lnalpha_nBC * alphaScalar#1-0.5^2/2#
+    if(!remove.EnhStocks){
+      # Add two enhanced inlets, assuming same prod at SWVI
+      lnalpha_inlet[6:7,1] <- lnalpha_inlet$lnalpha[2]
+      lnalpha_inlet[6:7,2]  <- c("Nitinat", "San Juan")
+      lnalpha_nBC_inlet[6:7,1] <- lnalpha_nBC_inlet$lnalpha[2]
+      lnalpha_nBC_inlet[6:7,2] <- c("Nitinat", "San Juan")
+    }
+  }
 
-  # lnalpha from Diana Dobson's run reconstruction coded in R/TMB with bias correction
-  lnalpha_inlet <- read.csv("samSimInputs/CUPars.csv") %>% dplyr::select(alpha,stkName) %>% rename(inlets=stkName, lnalpha=alpha)
-  lnalpha_nBC_inlet <- read.csv("samSimInputs/CUPars_nBC.csv") %>% dplyr::select(alpha,stkName) %>% rename(inlets=stkName, lnalpha_nBC=alpha)
-  lnalpha_inlet$lnalpha <- lnalpha_inlet$lnalpha * alphaScalar#1 #(value for life-stage model =1)
-  lnalpha_nBC_inlet$lnalpha_nBC <- lnalpha_nBC_inlet$lnalpha_nBC * alphaScalar#1-0.5^2/2#
+  if(CoreInd){
+    lnalpha_inlet <- read.csv("samSimInputs/CUPars_CoreInd.csv") %>%
+      dplyr::select(alpha,stkName) %>%
+      rename(inlets=stkName, lnalpha=alpha)
+    lnalpha_nBC_inlet <- read.csv("samSimInputs/CUPars_nBC_CoreInd.csv") %>%
+      dplyr::select(alpha,stkName) %>%
+      rename(inlets=stkName, lnalpha_nBC=alpha)
+    lnalpha_inlet$lnalpha <- lnalpha_inlet$lnalpha * alphaScalar#1 #(value for life-stage model =1)
+    lnalpha_nBC_inlet$lnalpha_nBC <- lnalpha_nBC_inlet$lnalpha_nBC * alphaScalar#1-0.5^2/2#
 
-  Inlet_Names <- lnalpha_inlet$inlets
+  }
+  if(AllExMH){
+    lnalpha_inlet <- read.csv("samSimInputs/CUPars_AllExMH.csv") %>%
+      dplyr::select(alpha,stkName) %>%
+      rename(inlets=stkName, lnalpha=alpha)
+    lnalpha_inlet$lnalpha <- lnalpha_inlet$lnalpha * alphaScalar#1 #(value for life-stage model =1)
+    lnalpha_nBC_inlet <- read.csv("samSimInputs/CUPars_nBC_AllExMH.csv") %>%
+      dplyr::select(alpha,stkName) %>%
+      rename(inlets=stkName, lnalpha_nBC=alpha)
+    lnalpha_nBC_inlet$lnalpha_nBC <- lnalpha_nBC_inlet$lnalpha_nBC * alphaScalar#1 #(value for life-stage model =1)
 
-  #Inlet_Names <- c("Kyuquot", "Clayoquot", "Quatsino", "Barkley", "Nootka/Esperanza")
-  SREP <- SREP %>% filter(Stock %in% Inlet_Names) %>% filter(Param=="SREP") %>%
-    dplyr::select(!c(X, Param)) %>% rename(SREP=Estimate, inlets=Stock)
-  SREP <- SREP %>% mutate(SREP=SREP * SREPScalar) %>%
-    mutate(LL=LL * SREPScalar) %>%
-    mutate(UL=UL * SREPScalar)
+  }
+
+    # Inlet_Names <- lnalpha_inlet$inlets
+    #Inlet_Names <- c("Kyuquot", "Clayoquot", "Quatsino", "Barkley", "Nootka/Esperanza")
+    SREP <- SREP %>% filter(Stock %in% Inlet_Names) %>% filter(Param=="SREP") %>%
+      dplyr::select(!c(X, Param)) %>% rename(SREP=Estimate, inlets=Stock)
+    SREP <- SREP %>% mutate(SREP=SREP * SREPScalar) %>%
+      mutate(LL=LL * SREPScalar) %>%
+      mutate(UL=UL * SREPScalar)
+
+    out <- SREP %>% left_join(lnalpha_inlet, by="inlets") %>%
+      left_join(lnalpha_nBC_inlet, by="inlets")
 
 
-  out <- SREP %>% left_join(lnalpha_inlet, by="inlets") %>% left_join(lnalpha_nBC_inlet, by="inlets")
 
   #Draw alpha value, then draw logSREP parameters,then calc beta for that draw
   # (lnalpha/SREP)
@@ -983,8 +1113,25 @@ if(createMCMCout){
     #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same
     rSREP <- exp(rnorm(nTrials*1.5, logmeanSREP,sigSREP))
 
-    rsig <-  read.csv(paste("samSimInputs/CUPars.csv")) %>%
-      filter(stkName==Inlet_Names[i]) %>% dplyr::select(sigma,stk)
+    if(!CoreInd & !AllExMH){
+      rsig <-  read.csv(paste("samSimInputs/CUPars.csv")) %>%
+        filter(stkName==Inlet_Names[i]) %>% dplyr::select(sigma,stk)
+      if(!remove.EnhStocks){ # use same rsig for enhanced indicators as for Barkely (in SWVI)
+        if(Inlet_Names[i] == "Nitinat" | Inlet_Names[i] == "San Juan") {
+          rsig <- read.csv(paste("samSimInputs/CUPars.csv")) %>%
+            filter(stkName == "Barkley") %>% dplyr::select(sigma,stk)
+          rsig$stk <- i
+        }
+      }
+    }
+    if(CoreInd){
+      rsig <- read.csv(paste("samSimInputs/CUPars_CoreInd.csv")) %>%
+        filter(stkName==Inlet_Names[i]) %>% dplyr::select(sigma,stk)
+    }
+    if(AllExMH){
+      rsig <- read.csv(paste("samSimInputs/CUPars_AllExMH.csv")) %>%
+        filter(stkName==Inlet_Names[i]) %>% dplyr::select(sigma,stk)
+    }
 
     meanlnalpha_nBC <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha_nBC)#1-(rsig$sigma^2)/2# (life-stage model)
     meanlnalpha <- out %>% filter(inlets==Inlet_Names[i]) %>% pull(lnalpha)#1# (life-stage model)
@@ -1016,8 +1163,35 @@ if(createMCMCout){
 
   }
 
-  if(alphaScalar==1&SREPScalar==1) write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc.csv", sep="/"),#"Ricker_mcmc_narrow.csv",#_lifeStageModel
-                          row.names=F)
+
+
+  if(CoreInd){
+    write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc_CoreInd.csv", sep="/"),#"Ricker_mcmc_narrow.csv",#_lifeStageModel
+                                                   row.names=F)
+  }
+
+  if(AllExMH){
+      write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc_AllExMH.csv", sep="/"),#"Ricker_mcmc_narrow.csv",#_lifeStageModel
+                row.names=F)
+  }
+
+
+  if(!CoreInd & !AllExMH){
+    if(remove.EnhStocks){
+      if(alphaScalar==1&SREPScalar==1) write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc_wEnh_2024.csv", sep="/"),#"Ricker_mcmc_narrow.csv",#_lifeStageModel
+                                                 row.names=F)
+      # 15 March 2024. Created new MCMC outputs for updated benchmarks for San Juan, with Enh
+      # Since San Juan is an ehcaned stock, no need to update LRPs wihtout enhancement
+
+    }
+  }
+  if(remove.EnhStocks){
+    if(alphaScalar==1&SREPScalar==1) write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc_wEnh_2024.csv", sep="/"),#"Ricker_mcmc_narrow.csv",#_lifeStageModel
+                                               row.names=F)
+    # 15 March 2024. Created new MCMC outputs for updated benchmarks for San Juan, with Enh
+    # Since San Juan is an ehcaned stock, no need to update LRPs wihtout enhancement
+
+  }
 
   if(alphaScalar!=1 | SREPScalar!=1) write.csv(mcmcOut, paste(wcviCKDir, "/SamSimInputs/Ricker_mcmc_alphaScalar",alphaScalar ,"_SREPScalar",SREPScalar,".csv", sep=""),
             row.names=F)
@@ -1624,13 +1798,16 @@ for (p in 1:length(probThresh)){
 # Specify threshold to use when calculating LRP
 # # Note: may want to loop over probThresholds as well; still needs to be added
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
-probThresh<-c(0.50,0.66)#,0.9, 0.99) # probability theshhold; the LRP is set as the aggregate abundance that has this
+probThresh<-c(0.50,0.66, 0.75, 0.95)#,0.9, 0.99) # probability theshhold; the LRP is set as the aggregate abundance that has this
 # probability that the propCUThreshold is met
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
   # "baseER")
+  # "baseER_wEnh")
+  # "baseER_CoreInd")
+   "baseER_AllExMH")
   #"ER0",
   # "ER0.05",
   # "ER0.10",
@@ -1654,15 +1831,15 @@ OMsToInclude<-c(
   # "ER0.45even_hCor")
 
 
-"ER0.05even_hCor",
-"ER0.10even_hCor",
-"ER0.15even_hCor",
-"ER0.20even_hCor",
-"ER0.25even_hCor",
-"ER0.25even_hCor",
-"ER0.35even_hCor",
-"ER0.40even_hCor",
-"ER0.45even_hCor")
+# "ER0.05even_hCor",
+# "ER0.10even_hCor",
+# "ER0.15even_hCor",
+# "ER0.20even_hCor",
+# "ER0.25even_hCor",
+# "ER0.25even_hCor",
+# "ER0.35even_hCor",
+# "ER0.40even_hCor",
+# "ER0.45even_hCor")
 # "ER0.05sameSREP_hCor",
 # "ER0.10sameSREP_hCor",
 # "ER0.15sameSREP_hCor",
@@ -1709,8 +1886,18 @@ for (OM in 1:length(OMsToInclude)){
 
     # Read in samSim outputs for OM
     filename<-paste("projLRPDat_",OMsToInclude[OM],".csv",sep="")
-    projLRPDat<-read.csv(here(wcviCKDir, "SamSimOutputs", "simData",filename))
-    CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
+    filenameCU<-paste("projCUBenchDat_",OMsToInclude[OM],".csv",sep="")
+    projLRPDat<-read.csv(here::here(wcviCKDir, "SamSimOutputs", "simData",filename))
+    projCUBenchDat<-read.csv(here::here(wcviCKDir, "SamSimOutputs", "simData",filenameCU))
+    # CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
+    # CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))
+    # CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_CoreInd.csv",sep="/"))
+
+    #NEED TO CHANGE THIS WHEN I CHANGE OM TO INCLUDE
+    CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_AllExMH.csv",sep="/"))
+    #######################################################
+
+    projCUBenchDat<-projCUBenchDat %>% filter(year > CUpars$ageMaxRec[1]*10)#)max(SRDat$yr_num)+4)
     projLRPDat<-projLRPDat %>% filter(year > CUpars$ageMaxRec[1]*10)#)max(SRDat$yr_num)+4)
 
     # Create bins for projected spawner abundances
@@ -1721,16 +1908,102 @@ for (OM in 1:length(OMsToInclude)){
 
     # Set bin labels as the mid-point
     projLRPDat$bins<-cut(projLRPDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
+    projCUBenchDat$bins<-cut(projCUBenchDat$sAg,breaks=breaks,labels=as.character(rollmean(breaks,k=2)))
 
     # Summarize nSims in each bin
     tmp<-projLRPDat %>% group_by(bins) %>% summarise(nSims=(length(ppnCUsLowerBM)))
+    tmpCU<-projCUBenchDat %>% group_by(bins) %>% summarise(nSims=(length(X1)))
 
     # Filter out bins with < 100 nSims
     tmp2<-projLRPDat %>% group_by(bins) %>% summarise(nSimsProp1=(length(ppnCUsLowerBM[ppnCUsLowerBM == propCUThresh]))) %>%
       add_column(nSims=tmp$nSims) %>% filter(nSims>=10)
+    # For CU level probability, note filter for low nSims is below
+    if(length(CUpars$stk)==2){
+      tmp2CU_x1<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX1=(sum(X1)))
+      tmp2CU_x2<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX2=(sum(X2)))
+      tmp2CU <- tmp2CU_x1 %>% left_join(tmp2CU_x2, by="bins") %>%
+        add_column(nSims=tmpCU$nSims) %>% filter(nSims>=50)
+    }
+    if(length(CUpars$stk)==5){
+      tmp2CU_x1<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX1=(sum(X1)))
+      tmp2CU_x2<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX2=(sum(X2)))
+      tmp2CU_x3<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX3=(sum(X3)))
+      tmp2CU_x4<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX4=(sum(X4)))
+      tmp2CU_x5<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX5=(sum(X5)))
+      tmp2CU <- tmp2CU_x1 %>% left_join(tmp2CU_x2, by="bins") %>%
+        left_join(tmp2CU_x3, by="bins") %>%
+        left_join(tmp2CU_x4, by="bins") %>%
+        left_join(tmp2CU_x5, by="bins") %>%
+        add_column(nSims=tmpCU$nSims) %>% filter(nSims>=50)
+    }
+    if(length(CUpars$stk)==6){
+      tmp2CU_x1<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX1=(sum(X1)))
+      tmp2CU_x2<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX2=(sum(X2)))
+      tmp2CU_x3<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX3=(sum(X3)))
+      tmp2CU_x4<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX4=(sum(X4)))
+      tmp2CU_x5<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX5=(sum(X5)))
+      tmp2CU_x6<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX6=(sum(X6)))
+      tmp2CU <- tmp2CU_x1 %>% left_join(tmp2CU_x2, by="bins") %>%
+        left_join(tmp2CU_x3, by="bins") %>%
+        left_join(tmp2CU_x4, by="bins") %>%
+        left_join(tmp2CU_x5, by="bins") %>%
+        left_join(tmp2CU_x6, by="bins") %>%
+        add_column(nSims=tmpCU$nSims) %>% filter(nSims>=50)
+    }
+    if(length(CUpars$stk)==7){
+      tmp2CU_x1<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX1=(sum(X1)))
+      tmp2CU_x2<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX2=(sum(X2)))
+      tmp2CU_x3<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX3=(sum(X3)))
+      tmp2CU_x4<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX4=(sum(X4)))
+      tmp2CU_x5<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX5=(sum(X5)))
+      tmp2CU_x6<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX6=(sum(X6)))
+      tmp2CU_x7<-projCUBenchDat %>% group_by(bins) %>% summarise(nSimsPropX7=(sum(X7)))
+      tmp2CU <- tmp2CU_x1 %>% left_join(tmp2CU_x2, by="bins") %>%
+        left_join(tmp2CU_x3, by="bins") %>%
+        left_join(tmp2CU_x4, by="bins") %>%
+        left_join(tmp2CU_x5, by="bins") %>%
+        left_join(tmp2CU_x6, by="bins") %>%
+        left_join(tmp2CU_x7, by="bins") %>%
+        add_column(nSims=tmpCU$nSims) %>% filter(nSims>=50)
+    }
+
 
     # For each bin, calculate probability that required proportion of CUs above benchmark
     projLRPDat<-tmp2 %>% add_column(prob=tmp2$nSimsProp1/tmp2$nSims)
+    if(length(CUpars$stk)==2){
+      projCUBenchDat<-tmp2CU %>%
+        add_column(prob1=tmp2CU$nSimsPropX1/tmp2CU$nSims) %>%
+        add_column(prob2=tmp2CU$nSimsPropX2/tmp2CU$nSims)
+    }
+    if(length(CUpars$stk)==5){
+      projCUBenchDat<-tmp2CU %>%
+        add_column(prob1=tmp2CU$nSimsPropX1/tmp2CU$nSims) %>%
+        add_column(prob2=tmp2CU$nSimsPropX2/tmp2CU$nSims) %>%
+        add_column(prob3=tmp2CU$nSimsPropX3/tmp2CU$nSims) %>%
+        add_column(prob4=tmp2CU$nSimsPropX4/tmp2CU$nSims) %>%
+        add_column(prob5=tmp2CU$nSimsPropX5/tmp2CU$nSims)
+    }
+    if(length(CUpars$stk)==6){
+      projCUBenchDat<-tmp2CU %>%
+        add_column(prob1=tmp2CU$nSimsPropX1/tmp2CU$nSims) %>%
+        add_column(prob2=tmp2CU$nSimsPropX2/tmp2CU$nSims) %>%
+        add_column(prob3=tmp2CU$nSimsPropX3/tmp2CU$nSims) %>%
+        add_column(prob4=tmp2CU$nSimsPropX4/tmp2CU$nSims) %>%
+        add_column(prob5=tmp2CU$nSimsPropX5/tmp2CU$nSims) %>%
+        add_column(prob6=tmp2CU$nSimsPropX6/tmp2CU$nSims)
+    }
+    if(length(CUpars$stk)==7){
+      projCUBenchDat<-tmp2CU %>%
+        add_column(prob1=tmp2CU$nSimsPropX1/tmp2CU$nSims) %>%
+        add_column(prob2=tmp2CU$nSimsPropX2/tmp2CU$nSims) %>%
+        add_column(prob3=tmp2CU$nSimsPropX3/tmp2CU$nSims) %>%
+        add_column(prob4=tmp2CU$nSimsPropX4/tmp2CU$nSims) %>%
+        add_column(prob5=tmp2CU$nSimsPropX5/tmp2CU$nSims) %>%
+        add_column(prob6=tmp2CU$nSimsPropX6/tmp2CU$nSims) %>%
+        add_column(prob7=tmp2CU$nSimsPropX7/tmp2CU$nSims)
+    }
+
+
     # For each bin, calculate the difference between the threshold probability and the calculated probability
     tmp3 <- projLRPDat %>% filter(nSims>100)# Remove bins where there are very few nSims among LRP options
     min <- min(abs(probThresh[i]-tmp3$prob))
@@ -1769,6 +2042,8 @@ for (OM in 1:length(OMsToInclude)){
 
         png(paste(wcviCKDir,"/Figures/ProjectedLRPs/", OMsToIncludeName,
                   "-ProjLRPCurve-ALLp.png", sep=""), width=plot.width,
+            # "-ProjLRPCurve-ALLp_wCUs.png", sep=""), width=plot.width,
+            # "-ProjLRPCurve-ALLp13March2024.png", sep=""), width=plot.width,
                   # "-ProjLRPCurve-ALLpFR.png", sep=""), width=plot.width,
             height=plot.height,
             units="in", res=300)#500
@@ -1784,9 +2059,58 @@ for (OM in 1:length(OMsToInclude)){
                           na.rm=T)*1.0 ),
            ylim=c(0,1),
            cex=0.5, cex.lab=1,#1.5,
-           xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
+           xlab="Aggregate Abundance", ylab="Pr (Inlets > Lower Benchmark)")
+           # xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
            # xlab="Abondance agrégée", ylab="Prob(tous les inlets) > PRI")
           yaxt <- "s"
+      plot.CUs <- FALSE#TRUE
+      if(plot.CUs){
+        points(as.numeric(as.character(projCUBenchDat$bins)),
+               projCUBenchDat$prob1, pch=19,
+               # col = palette(hcl.colors(7, "viridis"))[1],
+               col = RColorBrewer::brewer.pal(n=6, name="Dark2")[1],
+               cex=0.1) # or 'Classic Tableau'
+        points(as.numeric(as.character(projCUBenchDat$bins)),
+               projCUBenchDat$prob2, pch=19,
+               # col=palette(hcl.colors(7, "viridis"))[2],
+               col = RColorBrewer::brewer.pal(n=6, name="Dark2")[2],
+               cex=0.1) # or 'Classic Tableau'
+        if(length(CUpars$stk)>=5){
+          points(as.numeric(as.character(projCUBenchDat$bins)),
+                 projCUBenchDat$prob3, pch=19,
+                 # col=palette(hcl.colors(7, "viridis"))[3],
+                 col = RColorBrewer::brewer.pal(n=6, name="Dark2")[3],
+                 cex=0.1) # or 'Classic Tableau'
+          points(as.numeric(as.character(projCUBenchDat$bins)),
+                 projCUBenchDat$prob4, pch=19,
+                 # col=palette(hcl.colors(7, "viridis"))[4],
+                 col = RColorBrewer::brewer.pal(n=6, name="Dark2")[4],
+                 cex=0.1) # or 'Classic Tableau'
+          points(as.numeric(as.character(projCUBenchDat$bins)),
+                 projCUBenchDat$prob5, pch=19,
+                 # col=palette(hcl.colors(7, "viridis"))[5],
+                 col = RColorBrewer::brewer.pal(n=6, name="Dark2")[5],
+                 cex=0.1) # or 'Classic Tableau'
+        }
+        if(length(CUpars$stk)>=6){
+          points(as.numeric(as.character(projCUBenchDat$bins)),
+                 projCUBenchDat$prob6, pch=19,
+                 # col=palette(hcl.colors(7, "viridis"))[6],
+                 col = RColorBrewer::brewer.pal(n=6, name="Dark2")[6],
+                 cex=0.1) # or 'Classic Tableau'
+        }
+        if(length(CUpars$stk)==7){
+          points(as.numeric(as.character(projCUBenchDat$bins)),
+                 projCUBenchDat$prob7, pch=19,
+                 col=palette(hcl.colors(7, "viridis"))[7],
+                 cex=0.1) # or 'Classic Tableau'
+        }
+      loc.leg <- max(as.numeric(as.character(projCUBenchDat$bins)))*0.88
+      # legend(x=loc.leg, y=0.4, legend = CUpars$stkName, pch=19, cex=0.5, col=palette(hcl.colors(7, "viridis")))
+      legend(x=loc.leg, y=0.4, legend = c(CUpars$stkName, "All inlets"), pch=19,
+             cex=0.5, col=c(RColorBrewer::brewer.pal(n=6, name="Dark2"), "black"),
+             bty="n")
+      }
     }# End of if(length(OMsToInclude)==1){
 
     if(length(OMsToInclude)==9){
@@ -1886,8 +2210,9 @@ for (OM in 1:length(OMsToInclude)){
       # text(x=40000, y=0.05, labels=paste("PRL(p=0,66)= ", LRP_66), cex=0.4)# if (OM>1): alpha
 
       if(OM==1) {
-                  mtext("Prob(all inlets)>lower benchmark", side=2,
-                        # mtext("Prob(tous les inlets) > PRI", side=2,
+                # mtext("Prob(all inlets)>lower benchmark", side=2,
+                mtext("Prob(inlets for core indicators)>lower benchmark", side=2,
+                # mtext("Prob(tous les inlets) > PRI", side=2,
 
                        line=1.8,at=0.4, cex=0.55)
                   yaxt <- "s"}
@@ -1908,6 +2233,12 @@ for (OM in 1:length(OMsToInclude)){
       abline(v=LRP[i], col="#E69F00", lwd=lrp.lwd) }# "orange" "#E69F00",
     if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==2)
       abline(v=LRP[i], col="#56B4E9", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
+    # if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==3)
+    #   abline(v=LRP[i], col="#009E73", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
+    # if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==4)
+    #   abline(v=LRP[i], col="#D55E00", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
+
+
     # abline(h=0.9, lty=2)
     # abline(h=0.99, lty=2)
 
@@ -1928,12 +2259,14 @@ for (OM in 1:length(OMsToInclude)){
   # # # Save LRPs for all OM scenarios
 
   # # UNCOMMENT THIS AFTER FINSIHING FRENCH TRANSLATIION!!
-  # write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
-  #                           "_ALLp.csv", sep=""), row.names=F)
-  # # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-  # write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude[OM],
-  #                                  "_Allp.csv", sep=""), row.names=F)
-
+  write.csv(LRP_Ests, paste(projOutDir2, "/ProjectedLRPs",  OMsToInclude[OM],
+                            "_ALLp.csv", sep=""), row.names=F)
+  # Save LRP projection summaries used for calculating and plotting LRP (Optional)
+  write.csv(projLRPDat.plot, paste(projOutDir2, "/ProjectedLRP_data", OMsToInclude[OM],
+                                   "_Allp.csv", sep=""), row.names=F)
+  # Save CU benchmark projection summaries used for calculating and plotting prob of CUs>LBM
+  write.csv(projCUBenchDat, paste(projOutDir2, "/projCUBench_data", OMsToInclude[OM],
+                                   "_Allp.csv", sep=""), row.names=F)
 
 }# End of for OM in 1:length(OMsToInclude)
 
@@ -1943,6 +2276,7 @@ for (OM in 1:length(OMsToInclude)){
 # ==================================================================
 # This code runs run reconstrution from Diana Dobson, updated by Diana Mchugh
 # 1 June 2021"WCVI_term_model_revisions_updated-2021.xlsx" in TMBstan
+# For outputs usedin CUPars, see: RunReconstructionTMBoutputs_BetaCalc.xls
 
 run.RunReconstruction <- FALSE
 setwd(codeDir)
@@ -1979,6 +2313,7 @@ if(run.RunReconstruction){
   param$logB <- as.vector(log(1/( (SRDat %>% group_by(CU_ID) %>%
                                      summarise(x = quantile(
                                        Spawners, 0.8, na.rm=T)))$x/Scale) ) )
+  # param$logB <- rep(0.001, N_Stocks)
   param$logSigma <- rep(-2, N_Stocks)
 
 

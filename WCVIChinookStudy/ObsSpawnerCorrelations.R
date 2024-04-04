@@ -3,6 +3,7 @@
 #read.csv for Inlet_Sum
 setwd(wcviCKDir)
 # Inlet_Sum <- read.csv("DataIn/Inlet_Sum.csv")
+# Inlet_Sum <- read.csv("DataIn/Inlet_Sum_wEnh.csv")
 
 # Inlet_Sum.df <- as.data.frame(Inlet_Sum) %>%
 #   add_column( Years = 1953:2020)
@@ -11,6 +12,7 @@ setwd(wcviCKDir)
 # Inlet_Sum.df.long <- Inlet_Sum.df  %>% pivot_longer(names(Inlet_Sum.df)[1:5], names_to="Inlet_Name", values_to="Spawners")
 
 Inlet_Sum.df.long <- read.csv("DataIn/Inlet_Sum.csv")
+# Inlet_Sum.df.long <- read.csv("DataIn/Inlet_Sum_wEnh.csv")
 ggplot(Inlet_Sum.df.long, aes(BroodYear, Spawners, group=Inlet_Name, colour=Inlet_Name))+geom_line()
 
 # from 1996 onwards, but includes years when some CUs are missing (which are not included in corr)
@@ -18,7 +20,7 @@ ggplot(Inlet_Sum.df.long, aes(BroodYear, Spawners, group=Inlet_Name, colour=Inle
 
 SpawnerInlets <- ggplot(data =  Inlet_Sum.df.long %>% filter(BroodYear>1996),
        aes(BroodYear, Spawners, group=Inlet_Name, colour=Inlet_Name))+geom_line()
-ggsave("Figures/SpawnerInlets.png", plot = SpawnerInlets, width = 6,
+ggsave("Figures/SpawnerInlets_wEnh.png", plot = SpawnerInlets, width = 6,
        height = 4, units = "in")
 #with na.omit when some CUs are missingn (But adds lines over ommited years which is deceiving)
 #Inlet_Sum.df.long <- Inlet_Sum.df  %>% na.omit() %>% pivot_longer(names(Inlet_Sum.df)[1:5], names_to="Inlet_Name", values_to="Spawners")
