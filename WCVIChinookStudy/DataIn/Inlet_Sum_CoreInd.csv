@@ -1,0 +1,137 @@
+"","BroodYear","Inlet_Name","Spawners","CU_Name","Inlet_ID","Recruits"
+"1",1953,"Kyuquot",5750,"WCVI Nootka & Kyuquot",1,NA
+"2",1953,"Clayoquot",NA,"WCVI South",2,NA
+"3",1954,"Kyuquot",5000,"WCVI Nootka & Kyuquot",1,NA
+"4",1954,"Clayoquot",NA,"WCVI South",2,NA
+"5",1955,"Kyuquot",5000,"WCVI Nootka & Kyuquot",1,NA
+"6",1955,"Clayoquot",NA,"WCVI South",2,NA
+"7",1956,"Kyuquot",4300,"WCVI Nootka & Kyuquot",1,NA
+"8",1956,"Clayoquot",NA,"WCVI South",2,NA
+"9",1957,"Kyuquot",4650,"WCVI Nootka & Kyuquot",1,NA
+"10",1957,"Clayoquot",NA,"WCVI South",2,NA
+"11",1958,"Kyuquot",5200,"WCVI Nootka & Kyuquot",1,NA
+"12",1958,"Clayoquot",NA,"WCVI South",2,NA
+"13",1959,"Kyuquot",475,"WCVI Nootka & Kyuquot",1,NA
+"14",1959,"Clayoquot",NA,"WCVI South",2,NA
+"15",1960,"Kyuquot",1575,"WCVI Nootka & Kyuquot",1,NA
+"16",1960,"Clayoquot",NA,"WCVI South",2,NA
+"17",1961,"Kyuquot",1000,"WCVI Nootka & Kyuquot",1,NA
+"18",1961,"Clayoquot",NA,"WCVI South",2,NA
+"19",1962,"Kyuquot",1350,"WCVI Nootka & Kyuquot",1,NA
+"20",1962,"Clayoquot",NA,"WCVI South",2,NA
+"21",1963,"Kyuquot",4650,"WCVI Nootka & Kyuquot",1,NA
+"22",1963,"Clayoquot",NA,"WCVI South",2,NA
+"23",1964,"Kyuquot",3025,"WCVI Nootka & Kyuquot",1,NA
+"24",1964,"Clayoquot",NA,"WCVI South",2,NA
+"25",1965,"Kyuquot",825,"WCVI Nootka & Kyuquot",1,NA
+"26",1965,"Clayoquot",NA,"WCVI South",2,NA
+"27",1966,"Kyuquot",8500,"WCVI Nootka & Kyuquot",1,NA
+"28",1966,"Clayoquot",NA,"WCVI South",2,NA
+"29",1967,"Kyuquot",1175,"WCVI Nootka & Kyuquot",1,NA
+"30",1967,"Clayoquot",NA,"WCVI South",2,NA
+"31",1968,"Kyuquot",2275,"WCVI Nootka & Kyuquot",1,NA
+"32",1968,"Clayoquot",NA,"WCVI South",2,NA
+"33",1969,"Kyuquot",1700,"WCVI Nootka & Kyuquot",1,NA
+"34",1969,"Clayoquot",NA,"WCVI South",2,NA
+"35",1970,"Kyuquot",2450,"WCVI Nootka & Kyuquot",1,NA
+"36",1970,"Clayoquot",NA,"WCVI South",2,NA
+"37",1971,"Kyuquot",1700,"WCVI Nootka & Kyuquot",1,NA
+"38",1971,"Clayoquot",NA,"WCVI South",2,NA
+"39",1972,"Kyuquot",1450,"WCVI Nootka & Kyuquot",1,NA
+"40",1972,"Clayoquot",NA,"WCVI South",2,NA
+"41",1973,"Kyuquot",3750,"WCVI Nootka & Kyuquot",1,NA
+"42",1973,"Clayoquot",NA,"WCVI South",2,NA
+"43",1974,"Kyuquot",1900,"WCVI Nootka & Kyuquot",1,NA
+"44",1974,"Clayoquot",NA,"WCVI South",2,NA
+"45",1975,"Kyuquot",125,"WCVI Nootka & Kyuquot",1,NA
+"46",1975,"Clayoquot",NA,"WCVI South",2,NA
+"47",1976,"Kyuquot",75,"WCVI Nootka & Kyuquot",1,NA
+"48",1976,"Clayoquot",NA,"WCVI South",2,NA
+"49",1977,"Kyuquot",235,"WCVI Nootka & Kyuquot",1,NA
+"50",1977,"Clayoquot",NA,"WCVI South",2,NA
+"51",1978,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"52",1978,"Clayoquot",NA,"WCVI South",2,NA
+"53",1979,"Kyuquot",300,"WCVI Nootka & Kyuquot",1,NA
+"54",1979,"Clayoquot",NA,"WCVI South",2,NA
+"55",1980,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"56",1980,"Clayoquot",NA,"WCVI South",2,NA
+"57",1981,"Kyuquot",1600,"WCVI Nootka & Kyuquot",1,NA
+"58",1981,"Clayoquot",NA,"WCVI South",2,NA
+"59",1982,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"60",1982,"Clayoquot",NA,"WCVI South",2,NA
+"61",1983,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"62",1983,"Clayoquot",NA,"WCVI South",2,NA
+"63",1984,"Kyuquot",2550,"WCVI Nootka & Kyuquot",1,NA
+"64",1984,"Clayoquot",NA,"WCVI South",2,NA
+"65",1985,"Kyuquot",1900,"WCVI Nootka & Kyuquot",1,NA
+"66",1985,"Clayoquot",NA,"WCVI South",2,NA
+"67",1986,"Kyuquot",1200,"WCVI Nootka & Kyuquot",1,NA
+"68",1986,"Clayoquot",NA,"WCVI South",2,NA
+"69",1987,"Kyuquot",700,"WCVI Nootka & Kyuquot",1,NA
+"70",1987,"Clayoquot",NA,"WCVI South",2,NA
+"71",1988,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"72",1988,"Clayoquot",NA,"WCVI South",2,NA
+"73",1989,"Kyuquot",520,"WCVI Nootka & Kyuquot",1,NA
+"74",1989,"Clayoquot",NA,"WCVI South",2,NA
+"75",1990,"Kyuquot",260,"WCVI Nootka & Kyuquot",1,NA
+"76",1990,"Clayoquot",NA,"WCVI South",2,NA
+"77",1991,"Kyuquot",160,"WCVI Nootka & Kyuquot",1,NA
+"78",1991,"Clayoquot",NA,"WCVI South",2,NA
+"79",1992,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"80",1992,"Clayoquot",NA,"WCVI South",2,NA
+"81",1993,"Kyuquot",280,"WCVI Nootka & Kyuquot",1,NA
+"82",1993,"Clayoquot",NA,"WCVI South",2,NA
+"83",1994,"Kyuquot",500,"WCVI Nootka & Kyuquot",1,NA
+"84",1994,"Clayoquot",NA,"WCVI South",2,NA
+"85",1995,"Kyuquot",956,"WCVI Nootka & Kyuquot",1,NA
+"86",1995,"Clayoquot",703,"WCVI South",2,NA
+"87",1996,"Kyuquot",560,"WCVI Nootka & Kyuquot",1,NA
+"88",1996,"Clayoquot",935,"WCVI South",2,NA
+"89",1997,"Kyuquot",1483,"WCVI Nootka & Kyuquot",1,NA
+"90",1997,"Clayoquot",625,"WCVI South",2,NA
+"91",1998,"Kyuquot",2554,"WCVI Nootka & Kyuquot",1,NA
+"92",1998,"Clayoquot",831,"WCVI South",2,NA
+"93",1999,"Kyuquot",1871,"WCVI Nootka & Kyuquot",1,NA
+"94",1999,"Clayoquot",633,"WCVI South",2,NA
+"95",2000,"Kyuquot",571,"WCVI Nootka & Kyuquot",1,NA
+"96",2000,"Clayoquot",397,"WCVI South",2,NA
+"97",2001,"Kyuquot",785,"WCVI Nootka & Kyuquot",1,NA
+"98",2001,"Clayoquot",NA,"WCVI South",2,NA
+"99",2002,"Kyuquot",600,"WCVI Nootka & Kyuquot",1,NA
+"100",2002,"Clayoquot",205,"WCVI South",2,NA
+"101",2003,"Kyuquot",1177,"WCVI Nootka & Kyuquot",1,NA
+"102",2003,"Clayoquot",320,"WCVI South",2,NA
+"103",2004,"Kyuquot",1250,"WCVI Nootka & Kyuquot",1,NA
+"104",2004,"Clayoquot",575,"WCVI South",2,NA
+"105",2005,"Kyuquot",808,"WCVI Nootka & Kyuquot",1,NA
+"106",2005,"Clayoquot",216,"WCVI South",2,NA
+"107",2006,"Kyuquot",840,"WCVI Nootka & Kyuquot",1,NA
+"108",2006,"Clayoquot",306,"WCVI South",2,NA
+"109",2007,"Kyuquot",589,"WCVI Nootka & Kyuquot",1,NA
+"110",2007,"Clayoquot",166,"WCVI South",2,NA
+"111",2008,"Kyuquot",844,"WCVI Nootka & Kyuquot",1,NA
+"112",2008,"Clayoquot",242,"WCVI South",2,NA
+"113",2009,"Kyuquot",844,"WCVI Nootka & Kyuquot",1,NA
+"114",2009,"Clayoquot",119,"WCVI South",2,NA
+"115",2010,"Kyuquot",650,"WCVI Nootka & Kyuquot",1,NA
+"116",2010,"Clayoquot",244,"WCVI South",2,NA
+"117",2011,"Kyuquot",660,"WCVI Nootka & Kyuquot",1,NA
+"118",2011,"Clayoquot",200,"WCVI South",2,NA
+"119",2012,"Kyuquot",502,"WCVI Nootka & Kyuquot",1,NA
+"120",2012,"Clayoquot",NA,"WCVI South",2,NA
+"121",2013,"Kyuquot",989,"WCVI Nootka & Kyuquot",1,NA
+"122",2013,"Clayoquot",662,"WCVI South",2,NA
+"123",2014,"Kyuquot",936,"WCVI Nootka & Kyuquot",1,NA
+"124",2014,"Clayoquot",370,"WCVI South",2,NA
+"125",2015,"Kyuquot",2212,"WCVI Nootka & Kyuquot",1,NA
+"126",2015,"Clayoquot",NA,"WCVI South",2,NA
+"127",2016,"Kyuquot",1145,"WCVI Nootka & Kyuquot",1,NA
+"128",2016,"Clayoquot",806,"WCVI South",2,NA
+"129",2017,"Kyuquot",2440,"WCVI Nootka & Kyuquot",1,NA
+"130",2017,"Clayoquot",970,"WCVI South",2,NA
+"131",2018,"Kyuquot",1893,"WCVI Nootka & Kyuquot",1,NA
+"132",2018,"Clayoquot",726,"WCVI South",2,NA
+"133",2019,"Kyuquot",1693,"WCVI Nootka & Kyuquot",1,NA
+"134",2019,"Clayoquot",401,"WCVI South",2,NA
+"135",2020,"Kyuquot",1228,"WCVI Nootka & Kyuquot",1,NA
+"136",2020,"Clayoquot",442,"WCVI South",2,NA

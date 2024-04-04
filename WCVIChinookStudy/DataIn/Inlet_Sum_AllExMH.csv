@@ -1,0 +1,409 @@
+"","BroodYear","Inlet_Name","Spawners","CU_Name","Inlet_ID","Recruits"
+"1",1953,"Kyuquot",5750,"WCVI Nootka & Kyuquot",1,NA
+"2",1953,"Clayoquot",NA,"WCVI South",2,NA
+"3",1953,"Nootka/Esperanza",13100,"WCVI Nootka & Kyuquot",3,NA
+"4",1953,"Quatsino",NA,"WCVI North",4,NA
+"5",1953,"Barkley",4250,"WCVI South",5,NA
+"6",1953,"San Juan",400,"WCVI South",6,NA
+"7",1954,"Kyuquot",5000,"WCVI Nootka & Kyuquot",1,NA
+"8",1954,"Clayoquot",NA,"WCVI South",2,NA
+"9",1954,"Nootka/Esperanza",925,"WCVI Nootka & Kyuquot",3,NA
+"10",1954,"Quatsino",NA,"WCVI North",4,NA
+"11",1954,"Barkley",4250,"WCVI South",5,NA
+"12",1954,"San Juan",400,"WCVI South",6,NA
+"13",1955,"Kyuquot",5000,"WCVI Nootka & Kyuquot",1,NA
+"14",1955,"Clayoquot",NA,"WCVI South",2,NA
+"15",1955,"Nootka/Esperanza",2550,"WCVI Nootka & Kyuquot",3,NA
+"16",1955,"Quatsino",NA,"WCVI North",4,NA
+"17",1955,"Barkley",3700,"WCVI South",5,NA
+"18",1955,"San Juan",200,"WCVI South",6,NA
+"19",1956,"Kyuquot",4300,"WCVI Nootka & Kyuquot",1,NA
+"20",1956,"Clayoquot",NA,"WCVI South",2,NA
+"21",1956,"Nootka/Esperanza",725,"WCVI Nootka & Kyuquot",3,NA
+"22",1956,"Quatsino",NA,"WCVI North",4,NA
+"23",1956,"Barkley",950,"WCVI South",5,NA
+"24",1956,"San Juan",25,"WCVI South",6,NA
+"25",1957,"Kyuquot",4650,"WCVI Nootka & Kyuquot",1,NA
+"26",1957,"Clayoquot",NA,"WCVI South",2,NA
+"27",1957,"Nootka/Esperanza",700,"WCVI Nootka & Kyuquot",3,NA
+"28",1957,"Quatsino",NA,"WCVI North",4,NA
+"29",1957,"Barkley",600,"WCVI South",5,NA
+"30",1957,"San Juan",200,"WCVI South",6,NA
+"31",1958,"Kyuquot",5200,"WCVI Nootka & Kyuquot",1,NA
+"32",1958,"Clayoquot",NA,"WCVI South",2,NA
+"33",1958,"Nootka/Esperanza",700,"WCVI Nootka & Kyuquot",3,NA
+"34",1958,"Quatsino",NA,"WCVI North",4,NA
+"35",1958,"Barkley",600,"WCVI South",5,NA
+"36",1958,"San Juan",200,"WCVI South",6,NA
+"37",1959,"Kyuquot",475,"WCVI Nootka & Kyuquot",1,NA
+"38",1959,"Clayoquot",NA,"WCVI South",2,NA
+"39",1959,"Nootka/Esperanza",1200,"WCVI Nootka & Kyuquot",3,NA
+"40",1959,"Quatsino",NA,"WCVI North",4,NA
+"41",1959,"Barkley",1700,"WCVI South",5,NA
+"42",1959,"San Juan",200,"WCVI South",6,NA
+"43",1960,"Kyuquot",1575,"WCVI Nootka & Kyuquot",1,NA
+"44",1960,"Clayoquot",NA,"WCVI South",2,NA
+"45",1960,"Nootka/Esperanza",2750,"WCVI Nootka & Kyuquot",3,NA
+"46",1960,"Quatsino",NA,"WCVI North",4,NA
+"47",1960,"Barkley",950,"WCVI South",5,NA
+"48",1960,"San Juan",1500,"WCVI South",6,NA
+"49",1961,"Kyuquot",1000,"WCVI Nootka & Kyuquot",1,NA
+"50",1961,"Clayoquot",NA,"WCVI South",2,NA
+"51",1961,"Nootka/Esperanza",2750,"WCVI Nootka & Kyuquot",3,NA
+"52",1961,"Quatsino",NA,"WCVI North",4,NA
+"53",1961,"Barkley",1900,"WCVI South",5,NA
+"54",1961,"San Juan",400,"WCVI South",6,NA
+"55",1962,"Kyuquot",1350,"WCVI Nootka & Kyuquot",1,NA
+"56",1962,"Clayoquot",NA,"WCVI South",2,NA
+"57",1962,"Nootka/Esperanza",5150,"WCVI Nootka & Kyuquot",3,NA
+"58",1962,"Quatsino",NA,"WCVI North",4,NA
+"59",1962,"Barkley",600,"WCVI South",5,NA
+"60",1962,"San Juan",400,"WCVI South",6,NA
+"61",1963,"Kyuquot",4650,"WCVI Nootka & Kyuquot",1,NA
+"62",1963,"Clayoquot",NA,"WCVI South",2,NA
+"63",1963,"Nootka/Esperanza",5025,"WCVI Nootka & Kyuquot",3,NA
+"64",1963,"Quatsino",NA,"WCVI North",4,NA
+"65",1963,"Barkley",2250,"WCVI South",5,NA
+"66",1963,"San Juan",400,"WCVI South",6,NA
+"67",1964,"Kyuquot",3025,"WCVI Nootka & Kyuquot",1,NA
+"68",1964,"Clayoquot",NA,"WCVI South",2,NA
+"69",1964,"Nootka/Esperanza",9150,"WCVI Nootka & Kyuquot",3,NA
+"70",1964,"Quatsino",NA,"WCVI North",4,NA
+"71",1964,"Barkley",800,"WCVI South",5,NA
+"72",1964,"San Juan",1500,"WCVI South",6,NA
+"73",1965,"Kyuquot",825,"WCVI Nootka & Kyuquot",1,NA
+"74",1965,"Clayoquot",NA,"WCVI South",2,NA
+"75",1965,"Nootka/Esperanza",6900,"WCVI Nootka & Kyuquot",3,NA
+"76",1965,"Quatsino",NA,"WCVI North",4,NA
+"77",1965,"Barkley",1150,"WCVI South",5,NA
+"78",1965,"San Juan",750,"WCVI South",6,NA
+"79",1966,"Kyuquot",8500,"WCVI Nootka & Kyuquot",1,NA
+"80",1966,"Clayoquot",NA,"WCVI South",2,NA
+"81",1966,"Nootka/Esperanza",6450,"WCVI Nootka & Kyuquot",3,NA
+"82",1966,"Quatsino",NA,"WCVI North",4,NA
+"83",1966,"Barkley",1500,"WCVI South",5,NA
+"84",1966,"San Juan",1500,"WCVI South",6,NA
+"85",1967,"Kyuquot",1175,"WCVI Nootka & Kyuquot",1,NA
+"86",1967,"Clayoquot",NA,"WCVI South",2,NA
+"87",1967,"Nootka/Esperanza",5150,"WCVI Nootka & Kyuquot",3,NA
+"88",1967,"Quatsino",NA,"WCVI North",4,NA
+"89",1967,"Barkley",800,"WCVI South",5,NA
+"90",1967,"San Juan",400,"WCVI South",6,NA
+"91",1968,"Kyuquot",2275,"WCVI Nootka & Kyuquot",1,NA
+"92",1968,"Clayoquot",NA,"WCVI South",2,NA
+"93",1968,"Nootka/Esperanza",1425,"WCVI Nootka & Kyuquot",3,NA
+"94",1968,"Quatsino",NA,"WCVI North",4,NA
+"95",1968,"Barkley",1150,"WCVI South",5,NA
+"96",1968,"San Juan",750,"WCVI South",6,NA
+"97",1969,"Kyuquot",1700,"WCVI Nootka & Kyuquot",1,NA
+"98",1969,"Clayoquot",NA,"WCVI South",2,NA
+"99",1969,"Nootka/Esperanza",2750,"WCVI Nootka & Kyuquot",3,NA
+"100",1969,"Quatsino",NA,"WCVI North",4,NA
+"101",1969,"Barkley",1150,"WCVI South",5,NA
+"102",1969,"San Juan",400,"WCVI South",6,NA
+"103",1970,"Kyuquot",2450,"WCVI Nootka & Kyuquot",1,NA
+"104",1970,"Clayoquot",NA,"WCVI South",2,NA
+"105",1970,"Nootka/Esperanza",1900,"WCVI Nootka & Kyuquot",3,NA
+"106",1970,"Quatsino",NA,"WCVI North",4,NA
+"107",1970,"Barkley",1150,"WCVI South",5,NA
+"108",1970,"San Juan",7500,"WCVI South",6,NA
+"109",1971,"Kyuquot",1700,"WCVI Nootka & Kyuquot",1,NA
+"110",1971,"Clayoquot",NA,"WCVI South",2,NA
+"111",1971,"Nootka/Esperanza",2725,"WCVI Nootka & Kyuquot",3,NA
+"112",1971,"Quatsino",NA,"WCVI North",4,NA
+"113",1971,"Barkley",1950,"WCVI South",5,NA
+"114",1971,"San Juan",400,"WCVI South",6,NA
+"115",1972,"Kyuquot",1450,"WCVI Nootka & Kyuquot",1,NA
+"116",1972,"Clayoquot",NA,"WCVI South",2,NA
+"117",1972,"Nootka/Esperanza",2820,"WCVI Nootka & Kyuquot",3,NA
+"118",1972,"Quatsino",NA,"WCVI North",4,NA
+"119",1972,"Barkley",1300,"WCVI South",5,NA
+"120",1972,"San Juan",3500,"WCVI South",6,NA
+"121",1973,"Kyuquot",3750,"WCVI Nootka & Kyuquot",1,NA
+"122",1973,"Clayoquot",NA,"WCVI South",2,NA
+"123",1973,"Nootka/Esperanza",5825,"WCVI Nootka & Kyuquot",3,NA
+"124",1973,"Quatsino",NA,"WCVI North",4,NA
+"125",1973,"Barkley",825,"WCVI South",5,NA
+"126",1973,"San Juan",3500,"WCVI South",6,NA
+"127",1974,"Kyuquot",1900,"WCVI Nootka & Kyuquot",1,NA
+"128",1974,"Clayoquot",NA,"WCVI South",2,NA
+"129",1974,"Nootka/Esperanza",3775,"WCVI Nootka & Kyuquot",3,NA
+"130",1974,"Quatsino",NA,"WCVI North",4,NA
+"131",1974,"Barkley",1300,"WCVI South",5,NA
+"132",1974,"San Juan",750,"WCVI South",6,NA
+"133",1975,"Kyuquot",125,"WCVI Nootka & Kyuquot",1,NA
+"134",1975,"Clayoquot",NA,"WCVI South",2,NA
+"135",1975,"Nootka/Esperanza",1075,"WCVI Nootka & Kyuquot",3,NA
+"136",1975,"Quatsino",NA,"WCVI North",4,NA
+"137",1975,"Barkley",1150,"WCVI South",5,NA
+"138",1975,"San Juan",200,"WCVI South",6,NA
+"139",1976,"Kyuquot",75,"WCVI Nootka & Kyuquot",1,NA
+"140",1976,"Clayoquot",NA,"WCVI South",2,NA
+"141",1976,"Nootka/Esperanza",675,"WCVI Nootka & Kyuquot",3,NA
+"142",1976,"Quatsino",NA,"WCVI North",4,NA
+"143",1976,"Barkley",1025,"WCVI South",5,NA
+"144",1976,"San Juan",75,"WCVI South",6,NA
+"145",1977,"Kyuquot",235,"WCVI Nootka & Kyuquot",1,NA
+"146",1977,"Clayoquot",NA,"WCVI South",2,NA
+"147",1977,"Nootka/Esperanza",2820,"WCVI Nootka & Kyuquot",3,NA
+"148",1977,"Quatsino",NA,"WCVI North",4,NA
+"149",1977,"Barkley",840,"WCVI South",5,NA
+"150",1977,"San Juan",75,"WCVI South",6,NA
+"151",1978,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"152",1978,"Clayoquot",NA,"WCVI South",2,NA
+"153",1978,"Nootka/Esperanza",4860,"WCVI Nootka & Kyuquot",3,NA
+"154",1978,"Quatsino",NA,"WCVI North",4,NA
+"155",1978,"Barkley",325,"WCVI South",5,NA
+"156",1978,"San Juan",50,"WCVI South",6,NA
+"157",1979,"Kyuquot",300,"WCVI Nootka & Kyuquot",1,NA
+"158",1979,"Clayoquot",NA,"WCVI South",2,NA
+"159",1979,"Nootka/Esperanza",2101,"WCVI Nootka & Kyuquot",3,NA
+"160",1979,"Quatsino",NA,"WCVI North",4,NA
+"161",1979,"Barkley",600,"WCVI South",5,NA
+"162",1979,"San Juan",400,"WCVI South",6,NA
+"163",1980,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"164",1980,"Clayoquot",NA,"WCVI South",2,NA
+"165",1980,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"166",1980,"Quatsino",NA,"WCVI North",4,NA
+"167",1980,"Barkley",475,"WCVI South",5,NA
+"168",1980,"San Juan",500,"WCVI South",6,NA
+"169",1981,"Kyuquot",1600,"WCVI Nootka & Kyuquot",1,NA
+"170",1981,"Clayoquot",NA,"WCVI South",2,NA
+"171",1981,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"172",1981,"Quatsino",NA,"WCVI North",4,NA
+"173",1981,"Barkley",410,"WCVI South",5,NA
+"174",1981,"San Juan",750,"WCVI South",6,NA
+"175",1982,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"176",1982,"Clayoquot",NA,"WCVI South",2,NA
+"177",1982,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"178",1982,"Quatsino",NA,"WCVI North",4,NA
+"179",1982,"Barkley",570,"WCVI South",5,NA
+"180",1982,"San Juan",775,"WCVI South",6,NA
+"181",1983,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"182",1983,"Clayoquot",NA,"WCVI South",2,NA
+"183",1983,"Nootka/Esperanza",2102,"WCVI Nootka & Kyuquot",3,NA
+"184",1983,"Quatsino",NA,"WCVI North",4,NA
+"185",1983,"Barkley",227,"WCVI South",5,NA
+"186",1983,"San Juan",775,"WCVI South",6,NA
+"187",1984,"Kyuquot",2550,"WCVI Nootka & Kyuquot",1,NA
+"188",1984,"Clayoquot",NA,"WCVI South",2,NA
+"189",1984,"Nootka/Esperanza",2427,"WCVI Nootka & Kyuquot",3,NA
+"190",1984,"Quatsino",NA,"WCVI North",4,NA
+"191",1984,"Barkley",125,"WCVI South",5,NA
+"192",1984,"San Juan",1200,"WCVI South",6,NA
+"193",1985,"Kyuquot",1900,"WCVI Nootka & Kyuquot",1,NA
+"194",1985,"Clayoquot",NA,"WCVI South",2,NA
+"195",1985,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"196",1985,"Quatsino",NA,"WCVI North",4,NA
+"197",1985,"Barkley",550,"WCVI South",5,NA
+"198",1985,"San Juan",150,"WCVI South",6,NA
+"199",1986,"Kyuquot",1200,"WCVI Nootka & Kyuquot",1,NA
+"200",1986,"Clayoquot",NA,"WCVI South",2,NA
+"201",1986,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"202",1986,"Quatsino",NA,"WCVI North",4,NA
+"203",1986,"Barkley",650,"WCVI South",5,NA
+"204",1986,"San Juan",487,"WCVI South",6,NA
+"205",1987,"Kyuquot",700,"WCVI Nootka & Kyuquot",1,NA
+"206",1987,"Clayoquot",NA,"WCVI South",2,NA
+"207",1987,"Nootka/Esperanza",920,"WCVI Nootka & Kyuquot",3,NA
+"208",1987,"Quatsino",NA,"WCVI North",4,NA
+"209",1987,"Barkley",NA,"WCVI South",5,NA
+"210",1987,"San Juan",600,"WCVI South",6,NA
+"211",1988,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"212",1988,"Clayoquot",NA,"WCVI South",2,NA
+"213",1988,"Nootka/Esperanza",1826,"WCVI Nootka & Kyuquot",3,NA
+"214",1988,"Quatsino",NA,"WCVI North",4,NA
+"215",1988,"Barkley",350,"WCVI South",5,NA
+"216",1988,"San Juan",1500,"WCVI South",6,NA
+"217",1989,"Kyuquot",520,"WCVI Nootka & Kyuquot",1,NA
+"218",1989,"Clayoquot",NA,"WCVI South",2,NA
+"219",1989,"Nootka/Esperanza",2925,"WCVI Nootka & Kyuquot",3,NA
+"220",1989,"Quatsino",NA,"WCVI North",4,NA
+"221",1989,"Barkley",900,"WCVI South",5,NA
+"222",1989,"San Juan",300,"WCVI South",6,NA
+"223",1990,"Kyuquot",260,"WCVI Nootka & Kyuquot",1,NA
+"224",1990,"Clayoquot",NA,"WCVI South",2,NA
+"225",1990,"Nootka/Esperanza",3884,"WCVI Nootka & Kyuquot",3,NA
+"226",1990,"Quatsino",NA,"WCVI North",4,NA
+"227",1990,"Barkley",780,"WCVI South",5,NA
+"228",1990,"San Juan",500,"WCVI South",6,NA
+"229",1991,"Kyuquot",160,"WCVI Nootka & Kyuquot",1,NA
+"230",1991,"Clayoquot",NA,"WCVI South",2,NA
+"231",1991,"Nootka/Esperanza",5400,"WCVI Nootka & Kyuquot",3,NA
+"232",1991,"Quatsino",NA,"WCVI North",4,NA
+"233",1991,"Barkley",1671,"WCVI South",5,NA
+"234",1991,"San Juan",450,"WCVI South",6,NA
+"235",1992,"Kyuquot",NA,"WCVI Nootka & Kyuquot",1,NA
+"236",1992,"Clayoquot",NA,"WCVI South",2,NA
+"237",1992,"Nootka/Esperanza",6800,"WCVI Nootka & Kyuquot",3,NA
+"238",1992,"Quatsino",NA,"WCVI North",4,NA
+"239",1992,"Barkley",900,"WCVI South",5,NA
+"240",1992,"San Juan",500,"WCVI South",6,NA
+"241",1993,"Kyuquot",280,"WCVI Nootka & Kyuquot",1,NA
+"242",1993,"Clayoquot",NA,"WCVI South",2,NA
+"243",1993,"Nootka/Esperanza",4800,"WCVI Nootka & Kyuquot",3,NA
+"244",1993,"Quatsino",NA,"WCVI North",4,NA
+"245",1993,"Barkley",1283,"WCVI South",5,NA
+"246",1993,"San Juan",1300,"WCVI South",6,NA
+"247",1994,"Kyuquot",500,"WCVI Nootka & Kyuquot",1,NA
+"248",1994,"Clayoquot",NA,"WCVI South",2,NA
+"249",1994,"Nootka/Esperanza",6450,"WCVI Nootka & Kyuquot",3,NA
+"250",1994,"Quatsino",NA,"WCVI North",4,NA
+"251",1994,"Barkley",1250,"WCVI South",5,NA
+"252",1994,"San Juan",600,"WCVI South",6,NA
+"253",1995,"Kyuquot",956,"WCVI Nootka & Kyuquot",1,NA
+"254",1995,"Clayoquot",1153,"WCVI South",2,NA
+"255",1995,"Nootka/Esperanza",2059,"WCVI Nootka & Kyuquot",3,NA
+"256",1995,"Quatsino",1461,"WCVI North",4,NA
+"257",1995,"Barkley",348,"WCVI South",5,NA
+"258",1995,"San Juan",376,"WCVI South",6,NA
+"259",1996,"Kyuquot",560,"WCVI Nootka & Kyuquot",1,NA
+"260",1996,"Clayoquot",1585,"WCVI South",2,NA
+"261",1996,"Nootka/Esperanza",3302,"WCVI Nootka & Kyuquot",3,NA
+"262",1996,"Quatsino",3725,"WCVI North",4,NA
+"263",1996,"Barkley",663,"WCVI South",5,NA
+"264",1996,"San Juan",760,"WCVI South",6,NA
+"265",1997,"Kyuquot",1483,"WCVI Nootka & Kyuquot",1,NA
+"266",1997,"Clayoquot",1450,"WCVI South",2,NA
+"267",1997,"Nootka/Esperanza",6150,"WCVI Nootka & Kyuquot",3,NA
+"268",1997,"Quatsino",2460,"WCVI North",4,NA
+"269",1997,"Barkley",1806,"WCVI South",5,NA
+"270",1997,"San Juan",827,"WCVI South",6,NA
+"271",1998,"Kyuquot",2554,"WCVI Nootka & Kyuquot",1,NA
+"272",1998,"Clayoquot",1631,"WCVI South",2,NA
+"273",1998,"Nootka/Esperanza",13852,"WCVI Nootka & Kyuquot",3,NA
+"274",1998,"Quatsino",4992,"WCVI North",4,NA
+"275",1998,"Barkley",2970,"WCVI South",5,NA
+"276",1998,"San Juan",3840,"WCVI South",6,NA
+"277",1999,"Kyuquot",1871,"WCVI Nootka & Kyuquot",1,NA
+"278",1999,"Clayoquot",1384,"WCVI South",2,NA
+"279",1999,"Nootka/Esperanza",10360,"WCVI Nootka & Kyuquot",3,NA
+"280",1999,"Quatsino",4868,"WCVI North",4,NA
+"281",1999,"Barkley",1310,"WCVI South",5,NA
+"282",1999,"San Juan",1054,"WCVI South",6,NA
+"283",2000,"Kyuquot",571,"WCVI Nootka & Kyuquot",1,NA
+"284",2000,"Clayoquot",2178,"WCVI South",2,NA
+"285",2000,"Nootka/Esperanza",2056,"WCVI Nootka & Kyuquot",3,NA
+"286",2000,"Quatsino",2812,"WCVI North",4,NA
+"287",2000,"Barkley",243,"WCVI South",5,NA
+"288",2000,"San Juan",250,"WCVI South",6,NA
+"289",2001,"Kyuquot",785,"WCVI Nootka & Kyuquot",1,NA
+"290",2001,"Clayoquot",NA,"WCVI South",2,NA
+"291",2001,"Nootka/Esperanza",1228,"WCVI Nootka & Kyuquot",3,NA
+"292",2001,"Quatsino",2021,"WCVI North",4,NA
+"293",2001,"Barkley",1460,"WCVI South",5,NA
+"294",2001,"San Juan",357,"WCVI South",6,NA
+"295",2002,"Kyuquot",600,"WCVI Nootka & Kyuquot",1,NA
+"296",2002,"Clayoquot",395,"WCVI South",2,NA
+"297",2002,"Nootka/Esperanza",14886,"WCVI Nootka & Kyuquot",3,NA
+"298",2002,"Quatsino",2341,"WCVI North",4,NA
+"299",2002,"Barkley",3287,"WCVI South",5,NA
+"300",2002,"San Juan",582,"WCVI South",6,NA
+"301",2003,"Kyuquot",1177,"WCVI Nootka & Kyuquot",1,NA
+"302",2003,"Clayoquot",2095,"WCVI South",2,NA
+"303",2003,"Nootka/Esperanza",16351,"WCVI Nootka & Kyuquot",3,NA
+"304",2003,"Quatsino",2154,"WCVI North",4,NA
+"305",2003,"Barkley",4010,"WCVI South",5,NA
+"306",2003,"San Juan",1000,"WCVI South",6,NA
+"307",2004,"Kyuquot",1250,"WCVI Nootka & Kyuquot",1,NA
+"308",2004,"Clayoquot",1702,"WCVI South",2,NA
+"309",2004,"Nootka/Esperanza",7492,"WCVI Nootka & Kyuquot",3,NA
+"310",2004,"Quatsino",5027,"WCVI North",4,NA
+"311",2004,"Barkley",4296,"WCVI South",5,NA
+"312",2004,"San Juan",3500,"WCVI South",6,NA
+"313",2005,"Kyuquot",808,"WCVI Nootka & Kyuquot",1,NA
+"314",2005,"Clayoquot",851,"WCVI South",2,NA
+"315",2005,"Nootka/Esperanza",2063,"WCVI Nootka & Kyuquot",3,NA
+"316",2005,"Quatsino",NA,"WCVI North",4,NA
+"317",2005,"Barkley",1159,"WCVI South",5,NA
+"318",2005,"San Juan",900,"WCVI South",6,NA
+"319",2006,"Kyuquot",840,"WCVI Nootka & Kyuquot",1,NA
+"320",2006,"Clayoquot",720,"WCVI South",2,NA
+"321",2006,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"322",2006,"Quatsino",3392,"WCVI North",4,NA
+"323",2006,"Barkley",3255,"WCVI South",5,NA
+"324",2006,"San Juan",3712,"WCVI South",6,NA
+"325",2007,"Kyuquot",589,"WCVI Nootka & Kyuquot",1,NA
+"326",2007,"Clayoquot",419,"WCVI South",2,NA
+"327",2007,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"328",2007,"Quatsino",2932,"WCVI North",4,NA
+"329",2007,"Barkley",1466,"WCVI South",5,NA
+"330",2007,"San Juan",1500,"WCVI South",6,NA
+"331",2008,"Kyuquot",844,"WCVI Nootka & Kyuquot",1,NA
+"332",2008,"Clayoquot",457,"WCVI South",2,NA
+"333",2008,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"334",2008,"Quatsino",2453,"WCVI North",4,NA
+"335",2008,"Barkley",858,"WCVI South",5,NA
+"336",2008,"San Juan",900,"WCVI South",6,NA
+"337",2009,"Kyuquot",844,"WCVI Nootka & Kyuquot",1,NA
+"338",2009,"Clayoquot",325,"WCVI South",2,NA
+"339",2009,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"340",2009,"Quatsino",4070,"WCVI North",4,NA
+"341",2009,"Barkley",605,"WCVI South",5,NA
+"342",2009,"San Juan",2870,"WCVI South",6,NA
+"343",2010,"Kyuquot",650,"WCVI Nootka & Kyuquot",1,NA
+"344",2010,"Clayoquot",469,"WCVI South",2,NA
+"345",2010,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"346",2010,"Quatsino",4080,"WCVI North",4,NA
+"347",2010,"Barkley",1125,"WCVI South",5,NA
+"348",2010,"San Juan",832,"WCVI South",6,NA
+"349",2011,"Kyuquot",660,"WCVI Nootka & Kyuquot",1,NA
+"350",2011,"Clayoquot",421,"WCVI South",2,NA
+"351",2011,"Nootka/Esperanza",3659,"WCVI Nootka & Kyuquot",3,NA
+"352",2011,"Quatsino",4314,"WCVI North",4,NA
+"353",2011,"Barkley",1940,"WCVI South",5,NA
+"354",2011,"San Juan",300,"WCVI South",6,NA
+"355",2012,"Kyuquot",502,"WCVI Nootka & Kyuquot",1,NA
+"356",2012,"Clayoquot",NA,"WCVI South",2,NA
+"357",2012,"Nootka/Esperanza",2591,"WCVI Nootka & Kyuquot",3,NA
+"358",2012,"Quatsino",2457,"WCVI North",4,NA
+"359",2012,"Barkley",1662,"WCVI South",5,NA
+"360",2012,"San Juan",860,"WCVI South",6,NA
+"361",2013,"Kyuquot",989,"WCVI Nootka & Kyuquot",1,NA
+"362",2013,"Clayoquot",1346,"WCVI South",2,NA
+"363",2013,"Nootka/Esperanza",11052,"WCVI Nootka & Kyuquot",3,NA
+"364",2013,"Quatsino",2179,"WCVI North",4,NA
+"365",2013,"Barkley",1363,"WCVI South",5,NA
+"366",2013,"San Juan",874,"WCVI South",6,NA
+"367",2014,"Kyuquot",936,"WCVI Nootka & Kyuquot",1,NA
+"368",2014,"Clayoquot",589,"WCVI South",2,NA
+"369",2014,"Nootka/Esperanza",5766,"WCVI Nootka & Kyuquot",3,NA
+"370",2014,"Quatsino",1533,"WCVI North",4,NA
+"371",2014,"Barkley",457,"WCVI South",5,NA
+"372",2014,"San Juan",4007,"WCVI South",6,NA
+"373",2015,"Kyuquot",2212,"WCVI Nootka & Kyuquot",1,NA
+"374",2015,"Clayoquot",NA,"WCVI South",2,NA
+"375",2015,"Nootka/Esperanza",8258,"WCVI Nootka & Kyuquot",3,NA
+"376",2015,"Quatsino",7102,"WCVI North",4,NA
+"377",2015,"Barkley",2913,"WCVI South",5,NA
+"378",2015,"San Juan",2061,"WCVI South",6,NA
+"379",2016,"Kyuquot",1145,"WCVI Nootka & Kyuquot",1,NA
+"380",2016,"Clayoquot",1115,"WCVI South",2,NA
+"381",2016,"Nootka/Esperanza",14784,"WCVI Nootka & Kyuquot",3,NA
+"382",2016,"Quatsino",2004,"WCVI North",4,NA
+"383",2016,"Barkley",3206,"WCVI South",5,NA
+"384",2016,"San Juan",899,"WCVI South",6,NA
+"385",2017,"Kyuquot",2440,"WCVI Nootka & Kyuquot",1,NA
+"386",2017,"Clayoquot",1089,"WCVI South",2,NA
+"387",2017,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"388",2017,"Quatsino",5871,"WCVI North",4,NA
+"389",2017,"Barkley",2175,"WCVI South",5,NA
+"390",2017,"San Juan",1156,"WCVI South",6,NA
+"391",2018,"Kyuquot",1893,"WCVI Nootka & Kyuquot",1,NA
+"392",2018,"Clayoquot",814,"WCVI South",2,NA
+"393",2018,"Nootka/Esperanza",7673,"WCVI Nootka & Kyuquot",3,NA
+"394",2018,"Quatsino",993,"WCVI North",4,NA
+"395",2018,"Barkley",1784,"WCVI South",5,NA
+"396",2018,"San Juan",580,"WCVI South",6,NA
+"397",2019,"Kyuquot",1693,"WCVI Nootka & Kyuquot",1,NA
+"398",2019,"Clayoquot",472,"WCVI South",2,NA
+"399",2019,"Nootka/Esperanza",NA,"WCVI Nootka & Kyuquot",3,NA
+"400",2019,"Quatsino",5331,"WCVI North",4,NA
+"401",2019,"Barkley",1814,"WCVI South",5,NA
+"402",2019,"San Juan",1243,"WCVI South",6,NA
+"403",2020,"Kyuquot",1228,"WCVI Nootka & Kyuquot",1,NA
+"404",2020,"Clayoquot",589,"WCVI South",2,NA
+"405",2020,"Nootka/Esperanza",11970,"WCVI Nootka & Kyuquot",3,NA
+"406",2020,"Quatsino",2353,"WCVI North",4,NA
+"407",2020,"Barkley",2281,"WCVI South",5,NA
+"408",2020,"San Juan",1000,"WCVI South",6,NA
