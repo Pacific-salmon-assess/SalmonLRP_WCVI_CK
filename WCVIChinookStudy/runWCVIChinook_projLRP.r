@@ -1,21 +1,25 @@
 # ============================================================================
-# Calculation of Projected Limit Reference Points for Interior Fraser Coho
-# Carrie Holt, Last update: May 12, 2021
-# ================================================================================
+# Calculation of Projected Limit Reference Points for WCVI Chinook
+# Carrie Holt, Last update: August 2024
+# ============================================================================
 
-# Projected LRPs represent the aggregate abundance that is associated with a specified probability
-# that a required proportion of CUs will be above their lower benchmarks in projections
-#--  E.g., the LRP may represent the aggregate abundance that is projected to have a 50% probability
-# that all CUs (100% of CUs) will be above their lower benchmarks
+# Projected LRPs represent the aggregate abundance that is associated with a
+# specified probability that a required proportion of CUs will be above their
+# lower benchmarks in projections --  E.g., the LRP may represent the aggregate
+# abundance that is projected to have a 50% probability that all CUs (100% of
+# CUs) will be above their lower benchmarks
 
-# Projections are done using the LRP branch of the samSim model (https://github.com/Pacific-salmon-assess/samSim)
-# The code in this file is divided into the following sections:
+# Projections are done using the LRP branch of the samSim model
+# (https://github.com/Pacific-salmon-assess/samSim)
+# The code in this file is divided into the following main sections:
 #     (1) Read-in WCVI Chinook data
 #     (2) Specify initial parameters & data sets for projections
 #     (3) Run base projections (Using 4 different OM models at present)
 #     (4) Run sensitivity analysis projections
 #     (5) Estimate and save LRPs, and associated plots
 #     (6) Plot CU-level spawner abundance projections (Optional)
+
+# The following code provide inputs to the main functions above, figures
 #     (7) Code to create mcmcOut for Ricker pars from an assumed distn of a and
 #         SREP
 #     (8) Code to calculate tau for variability in age proportions
