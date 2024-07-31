@@ -16,7 +16,7 @@ Code and associated files are organized into the following sub-folders:
  * Contains files specific to West Coast Vancouver Island Chinook, which was a case study in Holt, K. et al. (2023)
 
 3. **Documents**
- * Miscellaneous word documents included for reference or created while formulating case studies 
+ * Miscellaneous word documents included for reference  
 
 
 
