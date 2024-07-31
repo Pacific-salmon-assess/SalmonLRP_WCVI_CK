@@ -1,5 +1,0 @@
-filename,description,how was it made?,what is it used for?,source,contact,secondary contact
-wild_spawners_CU_infilled_by_site_CU,"Wild spawner escapement data by CU, infilled ","infilling raw wild escapement data by stream, and for CUs with no observed streams in a year, infilled by CU","brood table construction, Stock recruit analysis, LRM benchmark analysis",make_brood_table.R,Luke.Warkentin@dfo-mpo.gc.ca,
-wild_spawners_stream_infilled_by_site_CU.csv,"Wild spawner escapement data by stream, infilled","infilling raw wild escapement data by stream, and for CUs with no observed streams in a year, infilled by CU","data checking, figures",make_brood_table.R,Luke.Warkentin@dfo-mpo.gc.ca,
-SRdatWild.csv,Brood table with spawners and recruits for each brood year,"Using wild returns from Pieter Van Will's run reconstruction, age composition data, and wild escapements, infilled by site and CU",Stock recruit analysis,make_brood_table.R,Luke.Warkentin@dfo-mpo.gc.ca,
-summary_n_infilled_by_year.csv,Summary of how many sites were infilled for each CU and year,summary in make_brood_table.R,"Data summary, check",make_brood_table.R,Luke.Warkentin@dfo-mpo.gc.ca,
