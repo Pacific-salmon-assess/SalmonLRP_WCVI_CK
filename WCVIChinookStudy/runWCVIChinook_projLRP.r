@@ -195,23 +195,16 @@ devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 # correlation in recruitment residuals assuming no density dependence and
 # constant harvest. These are used when recruitment time-series are missing
 dum <- wcviCKSRDat %>% dplyr::select(CU_ID, BroodYear, Spawners)
-dum <- dum %>% tidyr::pivot_wider(names_from=CU_ID, # 5Mar24 removed to fix error with new tidyr: id_cols=c(CU_ID, BroodYear),
+dum <- dum %>% tidyr::pivot_wider(names_from=CU_ID,
                            values_from=Spawners) %>% dplyr::select (!BroodYear)
 dum <- dum %>% drop_na()
 corMat <- cor(dum)
 
+# See Figure 6 of WCVI_CK_Projections.Rmd for bubble plot of pairwise
+# correlations of escapaement among inlets
 
-# Plot Bubble plot of correlations- See WCVI_CK_Projections.Rmd for better version
-# rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
-# colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
-# rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
-# colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
-#
-# # png(filename=paste(wcviCKDir, "/Figures/SpawnerCorrelation.png", sep=""), width=4, height=4.5, units="in", res=500)
-# corrplot(corMat, method="circle", p.mat=corMat, insig="p-value", type="lower")
-# # dev.off()
-
-# Alternatively, create correlation from Ricker residuals from run
+#-------------------------------------------------------------------------------
+# NOT USED: Alternatively, create correlation from Ricker residuals from run
 # reconstruction. However, reconstruction currently done at CU level. Although I
 # have inlet-level raw escapements, without infilling gaps, the time-series of
 # comparable data ends up being n=5 years, which is too short for a cor matrix
@@ -229,22 +222,10 @@ corMat <- cor(dum)
 # acf(InletRickerResid$WCVI)
 # dev.off()
 #-------------------------------------------------------------------------------
-#TESTING
-# SRDat <- SRDat %>% mutate(Recruits=NA) %>% dplyr::select(-c('Age_3_Recruits',
-#                                                      'Age_4_Recruits',
-#                                                      'STAS_Age_3', 'STAS_Age_4',
-#                                                      'ER_Age_3', 'ER_Age_4',
-#                                                      'Hatchery'))
 
-#-------------------------------------------------------------------------------
 
 # Create samSim input files for current scenario
 setwd(codeDir)
-
-
-
-
-
 
 scenarioName <- "baseER"
 
@@ -2239,11 +2220,16 @@ for (OM in 1:length(OMsToInclude)){
 
 
 # ===================================================================
-# (13) Run reconstruction for WCIV  CK
+# (13) Run reconstruction for WCVI CK
 # ==================================================================
-# This code runs run reconstrution from Diana Dobson, updated by Diana Mchugh
-# 1 June 2021"WCVI_term_model_revisions_updated-2021.xlsx" in TMBstan
-# For outputs usedin CUPars, see: RunReconstructionTMBoutputs_BetaCalc.xls
+# This code runs Ricker SR model on run reconstruction from D. Dobson Sept 2020
+# The following parameters are estimated below by CU and used in 'CU_pars.csv'
+# samSimInput files:
+#  (1) logA (log alpha or productivity values)
+#  (2) logSigma, exponentiated for CU_pars file
+
+# *Note, projections use Ricker beta's calculated from the watershed-area model
+# SREP values by inlet and CU-specific productivity in (1) above
 
 run.RunReconstruction <- FALSE
 setwd(codeDir)
@@ -2295,10 +2281,15 @@ if(run.RunReconstruction){
   pl
   #summary(sdreport(obj), p.value=TRUE)
 
-  ricA.rr <- data.frame(CU_Name=unique(SRDat$CU_Name), logRicA=pl$logA)
-  write.csv(ricA.rr, paste(wcviCKDir,"/DataIn/ricArr.csv", sep=""))
+  riclogA.rr <- data.frame(CU_Name=unique(SRDat$CU_Name), logRicA=pl$logA)
+  write.csv(riclogA.rr, paste(wcviCKDir,"/DataIn/ricArr.csv", sep=""))
 
 }
+
+# Future work could update this based updated data, e.g.,
+# "WCVI_term_model_revisions_updated-2021.xlsx" from D. McHugh
+# Note to CH: see RunReconstructionTMBoutputs_BetaCalc.xls
+
 
 # ===================================================================
 # (14) Plot time-series of age proportions in recruitment
