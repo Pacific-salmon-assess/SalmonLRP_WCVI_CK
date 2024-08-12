@@ -14,7 +14,7 @@
 # The code in this file is divided into the following main sections:
 #     (1) Read-in WCVI Chinook data
 #     (2) Specify initial parameters & data sets for projections
-#     (3) Run base projections (Using 4 different OM models at present)
+#     (3) Run base projections
 #     (4) Run sensitivity analysis projections
 #     (5) Estimate and save LRPs, and associated plots
 #     (6) Plot CU-level spawner abundance projections (Optional)
@@ -65,29 +65,22 @@ sourceAll <- function(){
 }
 sourceAll()
 
-# # Load TMB models for fitting Bayesian Ricker stock recruit models;
-# #   outputs from these model fits are used to parameterize samSim
-#
-# compile("TMB_Files/SR_IndivRicker_Surv_noLRP.cpp")
-# dyn.load(dynlib("TMB_Files/SR_IndivRicker_Surv_noLRP"))
-#
-# compile("TMB_Files/SR_HierRicker_Surv_noLRP.cpp")
-# dyn.load(dynlib("TMB_Files/SR_HierRicker_Surv_noLRP"))
-#
-# compile("TMB_Files/SR_IndivRicker_SurvCap_noLRP.cpp")
-# dyn.load(dynlib("TMB_Files/SR_IndivRicker_SurvCap_noLRP"))
-#
-# compile("TMB_Files/SR_HierRicker_SurvCap_noLRP.cpp")
-# dyn.load(dynlib("TMB_Files/SR_HierRicker_SurvCap_noLRP"))
-#
 
 # ======================================================================
 #(1)  Read-in WCVI Chinook data and plot:
 # =====================================================================
 setwd(wcviCKDir)
 remove.EnhStocks <- FALSE#TRUE#FALSE#TRUE
+
+# Use only core indicator stocks?
 CoreInd <- FALSE
+# Use all indicator stocks except major hatchery facilities?
 AllExMH <- TRUE#FALSE
+# Working Paper for WCVI Chinook FSAR used AllExMH<- TRUE
+
+# If both CoreInd and AllExMH are FALSE, and remove.EnhStocks is TRUE, then
+# then only stocks with PNI > 0.5 as specified in Holt, K. et a l. 2023 are
+# used. If all three are FALSE, then all indicators are used.
 
 # Data to estimate correlation matrix
 if(!CoreInd & !AllExMH){
