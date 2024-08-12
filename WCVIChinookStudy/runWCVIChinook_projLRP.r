@@ -228,6 +228,11 @@ corMat <- cor(dum)
 setwd(codeDir)
 
 scenarioName <- "baseER"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+mcmcOut <- read.csv("SamSimInputs/Ricker_mcmc_2022ResDoc.csv")
+write.csv(mcmcOut, paste("SamSimInputs/Ricker_mcmc.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -238,9 +243,14 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
 scenarioName <- "baseER_CoreInd"
+CUpars<-read.csv("SamSimInputs/CUPars_CoreInd.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+mcmcOut <- read.csv("SamSimInputs/Ricker_mcmc_CoreInd.csv")
+write.csv(mcmcOut, paste("SamSimInputs/Ricker_CoreInd.csv"), row.names=F)
+
 # Ran corMat above with Core indicators, 6, only (see line 83 and 220)
 # Created Ricker_mcmc_CoreInd (below)
-# created CUPars_CoreInd (ran waterhshed rps-bootstrapped again with CoreInd = T)
+# created CUPars_CoreInd (ran waterhshed lrps-bootstrapped again with CoreInd = T)
 # Changed ProjLRP_Functions to use these: CUPars_CoreInd and Ricker_mcmc_CoreInd
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
@@ -252,6 +262,11 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
 scenarioName <- "baseER_AllExMH"
+CUpars<-read.csv("SamSimInputs/CUPars_AllExMH.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+mcmcOut <- read.csv("SamSimInputs/Ricker_mcmc_AllExMH.csv")
+write.csv(mcmcOut, paste("SamSimInputs/Ricker_mcmc.csv"), row.names=F)
+
 # Ran corMat above with AllExMH, all esc indicators except 3 major hatcheries (see line 83 and 220)
 # Created Ricker_mcmc_AllExMH (below)
 # created CUPars_AllExMH (ran waterhshed rps-bootstrapped again with AllExMH = T)
@@ -265,7 +280,13 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
+
+
 scenarioName <- "baseER_wEnh"
+CUpars<-read.csv("SamSimInputs/CUPars_wEnh.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+mcmcOut <- read.csv("SamSimInputs/Ricker_mcmc_wEnh_2024.csv")
+write.csv(mcmcOut, paste("SamSimInputs/Ricker_mcmc.csv"), row.names=F)
 # Ran corMat above with enh (see line 83 and 220)
 # Created Ricker_mcmc_wEnh_2024 (below)
 # created CUPars_wEnh (just added 2 more inlets in SWVI with same pars)
@@ -280,6 +301,12 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
 scenarioName <- "baseERn10000"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+# For all of these following sensitivity anlyses, use the following mcmc input:
+mcmcOut <- read.csv("SamSimInputs/Ricker_mcmc_2022ResDoc.csv")
+write.csv(mcmcOut, paste("SamSimInputs/Ricker_mcmc.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -290,6 +317,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
 scenarioName <- "cvER0" # should also be run with 50,000 for LRPs
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -300,6 +330,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
 scenarioName <- "cvER0.17" #should also be run with 50,000 for LRPs
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -311,6 +344,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "ER0"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -322,6 +358,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "ER0.05"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -331,6 +370,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 recCorScalar=1, corMat=corMat, agePpnConst=FALSE,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.05)
 scenarioName <- "ER0.10"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -341,6 +383,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.10)
 
 scenarioName <- "ER0.15"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -351,6 +396,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.15)
 
 scenarioName <- "ER0.2"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -361,6 +409,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.2)
 
 scenarioName <- "ER0.25"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -373,6 +424,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "ER0.35"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -383,6 +437,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.35)
 
 scenarioName <- "ER0.4"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -393,6 +450,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.4)
 
 scenarioName <- "ER0.45"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -407,6 +467,9 @@ diag(corMat) <- 1
 
 
 scenarioName <- "ER0sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -417,6 +480,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.05sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -427,6 +493,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.05,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.10sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -437,6 +506,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.10,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.15sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -447,6 +519,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.15,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.20sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -457,6 +532,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.20,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.25sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -467,6 +545,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.25,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.30sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -477,6 +558,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.30,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.35sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -487,6 +571,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.35,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.40sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -497,6 +584,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.40,
                                 evenPars="SameSREP")
 scenarioName <- "ER0.45sameSREP_hCor"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -512,6 +602,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 # Now re-enter correct corMat (if changed above)
 
 scenarioName <- "recCorSca0"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -564,6 +656,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 #                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 #
 scenarioName <- "recCorSca0.5"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -615,6 +710,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "cvER0n50000" # should also be run with 50,000 for LRPs
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -625,6 +722,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
 scenarioName <- "cvER0.17n50000" #should also be run with 50,000 for LRPs
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -635,6 +734,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 annualcvERCU=FALSE, biasCorrectProj=TRUE, ER=0.3)
 
 scenarioName <- "agePpnConst"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -647,6 +749,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "alphaScalar0.75n50000"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -659,6 +764,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "alphaScalar1.5n50000"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -674,6 +782,9 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "Anarrow"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
+
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -685,6 +796,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 aNarrow=TRUE)
 
 scenarioName <- "AlifeStageModel"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
@@ -697,6 +810,8 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 scenarioName <- "annualcvERCU"
+CUpars<-read.csv("SamSimInputs/CUPars_2022ResDoc.csv")
+write.csv(CUpars, paste("SamSimInputs/CUPars.csv"), row.names=F)
 
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
