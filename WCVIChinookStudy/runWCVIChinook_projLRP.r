@@ -73,14 +73,22 @@ setwd(wcviCKDir)
 remove.EnhStocks <- FALSE#TRUE#FALSE#TRUE
 
 # Use only core indicator stocks?
+# (Artlish, Bedwell/Ursus, Kaouk, Megin, Moyeha, Tahsish)
 CoreInd <- FALSE
+
 # Use all indicator stocks except major hatchery facilities?
+# (Artlish, Bedwell/Ursus, Burman, Cayeghle, Gold, Kaouk, Leiner, Marble,
+# Megin, Moyeha, Nahmint, San Juan, Sarita, Tahsis, Tahsish, Tranquil, Zeballos)
+# Note Cypre is removed from all cases as it's not considered an indicator
 AllExMH <- TRUE#FALSE
-# Working Paper for WCVI Chinook FSAR used AllExMH<- TRUE
+# ***Working Paper for WCVI Chinook FSAR used AllExMH <- TRUE***
 
 # If both CoreInd and AllExMH are FALSE, and remove.EnhStocks is TRUE, then
 # then only stocks with PNI > 0.5 as specified in Holt, K. et a l. 2023 are
 # used. If all three are FALSE, then all indicators are used.
+
+# These input files are created in Watershed-Area-Model repository
+# R/Inlet_Sum.R, files created in DataOut folder
 
 # Data to estimate correlation matrix
 if(!CoreInd & !AllExMH){
@@ -90,23 +98,26 @@ if(!CoreInd & !AllExMH){
 if(CoreInd){wcviCKSRDat <- read.csv("DataIn/Inlet_Sum_CoreInd.csv")}
 if(AllExMH){wcviCKSRDat <- read.csv("DataIn/Inlet_Sum_AllExMH.csv")}
 
-# Get this file from Watershed-Area-Model/DataOut
+# Create indices for year and Inlet/CU
+wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1
+# have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
+wcviCKSRDat$CU_ID <- group_by(wcviCKSRDat, Inlet_ID) %>% group_indices() - 1
+# have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
 
-wcviCKSRDat$yr_num <- group_by(wcviCKSRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-wcviCKSRDat$CU_ID <- group_by(wcviCKSRDat, Inlet_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-
+# Create time-series of gene rationally smoolthed spawner time-series
 wcviInletsDF <- wcviCKSRDat %>% group_by(Inlet_Name) %>%
   mutate(genS=genSmooth(Spawners)) %>% ungroup() %>% rename(Year=BroodYear,
                                                             Stock=Inlet_Name,
                                                             SiteEsc=Spawners,
                                                             Value=genS)
-
 #Value = generational geometric smoothed Value
 wcviInletsDF <- wcviInletsDF %>% select(Year, Stock, SiteEsc, Value)
 
 wcviCK_inlet <- unique(wcviCKSRDat$Inlet_Name)
 
-# For plotting purposes only here: (these are old files, not used otherwise)
+#-------------------------------------------------------------------------------
+# For plotting purposes ONLY:
+# (these are old files, not used for WCVI Chinook FSAR)
 if(remove.EnhStocks) wcviCKbench <- read.csv("DataIn/wcviRPs_noEnh.csv")
 if(!remove.EnhStocks) wcviCKbench <- read.csv("DataIn/wcviRPs_wEnh.csv")
 # San Juan is still wrong in this file, for enhanced stocks
@@ -145,51 +156,12 @@ inletPlot <- ggplot(wcviInletsDF) +
 #        height = 4, units = "in")
 # ggsave("Figures/chinook-inlet-timeseriesFR.png", plot=inletPlot, width = 6,
 #        height = 4, units = "in")
+#-------------------------------------------------------------------------------
 
 
 # ======================================================================
-# (2) Specify initial parameters & datasets for projections
+# (2) Specify initial parameters & data sets for projections
 # =====================================================================
-
-# # Subset data up to current year
-# year <- 2018 # - last year of data for parameterization
-# BroodYrLag <- 2 # - number of years between brood year and first age of return (2 years for coho)
-#
-# # Only use SR data for brood years that have recruited by specified year
-# # (note: most recent brood year is calculated by subtracting BroodYearLag (e.g. 2 years) from current year)
-# SRDat <- CoSRDat %>%  filter(BroodYear <= year-BroodYrLag)
-#
-# SRDat$yr_num <- group_by(SRDat,BroodYear) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-# SRDat$CU_ID <- group_by(SRDat, CU_ID) %>% group_indices() - 1 # have to subtract 1 from integer so they start with 0 for TMB/c++ indexing
-#
-#
-# # TMB input parameters:
-# TMB_Inputs_HM <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-#                       logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-#
-#
-# TMB_Inputs_IM <- list(Scale = 1000, logA_Start = 1,
-#                       Tau_dist = 0.1,
-#                       gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1)
-#
-#
-# # Prior means come from running "compareRickerModelTypes.r"
-# cap_priorMean_HM<-c(10.957092, 5.565526, 11.467815, 21.104274, 14.803877)
-#
-# TMB_Inputs_HM_priorCap <- list(Scale = 1000, logA_Start = 1, logMuA_mean = 1,
-#                                logMuA_sig = sqrt(2), Tau_dist = 0.1, Tau_A_dist = 0.1,
-#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-#                                cap_mean=cap_priorMean_HM, cap_sig=sqrt(2))
-#
-# # Prior means come from running "compareRickerModelTypes.r"
-# cap_priorMean_IM<-c(11.153583,  5.714955, 11.535779, 21.379558, 14.889006)
-#
-# TMB_Inputs_IM_priorCap <- list(Scale = 1000, logA_Start = 1, Tau_dist = 0.1,
-#                                gamma_mean = 0, gamma_sig = 10, S_dep = 1000, Sgen_sig = 1,
-#                                cap_mean=cap_priorMean_IM, cap_sig=sqrt(2))
-
-
 
 # Create output directories for Projected LRP outputs
 figDir <- here(wcviCKDir, "Figures")
@@ -219,11 +191,9 @@ setwd(codeDir)
 devtools::install_github("Pacific-salmon-assess/samSim", ref="LRP")
 
 
-
-
 # Create a correlation matrix from spawner time-series, as a proxy for
 # correlation in recruitment residuals assuming no density dependence and
-# constant harvest. Only used if recruitment time-series are missing
+# constant harvest. These are used when recruitment time-series are missing
 dum <- wcviCKSRDat %>% dplyr::select(CU_ID, BroodYear, Spawners)
 dum <- dum %>% tidyr::pivot_wider(names_from=CU_ID, # 5Mar24 removed to fix error with new tidyr: id_cols=c(CU_ID, BroodYear),
                            values_from=Spawners) %>% dplyr::select (!BroodYear)

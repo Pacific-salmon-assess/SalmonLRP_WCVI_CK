@@ -153,13 +153,13 @@ Years <- 1995:2000
 tri <- matrix(NA, nrow=10,ncol=length(Years))
 med <- NA
 
-#Estimate correlatoin over 2o-year periods running from 1995 to 2000.
+#Estimate correlation over 20-year periods running from 1995 to 2000.
 for (i in 1:length(Years)){
   Year.Start <- Years[i]
   Inlet_Sum.df <-   Inlet_Sum.df.long %>% 
     filter(BroodYear %in% c(Year.Start : (Year.Start + 20) ) ) %>% 
     dplyr::select(-c(CU_Name, Inlet_ID, Recruits)) %>% 
-    pivot_wider(id_cols= c (Inlet_Name, BroodYear), 
+    tidyr::pivot_wider(id_cols= c (BroodYear), 
                 names_from=Inlet_Name, values_from=Spawners) %>% 
     dplyr::select(-BroodYear) %>% na.omit()
   
@@ -170,7 +170,7 @@ for (i in 1:length(Years)){
 
 dum <- as.data.frame(tri)
 names(dum) <- as.character(Years)
-tri_longer <- dum %>% pivot_longer(col=names(dum), names_to="StartYear", 
+tri_longer <- dum %>% tidyr::pivot_longer(col=names(dum), names_to="StartYear", 
                                    values_to="Correlation")
 tri_longer$StartYear <- factor(tri_longer$StartYear, levels = names(dum), 
                                ordered = TRUE)
@@ -178,7 +178,7 @@ tri_longer$StartYear <- factor(tri_longer$StartYear, levels = names(dum),
 # Add overall correlation (over all years)
 Inlet_Sum.df.all <-   Inlet_Sum.df.long %>% 
   dplyr::select(-c(CU_Name, Inlet_ID, Recruits)) %>% 
-  pivot_wider(id_cols=c(Inlet_Name, BroodYear), names_from=Inlet_Name, 
+  tidyr::pivot_wider(id_cols=c(BroodYear), names_from=Inlet_Name, 
               values_from=Spawners) %>% dplyr::select(-BroodYear) %>% na.omit()
 co <- cor(Inlet_Sum.df.all)
 tri.all <- data.frame(StartYear="All", Correlation= co[lower.tri(co)==TRUE])
@@ -385,8 +385,8 @@ g7
 ```
 In the forward projection model, pairwise correlations in projected spawner abundances among inlets were similar to observed pairwise correlations in spawner abundances among inlets (Fig. 5). Varying assumptions about variability in exploitation among inlets between cv= 0 and 0.17 did not impact the distribution of correlations in spawner abundances in the projections.  
 ```{r echo=FALSE, fig.cap="**Figure 5**. Distribution of correlations of spawner abundances among inlets for observed data over the most recent 20 years (n=10 pairwise correlations) and projected time-series, with a cv in exploitation rates among inlets = 0, 0.085 or 0.17 (0.17 is equal to the estimated interannual variablity in exploitation rates). ", out.width = '60%'}
-knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor_cvER.png",sep=""))
-#knitr::include_graphics("Figures/ProjectedLRPs/compareEscCor_cvER.png")
+# knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor_cvER.png",sep=""))
+knitr::include_graphics(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor-cvER.png",sep=""))
 
 # Consider adding another run with annualcvER=FALSE (cvER =0.21) in Appendix
 ```
@@ -423,21 +423,21 @@ corMat <- cor(dum)
 
 if(!CoreInd & !AllExMH){
   if(remove.EnhStocks) {
-    rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
-    colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))$stkName
+    rownames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars.csv",sep="/"))$stkName
+    colnames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars.csv",sep="/"))$stkName
   }
   if(!remove.EnhStocks) {
-  rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
-  colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
+  rownames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
+  colnames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars_wEnh.csv",sep="/"))$stkName
   }
 }
 if(CoreInd){
-    rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_CoreInd.csv",sep="/"))$stkName
-    colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_CoreInd.csv",sep="/"))$stkName
+    rownames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars_CoreInd.csv",sep="/"))$stkName
+    colnames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars_CoreInd.csv",sep="/"))$stkName
 }
 if(AllExMH){
-    rownames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_AllExMH.csv",sep="/"))$stkName
-    colnames(corMat) <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_AllExMH.csv",sep="/"))$stkName
+    rownames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars_AllExMH.csv",sep="/"))$stkName
+    colnames(corMat) <- read.csv(paste(wcviCKDir, "samSimInputs/CUPars_AllExMH.csv",sep="/"))$stkName
 }
 png(filename=paste(wcviCKDir, "/Figures/SpawnerCorrelation_AllExMH.png", sep=""), width=4, height=4.5, units="in", res=500)
 par(xpd=TRUE)
