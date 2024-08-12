@@ -1222,16 +1222,23 @@ calcTau <- FALSE
 if(calcTau){
   setwd(wcviCKDir)
 
-  Inlet_Names <- read.csv(paste("samSimInputs/CUPars.csv"))$stkName
+  # Get names of inlets
+  Inlet_Names <- read.csv(paste("samSimInputs/CUPars_AllExMH.csv"))$stkName
   CU_inlet <- data.frame(Inlet_Names=Inlet_Names, CU_Names=NA)
+  CU_inlet[Inlet_Names=="San Juan",2] <- "Southwest_Vancouver_Island"
   CU_inlet[Inlet_Names=="Barkley",2] <- "Southwest_Vancouver_Island"
   CU_inlet[Inlet_Names=="Clayoquot",2] <- "Southwest_Vancouver_Island"
   CU_inlet[Inlet_Names=="Kyuquot",2] <- "Nootka_Kyuquot"
   CU_inlet[Inlet_Names=="Nootka/Esperanza",2] <- "Nootka_Kyuquot"
   CU_inlet[Inlet_Names=="Quatsino",2] <- "Northwest_Vancouver_Island"
 
+  # Get CU-specific proportion at age data provided in run reconstruction from
+  # D. Dobson, Sept 2020 (pers. comm.), see input data: DataIn/CUages.csv
   CUages <- data.frame(read.csv("DataIn/CUages.csv"))
   CU.tau <- NA
+
+  # For each CU, run function to esimate 'tau' of multivariate logistic
+  # distribution. See Code/get.mv.logistic.tau.r for documentation
   for (i in 1: length(unique(CUages$CU_Names))){
     CUages.byCU <- CUages %>% filter(CU_Names== unique(CUages$CU_Names)[i]) %>% dplyr::select(-c(Year, CU, CU_Names))
     CU.tau[i] <- "get.mv.logistic.tau"(CUages.byCU)$best.tau
@@ -1239,7 +1246,7 @@ if(calcTau){
   df <- data.frame(CU_Names=unique(CUages$CU_Names), CU.tau=CU.tau)
   inletTau <- left_join(CU_inlet, df)
 
-  # Use these tau values for `tauCycAge` in samSim- logistic variation in age
+  # OLD results: Use these tau values for `tauCycAge` in samSim- logistic variation in age
   #  structure
   # Inlet_Names                   CU_Names CU.tau
   #           Kyuquot             Nootka_Kyuquot    0.6
@@ -2223,8 +2230,10 @@ for (OM in 1:length(OMsToInclude)){
 # (13) Run reconstruction for WCVI CK
 # ==================================================================
 # This code runs Ricker SR model on run reconstruction from D. Dobson Sept 2020
+# (pers. commm.), see input data: DataIn/WCVI_SRbyCU.csv
 # Ricker model of the form:
-# logR = logS + logA - exp(logB*S) + normal error
+# logR = logS + logA - exp(logB*S) + normal error with SD=sigma and
+# log-transformation bias correction
 
 # The following parameters are estimated below by CU and used in 'CU_pars.csv'
 # samSimInput files:
@@ -2232,8 +2241,9 @@ for (OM in 1:length(OMsToInclude)){
 #  (2) logSigma, exponentiated for CU_pars file
 
 
-# *Note, projections use Ricker beta's calculated from the watershed-area model
-# SREP values by inlet and CU-specific productivity in (1) above
+# *Note, projections use Ricker B (beta) is calculated from the watershed-area
+# model SREP values, by inlet, and CU-specific productivity estimated as above,
+# where, Ricker B (beta) =logA/SREP
 
 run.RunReconstruction <- FALSE
 setwd(codeDir)
