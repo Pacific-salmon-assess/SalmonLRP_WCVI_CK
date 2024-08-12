@@ -2223,10 +2223,14 @@ for (OM in 1:length(OMsToInclude)){
 # (13) Run reconstruction for WCVI CK
 # ==================================================================
 # This code runs Ricker SR model on run reconstruction from D. Dobson Sept 2020
+# Ricker model of the form:
+# logR = logS + logA - exp(logB*S) + normal error
+
 # The following parameters are estimated below by CU and used in 'CU_pars.csv'
 # samSimInput files:
 #  (1) logA (log alpha or productivity values)
 #  (2) logSigma, exponentiated for CU_pars file
+
 
 # *Note, projections use Ricker beta's calculated from the watershed-area model
 # SREP values by inlet and CU-specific productivity in (1) above
