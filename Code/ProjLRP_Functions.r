@@ -1,5 +1,4 @@
-## April 2023: For WCVI CK, need to change CUpars and mcmc files that are
-# read in, and make sure they are consistent with scenario being run
+
 
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
                              TMB_Inputs, outDir, runMCMC, nMCMC, nProj,
@@ -131,7 +130,7 @@ run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,
             # mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
             # mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_wEnh_2024.csv",
             # mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_CoreInd.csv",
-            mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc_AllExMH.csv",
+            mcmcOut <- read.csv(paste(outDir,"SamSimInputs/Ricker_mcmc.csv",
                                                                 sep="/"))
           }
           if(!is.null(evenPars)){# This mcmc SR set assume even pars across CUs
