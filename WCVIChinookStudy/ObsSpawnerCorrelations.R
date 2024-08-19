@@ -1,16 +1,17 @@
-# Show Time-series of Correlations among spawners
-
-#read.csv for Inlet_Sum
-setwd(wcviCKDir)
-# Inlet_Sum <- read.csv("DataIn/Inlet_Sum.csv")
-# Inlet_Sum <- read.csv("DataIn/Inlet_Sum_wEnh.csv")
-
-# Inlet_Sum.df <- as.data.frame(Inlet_Sum) %>%
-#   add_column( Years = 1953:2020)
+#-------------------------------------------------------------------------------
+# Code to plot time-series of pairwise correlations in spawner abundances
+# between inlets for wCVI Chinook salmon
 #
-# # Plot time-series, 1953-2020
-# Inlet_Sum.df.long <- Inlet_Sum.df  %>% pivot_longer(names(Inlet_Sum.df)[1:5], names_to="Inlet_Name", values_to="Spawners")
+# Used in Holt, K et al. (2023)
+# Holt, K.R., Holt, C.A., Warkentin, L., Wor, C., Davis, B., Arbeider, M.,
+# Bokvist, J., Crowley, S., Grant, S., Luedke, W., McHugh, D., Picco, C., and
+# Van Will, P. 2023. Case Study Applications of LRP Estimation Methods to
+# Pacific Salmon Stock Management Units. DFO Can. Sci. Advis. Sec. Res. Doc.
+# 2023/010.iv+129p.
+#-------------------------------------------------------------------------------
 
+
+setwd(wcviCKDir)
 Inlet_Sum.df.long <- read.csv("DataIn/Inlet_Sum.csv")
 # Inlet_Sum.df.long <- read.csv("DataIn/Inlet_Sum_wEnh.csv")
 ggplot(Inlet_Sum.df.long, aes(BroodYear, Spawners, group=Inlet_Name, colour=Inlet_Name))+geom_line()

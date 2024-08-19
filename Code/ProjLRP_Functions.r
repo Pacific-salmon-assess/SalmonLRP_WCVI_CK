@@ -1,3 +1,68 @@
+#-------------------------------------------------------------------------------
+# Generic function to run projections to for projection-based reference points
+# contains if statements for case studies used in Holt, K. et al (2023)-
+# Interior Fraser Coho and West Coast Vancouver Island Chinook
+# Holt, K.R., Holt, C.A., Warkentin, L., Wor, C., Davis, B., Arbeider, M.,
+# Bokvist, J., Crowley, S., Grant, S., Luedke, W., McHugh, D., Picco, C., and
+# Van Will, P. 2023. Case Study Applications of LRP Estimation Methods to
+# Pacific Salmon Stock Management Units. DFO Can. Sci. Advis. Sec. Res. Doc.
+# 2023/010. iv+129p.
+
+# This function uses samSim R package (LRP branch)
+# https://github.com/Pacific-salmon-assess/samSim/tree/LRP
+# See Appendix B of Holt, K. et al. (2023) for documentation of samSim model
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Inputs:
+# SRDat- dataframe of stock-recruitment data
+# BMmodel- the type of stock-recruitment model, used only for IFR coho salmon
+# scenarioName-  the name of the scenario being projected
+# useGenMean- not currently used
+# genYrs- not currently used
+# TMB_Inputs- specs used for TMB input (used for IFR coho)
+# outdir - directory to save outputs
+# runMCMC - should random draws from Bayesian analysis (IFR coho) or
+#   bootstrapping (WCVI Chinook) be used for stock-recruitment projections
+# nMCMC - number of draws of Bayesian posterior to use (IFR coho only)
+# nProj - number of random trials (projections)
+# ERScalar - not currently used
+# recCorScalar - Scalar to apply to correlation matrix of spawner abundances
+#   between inlets
+# cvER - coefficient of variation in realized exploitation rates among inlets.
+  # This overwrites the value in CUpars. (see Section 4.6.1 of Holt, K et al
+  # 2023 for more details)
+# gammaSigScalar - a scalar to gamma parameter of the IFR coho Ricker model
+# cvERSMU - coffiecient of variation of SMU level ER over time (see Section
+  # 4.6.1 of Holt, K et al 2023 for more details)
+# agePpnConst - Logical- is the proportion of ages constant over time?
+# corMat - the correlation matrix of pairwise correlations in spawner abundances
+  # among CUs (or inlets)
+# alphaScalar - scalar applied to productivity parameter (WCVI Chinook only)
+# aNarrow - Logical, is a narrow distribution of productivity parameters assumed
+  # (WCVI Chinook only)
+# SREPScalar - scalar applied to SREP used in Ricker model (WCVI Chinook only)
+# biasCorrectEst - Logical - is log-normal bias correction used in Bayesian
+  # estimation of Ricker parameters (used on only for IFR coho)
+# biasCorrectProj - Logical - is log-normal bias correction used in projections
+# ER - target exploitation rate
+# evenPars - Logical, is a scenario where Ricker parameters are the same across
+  # inlets used (WCVI Chinook only)
+
+# Outputs:
+# 'SamSimOutputs/diagnostics/' Example trajectory from a single MCtrial in
+  # sub-directory labeled by scenarioName
+# 'SamSimOutputs/simData/projLRPDat_scenarioName.csv' Projection data to
+  # estimate projection based reference point, where file is labeled by
+  # the scenarioName
+# 'SamSimOutputs/simData/projSpawnDat_scenarioName.csv' Projected spawner-
+  # recruit time-series by CU (or inlet), where file is labeled by
+  # the scenarioName
+# 'SamSimOutputs/simData/scenarioName' standard outputs from samSim, where the
+  # sub-directory is labelled by scenarioName. See samSim code and documentation
+  # (LRP branch)
+
+#-------------------------------------------------------------------------------
 
 
 run_ScenarioProj <- function(SRDat, BMmodel, scenarioName, useGenMean, genYrs,

@@ -1,12 +1,17 @@
-# This file runs function calls that compare LRP estimates for IF Coho that have been
-# calculated from a range of different estimation methods.
+#-------------------------------------------------------------------------------
+# This file runs function calls that compare LRP estimates for wcvI CK that have
+# been calculated from a range of different estimation methods.
 # e.g., logistic-regression LRPs vs. projected LRPs vs. proportion-based LRPs
+# Prior to running this code, projection-based LRPs must be generated
+#
+# Code used for Holt, K. et al. (2023):
+# Holt, K.R., Holt, C.A., Warkentin, L., Wor, C., Davis, B., Arbeider, M.,
+# Bokvist, J., Crowley, S., Grant, S., Luedke, W., McHugh, D., Picco, C., and
+# Van Will, P. 2023. Case Study Applications of LRP Estimation Methods to
+# Pacific Salmon Stock Management Units. DFO Can. Sci. Advis. Sec. Res. Doc.
+# 2023/010.iv+129p.
+#-------------------------------------------------------------------------------
 
-# Prior to running this code, the following files must be sourced to produce output csvs:
-#   - runFraserCoho.r (to estimate logistic LRPs)
-# (will eventually add runFraserCoho_projLRP.r, but have not added this in yet, so not yet plotting projected LRPs)
-
-#library(MASS) # dose.p function to get SE around P95
 library(rsample)
 library(tidyverse)
 library(ggplot2)

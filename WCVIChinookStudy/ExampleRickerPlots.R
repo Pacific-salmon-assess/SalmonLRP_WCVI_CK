@@ -1,3 +1,8 @@
+#-------------------------------------------------------------------------------
+# Code to plot Ricker curves from mcmc draws, for testing purposes
+# NOT NEEDED
+#-------------------------------------------------------------------------------
+
 testmcmc <- read.csv("samSimInputs/Ricker_mcmc.csv")
 # testmcmc <- read.csv("samSimInputs/Even_mcmc.csv")
 # testmcmc <- read.csv("samSimInputs/Same_mcmc.csv")

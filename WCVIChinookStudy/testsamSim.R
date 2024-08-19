@@ -1,3 +1,10 @@
+# -----------------------------------------------------------------------------
+# Code to help with debugging projection-based reference points estimated with
+# samSim
+# NOT NEEDED
+# -----------------------------------------------------------------------------
+
+
 genericRecoverySim(simPars[4, ], cuPar=CUpars, srDat=recDatTrim,
         variableCU=FALSE, ricPars=mcmcOut, cuCustomCorrMat = corMatrix,
          nTrials=nProj, makeSubDirs=FALSE, random=FALSE, outDir="C:/github/SalmonLRP_RetroEval/WCVIChinookStudy")

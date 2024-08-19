@@ -16,7 +16,7 @@
 #     (2) Specify initial parameters & data sets for projections
 #     (3) Run base projections
 #     (4) Run sensitivity analysis projections
-#     (5) Estimate and save LRPs, and associated plots
+#     (5) Estimate and save LRPs and associated plots (Optional, see Section 12)
 #     (6) Plot CU-level spawner abundance projections (Optional)
 
 # The following code provide inputs to the main functions above & figures
@@ -26,7 +26,7 @@
 #     (9) Code to plot distribution of correlations among CUs/inlets
 #     (10) Make histograms of cvER
 #     (11) Plots of LRP stabilitization with number of trials
-#     (12) Plot LRPs with various plevels
+#     (12) Plot LRPs with various plevels (replaces Section 5)
 #     (13) Run reconstruction for WCVI CK CUs
 #     (14) Plot age proportions in recruitment
 #     (15) Plot SMU time-series
@@ -35,6 +35,9 @@
 
 # ===============================================================================
 
+#-------------------------------------------------------------------------------
+# SET-UP: Libraries and Source Code
+#-------------------------------------------------------------------------------
 
 library(rsample)
 library(tidyverse)
@@ -234,6 +237,7 @@ mcmcOut <- read.csv("samSimInputs/Ricker_mcmc_AllExMH.csv")
 write.csv(mcmcOut, paste("samSimInputs/Ricker_mcmc.csv"), row.names=F)
 setwd(codeDir)
 
+# This function is coded and documented in 'Code/ProjLRP_Functions.r'
 projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
                                 scenarioName=scenarioName,
                                 useGenMean = F, genYrs = genYrs,
@@ -303,54 +307,22 @@ projSpawners <-run_ScenarioProj(SRDat = NULL, BMmodel = NULL,
 
 
 
-# ===================================================================
+# ==============================================================================
 #  (5) Estimate and Save LRPs (and associated plots)
-# ==================================================================
+#     See Section 12 for improved plotting with multiple probability levels
+#     This section is OPTIONAL
+# ==============================================================================
 
 # Specify threshold to use when calculating LRP
-# # Note: may want to loop over probThresholds as well; still needs to be added
-propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
-probThresh<-0.50 # probability theshhold; the LRP is set as the aggregate abundance that has this
+propCUThresh <- 1.0
+# required proportion of CUs above lower benchmark
+probThresh <- 0.50
+# probability theshhold; the LRP is set as the aggregate abundance that has this
 # probability that the propCUThreshold is met
 
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
-OMsToInclude<-c(
-  # "baseERn10000",
-  # "agePpnConst")
-  "cvER0",
-  "baseERn10000",
-  "cvER0.17")
-# "cvER0.21ER0",
-  # "cvER0.21ER0.43")
-# #"cvER0.21n50000_20yrs")
-  # "cvER0.21.AlifeStageModel")
-  # "cvER0.21.annualcvERCU")
-  # "cvER0.42")
-# "cvER0.21",
-# "cvER0.21.recCorSca0",
-# "cvER0.21.recCorSca0.1",
-# "cvER0.21.recCorSca0.2",
-# "cvER0.21.recCorSca0.3",
-# "cvER0.21.recCorSca0.4",
-# "cvER0.21.recCorSca0.5",
-# "cvER0.21.recCorSca0.6",
-# "cvER0.21.recCorSca0.7",
-# "cvER0.21.recCorSca0.8",
-# "cvER0.21.recCorSca0.9")
-# "cvER0.21",
-# "cvER0.21.agePpnConst")
-
-# "cvER0",
-# "cvER0.21",
-# "cvER0.42",
-# "cvER0.21.agePpnConst")
-  # "cvER0.21",
-  # "cvER0.21.alphaScalar0.75",
-  # "cvER0.21.alphaScalar1.5",
-  # "cvER0.21.Anarrow",
-  # "cvER0.21.noMCMC")
-  #
+OMsToInclude <- c("baseER_AllExMH")
 
 
 # Loop over OM Scenarios
@@ -424,9 +396,9 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # Save LRPs for all OM scenarios
-write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_cvER.csv", sep="/"), row.names=F)
+write.csv(LRP_Ests, paste(projOutDir2, "ProjectedLRPs_AllExMH.csv", sep="/"), row.names=F)
 # Save LRP projection summaries used for calculating and plotting LRP (Optional)
-write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_cvER.csv", sep="/"), row.names=F)
+write.csv(projLRPDat.plot, paste(projOutDir2, "ProjectedLRP_data_AllExMH.csv", sep="/"), row.names=F)
 
 
 
@@ -474,10 +446,10 @@ for (i in 1:length(OMsToInclude)) {
 
 
 # ===================================================================
-# (7) Code to create mcmcOut for SR parameters for WCVI CK
+# (7) Code to create random draws for SR parameters for WCVI CK
 # ===================================================================
 
-# The mcmc is written to a file that is read-in by ProjRLRP_Functions.r
+# The random draws are written to a file that is read-in by ProjRLRP_Functions.r
 # These are generated and stored so that the same random numbers can be drawn
 # with and without log-normal back-transformation bias adjustment
 
@@ -490,7 +462,7 @@ for (i in 1:length(OMsToInclude)) {
 # uncertainty in ln(SREP) is assumed to be normal with 95% uncertainty intervals
   # at LL and UL prediction intervals, provided by the integrated watershed area
   # model, pulled from WCVI_SMSY_AllExMH.csv
-# productivity (ln alpha) and sigma (sd of Ricker residuals) are from
+# productivity (log alpha) and sigma (sd of Ricker residuals) are from
   # "samSimInputs/CUPars_AllExMH.csv" in the SalmonLRP_wCVI_CK repository
 # SD in productivity is assumed 0.5 as in the life-cycle model, i.e., relatively
   # large uncertainty in productivity (W. Luedke pers. comm.)
@@ -498,7 +470,7 @@ for (i in 1:length(OMsToInclude)) {
 
 # 15 March 2024. The SREP files were copied to SalmonLRP_RetroEval repo here
   # with the correct San Juan values based on updated WA from March 2023 (D.
-  # McHugh)
+  # McHugh).
 
 # # Hard coding from Watershed-Area-Model directory
 # if (remove.EnhStocks) SREP <- data.frame(read.csv(
@@ -642,7 +614,10 @@ if(createMCMCout){
     logLLSREP <- log(LLSREP)
     sigSREP <- (logmeanSREP-logLLSREP)/1.96
     #sigSREP <- (logULSREP-logmeanSREP)/1.96 #Check should be same. Yes.
-    rSREP <- exp(rnorm(nTrials*1.5, logmeanSREP,sigSREP))
+    # Without log-normal bias correction when sampling log-beta
+    # rSREP <- exp(rnorm(nTrials*1.5, logmeanSREP,sigSREP))
+    # With a log-normal bias correction when sampling log-beta
+    rSREP <- exp(rnorm(nTrials*1.5, logmeanSREP - 0.5*sigSREP^2, sigSREP))
 
     if(!CoreInd & !AllExMH){
       rsig <-  read.csv(paste("samSimInputs/CUPars.csv")) %>%
@@ -702,7 +677,7 @@ if(createMCMCout){
   }
 
   if(AllExMH){
-      write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc_AllExMH_13Aug.csv", sep="/"),#"Ricker_mcmc_narrow.csv",#_lifeStageModel
+      write.csv(mcmcOut, paste(wcviCKDir, "SamSimInputs","Ricker_mcmc_AllExMH.csv", sep="/"),#"Ricker_mcmc_narrow.csv",#_lifeStageModel
                 row.names=F)
   }
 
@@ -1334,9 +1309,9 @@ for (p in 1:length(probThresh)){
 # ==================================================================
 
 # Specify threshold to use when calculating LRP
-# # Note: may want to loop over probThresholds as well; still needs to be added
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
-probThresh<-c(0.50,0.66, 0.75, 0.95)#,0.9, 0.99) # probability theshhold; the LRP is set as the aggregate abundance that has this
+probThresh<-c(0.50,0.66, 0.75, 0.95)#,0.9, 0.99)
+# probability threshold; the LRP is set as the aggregate abundance that has this
 # probability that the propCUThreshold is met
 
 # Specify scenarios to calculate LRPs and make plots for.
@@ -1410,11 +1385,12 @@ OMsToInclude<-c(
 
 
 
-
+# Name the set of scenarios to plot
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
 if(length(OMsToInclude)==9) OMsToIncludeName <- "ERsEven-hCor"#ERs"#"ERsEven-hCor"#"ERs"
 if(length(OMsToInclude)==3) OMsToIncludeName <- "Alphas"#"cvER"#"Alphas"#"cvER"#"
 
+# Create LRP variable, to be calculated below
 LRP <- NA
 
 for (OM in 1:length(OMsToInclude)){
@@ -1427,6 +1403,7 @@ for (OM in 1:length(OMsToInclude)){
     filenameCU<-paste("projCUBenchDat_",OMsToInclude[OM],".csv",sep="")
     projLRPDat<-read.csv(here::here(wcviCKDir, "SamSimOutputs", "simData",filename))
     projCUBenchDat<-read.csv(here::here(wcviCKDir, "SamSimOutputs", "simData",filenameCU))
+
     # CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars.csv",sep="/"))
     # CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_wEnh.csv",sep="/"))
     # CUpars <- read.csv(paste(wcviCKDir, "SamSimInputs/CUPars_CoreInd.csv",sep="/"))
@@ -1601,7 +1578,7 @@ for (OM in 1:length(OMsToInclude)){
            # xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
            # xlab="Abondance agrégée", ylab="Prob(tous les inlets) > PRI")
           yaxt <- "s"
-      plot.CUs <- FALSE#TRUE
+      plot.CUs <- TRUE
       if(plot.CUs){
         points(as.numeric(as.character(projCUBenchDat$bins)),
                projCUBenchDat$prob1, pch=19,
@@ -1818,14 +1795,16 @@ for (OM in 1:length(OMsToInclude)){
 # logR = logS + logA - exp(logB*S) + normal error with SD=sigma and
 # log-transformation bias correction
 
-# The following parameters are estimated below by CU and used in 'CU_pars.csv'
-# samSimInput files:
+# The following parameters are estimated below by CU and used in
+# 'CU_pars_AllExMH.csv' samSimInput file.
 #  (1) logA (log alpha or productivity values)
 #  (2) logSigma, exponentiated for CU_pars file
+# Productivity (log alpha) estimates also used in 'Watershed-Area-Model'
+# repository to estimated bootstrapped benchmark estimates:
 
-
-# *Note, projections use Ricker B (beta) is calculated from the watershed-area
-# model SREP values, by inlet, and CU-specific productivity estimated as above,
+# *Note, projections use Ricker B (beta) as calculated from the watershed-area
+# model SREP values, by inlet (from WCVI_SMSY_AllExMH.csv rounded to 2
+# significant digits), and CU-specific productivity estimated as above,
 # where, Ricker B (beta) =logA/SREP
 
 run.RunReconstruction <- FALSE
