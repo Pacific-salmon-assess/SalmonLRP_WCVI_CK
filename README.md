@@ -70,7 +70,7 @@ File: R/Inlet_Sum.R ('Watershed-Area-Model' repository)
 
 Inputs: 
 'DataIn/WCVIstocks.csv'(Watershed-Area-Model' repository) for list of indicator stocks
-'DataIn/WCVIEsc.csv' (Watershed-Area-Model' repository) for spawner abundances by indicator population, provided by Diana McHugh (DFO South  Coast Area, 2021, pers. comm.)
+'DataIn/WCVIEsc.csv' (Watershed-Area-Model' repository) for spawner abundances by indicator population, provided by Diana McHugh (DFO South Coast Area, 2021, pers. comm.)
         
 Outputs: 
 'DataOut/Inlet_Sum_AllExMH.csv' (Watershed-Area-Model repository). This file is copied to the 'SalmonLRP_WCVI_CK' repository, location: 'DataIn/Inlet_Sum_AllExMH.csv'.
