@@ -518,7 +518,7 @@ if(!remove.EnhStocks & !CoreInd & !AllExMH){
 
 
 if(createMCMCout){
-  set.seed(1)
+  set.seed(1)#set.seed(10)
   nTrials <- 50000
   # Set up matrix of random numbers to use for generating alphas, so that
   # the same random numbers are used for Ricka estimates with bias correction
@@ -819,6 +819,7 @@ if(calcTau){
 
 # ===================================================================
 # (9) Code to plot distribution of correlations among CUs/inlets
+#   (requird for Holt, K. et al. 2023)
 # ===================================================================
 
 
@@ -1041,6 +1042,7 @@ ggsave(paste(wcviCKDir,"/Figures/ProjectedLRPs/compareEscCor.png",sep=""), plot 
 
 # ===================================================================
 # (10) Make histograms of cvER
+#     (requird for Holt, K. et al. (2023))
 # ==================================================================
 nTrials <- 100000
 canERlabel <- 0.3
@@ -1317,73 +1319,8 @@ probThresh<-c(0.50,0.66, 0.75, 0.95)#,0.9, 0.99)
 # Specify scenarios to calculate LRPs and make plots for.
 # These scenarios will be looped over below with a LRP (and LRP plot) saved for each scenario
 OMsToInclude<-c(
-  # "baseER")
-  # "baseER_wEnh")
   # "baseER_CoreInd")
    "baseER_AllExMH")
-  #"ER0",
-  # "ER0.05",
-  # "ER0.10",
-  # "ER0.15",
-  # "ER0.2",
-  # "ER0.25",
-  # # "ER0.30",
-  # "baseER",
-  # "ER0.35",
-  # "ER0.4",
-  # "ER0.45")
-  # "ER0.05even_hCor",
-  # "ER0.10even_hCor",
-  # "ER0.15even_hCor",
-  # "ER0.20even_hCor",
-  # "ER0.25even_hCor",
-  # "ER0.30even_hCor",
-  # #"baseER",
-  # "ER0.35even_hCor",
-  # "ER0.40even_hCor",
-  # "ER0.45even_hCor")
-
-
-# "ER0.05even_hCor",
-# "ER0.10even_hCor",
-# "ER0.15even_hCor",
-# "ER0.20even_hCor",
-# "ER0.25even_hCor",
-# "ER0.25even_hCor",
-# "ER0.35even_hCor",
-# "ER0.40even_hCor",
-# "ER0.45even_hCor")
-# "ER0.05sameSREP_hCor",
-# "ER0.10sameSREP_hCor",
-# "ER0.15sameSREP_hCor",
-# "ER0.20sameSREP_hCor",
-# "ER0.25sameSREP_hCor",
-# "ER0.25sameSREP_hCor",
-# "ER0.35sameSREP_hCor",
-# "ER0.40sameSREP_hCor",
-# "ER0.45sameSREP_hCor")
-# "ER0.05sameProd_hCor",
-# "ER0.10sameProd_hCor",
-# "ER0.15sameProd_hCor",
-# "ER0.20sameProd_hCor",
-# "ER0.25sameProd_hCor",
-# "ER0.25sameProd_hCor",
-# "ER0.35sameProd_hCor",
-# "ER0.40sameProd_hCor",
-# "ER0.45sameProd_hCor")
-
-
-
-  # "alphaScalar0.75",
-  # "baseER",#"baseERn10000",
-  # "alphaScalar1.5")
-  # # "baseER")
-
-# "cvER0",
-# "baseER",
-# "cvER0.17")
-
-
 
 # Name the set of scenarios to plot
 if(length(OMsToInclude)==1) OMsToIncludeName <- OMsToInclude[1]
@@ -1746,9 +1683,11 @@ for (OM in 1:length(OMsToInclude)){
     abline(h=probThresh[i], lty=2, lwd=lrp.lwd)
     if(OMsToInclude[OM]!="alphaScalar1.5") { if (i==1)
       abline(v=LRP[i], col="#E69F00", lwd=lrp.lwd) }# "orange" "#E69F00",
-    if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==2)
-      abline(v=LRP[i], col="#56B4E9", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
-    # if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==3)
+    # The 2 lines below create a blue vertical line at 66%, commented out for now
+    # if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==2)
+    #   abline(v=LRP[i], col="#56B4E9", lwd=lrp.lwd) }
+
+      # if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==3)
     #   abline(v=LRP[i], col="#009E73", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
     # if(OMsToInclude[OM]!="alphaScalar0.75"&OM < 7) { if (i==4)
     #   abline(v=LRP[i], col="#D55E00", lwd=lrp.lwd) }#viridis(4, alpha=0.3)[3] #"adjustcolor("#56B4E9", alpha.f = 0.5)
@@ -1846,7 +1785,7 @@ if(run.RunReconstruction){
   param$logSigma <- rep(-2, N_Stocks)
 
 
-  dyn.unload(dynlib(paste("TMB_Files/",Mod, sep="")))
+  # dyn.unload(dynlib(paste("TMB_Files/",Mod, sep="")))
   compile(paste(codeDir, "/TMB_Files/", Mod, ".cpp", sep=""))
 
   dyn.load(dynlib("TMB_Files/SR_RickerBasic"))
@@ -1855,15 +1794,157 @@ if(run.RunReconstruction){
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
   pl <- obj$env$parList(opt$par)
   pl
-  #summary(sdreport(obj), p.value=TRUE)
+
+  # Get predicted values and UL and LL for model fit
+  out <- summary(sdreport(obj), p.value=TRUE)
+  out <- as.data.frame(out)
+  out$Param <- row.names(out)
+  out$CU <- SRDat$CU_Name
+  out$Param <- sapply(out$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
+  Preds <- out %>% filter (Param %in% c("LogR_Pred"))
+  Preds$CU <- SRDat$CU_Name
+  Params <- out %>% filter(Param%in% c("logA", "logB", "logSigma"))
+  Params$CU <- rep(CUs,3)
+  lnalpha <- Params %>% filter(Param=="logA") %>% select(Estimate, 'Std. Error')
+  lnalpha <- round(lnalpha,2)
+
+  smax <- Params %>% filter(Param=="logB")
+  smax$smax <- 1/(exp(smax$Estimate))*Scale
+  smax$smaxSE <- 1/(exp(smax$'Std. Error'))*Scale
+  smax <- smax %>% dplyr::select(smax, smaxSE)
+  smax <- round(smax,2)
+
+  beta <- Params %>% filter(Param=="logB")
+  beta$beta <- 1/(1/(exp(beta$Estimate))*Scale)
+  beta$betaSE <- 1/(1/(exp(beta$'Std. Error'))*Scale)
+  beta <- beta %>% dplyr::select(beta, betaSE)
+  beta <- signif(beta,2)
+
+    sig <- Params %>% filter(Param=="logSigma")
+  sig$sig <- exp(sig$Estimate)
+  sig$sigSE <- exp(sig$'Std. Error')
+  sig <- sig %>% dplyr::select(sig, sigSE)
+  sig <- round(sig,2)
 
   riclogA.rr <- data.frame(CU_Name=unique(SRDat$CU_Name), logRicA=pl$logA)
   write.csv(riclogA.rr, paste(wcviCKDir,"/DataIn/ricArr.csv", sep=""))
 
 }
 
+plotRR <- FALSE
+Ricker <- TRUE
+linRicker <- FALSE
+
+if (plotRR==TRUE){
+  CUs <- unique(SRDat$CU_Name)
+  nCUs <- length(CUs)
+  if(Ricker) file.name <- "RickerFits"
+  if(linRicker) file.name <- "LinRickerFits"
+  png(paste(wcviCKDir,"/Figures/",file.name, "_WCVICK.png", sep=""), width=4,
+      height=6,
+      units="in", res=300)#500
+  par(mfrow=c(3,1), mar=c(4, 3.2, 1, 2) + 0.1)
+
+
+  for (i in 1:nCUs){
+    Spawners <- SRDat %>% filter(CU_Name == CUs[i]) %>% dplyr::pull(Spawners)
+    Recruits <- SRDat %>% filter(CU_Name == CUs[i]) %>% dplyr::pull(Recruits)
+    logA <- pl$logA[i]
+    beta <- exp(pl$logB[i])/Scale
+    sigma <- exp(pl$logSigma[i])
+
+    # Need to divide this Preds into the 3 CUs first
+    Preds.CU <- Preds %>% filter(CU == CUs[i]) #%>% dplyr::select('Std. Error')
+
+    PredLL <- exp(Preds.CU$Estimate - 1.96*Preds.CU$'Std. Error') * Scale
+    PredUL <- exp(Preds.CU$Estimate + 1.96*Preds.CU$'Std. Error') * Scale
+    SS <- NA
+    RR <- NA
+    logRS <- NA
+
+    for (j in 1:100){
+      SS[j] <- j*(max(Spawners)/100)
+      RR[j] <- exp(logA) * SS[j] * exp(-beta * SS[j])
+      logRS[j] <- logA - beta*SS[j]
+    }
+
+    if(Ricker){
+      plot(x=Spawners, y=Recruits, pch=19, xlab="", ylab="")
+      lines(x=SS, y=RR, col='grey')
+      plot_df <- data.frame(Spawners,  PredLL, PredUL)
+      plot_df <- arrange(plot_df, Spawners)
+      polygon (x= c(plot_df$Spawners, rev(plot_df$Spawners)),
+               y = c(plot_df$PredLL, rev(plot_df$PredUL)),
+               col = adjustcolor('grey', alpha.f=0.3),
+               border = FALSE)
+      mtext(CUs[i], side=3, line=0.1, at=min(Spawners), cex=0.8, adj=0)
+      if(i==3) mtext("Spawners", side=1, line=2.1)
+      if(i==2) mtext("Recruits", side=2, line=2)
+    }
+    if(linRicker){
+      plot(x=Spawners, y=log(Recruits/Spawners), pch=19, xlab="", ylab="")
+      lines(x=SS, y=logRS, col='grey')
+      # plot_df <- data.frame(Spawners,  PredLL, PredUL)
+      # plot_df <- arrange(plot_df, Spawners)
+      # polygon (x= c(plot_df$Spawners, rev(plot_df$Spawners)),
+      #          y = c(plot_df$PredLL, rev(plot_df$PredUL)),
+      #          col = adjustcolor('grey', alpha.f=0.3),
+      #          border = FALSE)
+      mtext(CUs[i], side=3, line=0.1, at=min(Spawners), cex=0.8, adj=0)
+      if(i==3) mtext("Spawners", side=1, line=2.1)
+      if(i==2) mtext("log(R/S)", side=2, line=2)
+      # r2 <- Resid_df %>% group_by(CU) %>% summarize(r2=cor(Rec,Pr)^2)
+      logRPred <- Preds %>% filter(CU == CUs[i]) %>% pull(Estimate)
+      RPred <- exp(logRPred) *Scale
+      logRSPred <- log(RPred/Spawners)
+      r2 <- round(cor(logRSPred, log(Recruits/Spawners))^2,2)
+      text(x=max(Spawners)*0.9, y=max(log(Recruits/Spawners))*0.8,
+           labels=expression(paste(r^{2}, "=")))
+      text(x=max(Spawners)*0.955, y=max(log(Recruits/Spawners))*0.8,
+           labels=r2)
+
+    }
+  }
+dev.off()
+
+
+Resid_df <- data.frame(CU = SRDat$CU_Name,
+                       Sp = SRDat$Spawners,
+                       Rec = SRDat$Recruits,
+                       Pr = exp(Preds$Estimate) * Scale)
+Resid_df$resid <- Resid_df$Pr - Resid_df$Rec
+png(paste(wcviCKDir,"/Figures/RickerResids_WCVICK.png", sep=""), width=4,
+    height=6,
+    units="in", res=300)#500
+par(mfrow=c(3,1), mar=c(4, 3.1, 1, 2) + 0.1)
+
+for (i in 1:nCUs){
+  Resid_df.CU <- Resid_df %>% filter(CU == CUs[i])
+  plot(x=Resid_df.CU$Sp, y=Resid_df.CU$resid, pch=19, xlab="", ylab="")
+  abline(h=0)
+  mtext(CUs[i], side=3, line=0.1, at=min(Resid_df.CU$Sp), cex=0.8, adj=0)
+  if(i==3) mtext("Spawners", side=1, line=2.1)
+  if(i==2) mtext("Residuals", side=2, line=2)
+}
+dev.off()
+
+png(paste(wcviCKDir,"/Figures/RickerACF_WCVICK.png", sep=""), width=4,
+    height=6,
+    units="in", res=300)#500
+par(mfrow=c(3,1), mar=c(4, 3.1, 1, 2) + 0.1)
+for (i in 1:nCUs){
+  Resid_df.CU <- Resid_df %>% filter(CU == CUs[i])
+  acf(Resid_df.CU$resid, main="", xlab="", ylab="")
+  mtext(CUs[i], side=3, line=0.1, at=0, cex=0.7, adj=0)
+  if(i==3) mtext("Lag", side=1, line=2)
+  if(i==2) mtext("ACF", side=2, line=2)
+}
+dev.off()
+
+}
 # Future work could update this based updated data, e.g.,
 # "WCVI_term_model_revisions_updated-2021.xlsx" from D. McHugh
+# Future work could also consider model with AR1 residuals
 # Note to CH: see RunReconstructionTMBoutputs_BetaCalc.xls
 
 
@@ -2187,7 +2268,7 @@ d["varAlpha"][[1]] # matrix(..., nrow = nTrials, ncol = nCU), cv over years
 
 
 # ===================================================================
-# (16) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
+# (18) Make Comparison Plots Among Scenarios (NOT CURRENTLY WORKING)
 # ==================================================================
 
 # Note: The below code needs to be updated for new projected LRP method (Apr 26, 2021)
