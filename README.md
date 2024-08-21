@@ -138,17 +138,17 @@ The following steps (3-8) are required to generate inputs for projection-based r
 
 *Inputs*: 
 
-column man Unit = WCVIChinook
+column manUnit = WCVIChinook (stock management unit, SMU)
 
 column stk = (each inlet numbered sequentially)
 
-column model = ricker (default model assumption)
+column model = ricker (default stock-recruitment model assumption)
 
-column minER = 0.05 (minimum exploitation rate assuming minimal level of bycatch)
+column minER = 0.05 (minimum exploitation rate assuming minimal unavoidable level of bycatch)
 
-column usERscalar = 1 (scalar applied for additional US harvest, assumed 1)
+column usERscalar = 1 (scalar applied for additional US harvest, assumed default 1)
 
-column canERscalar = 1 (scalar applied for additional CDN harvest, assumed 1)
+column canERscalar = 1 (scalar applied for additional CDN harvest, assumed default 1)
 
 column tauCycAge = tau parameter of the multivariate logistic distribution of proportion of ages in recruitment, provided from Step 4 above, by inlet (all CUs within an inlet are identical)
 
