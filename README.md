@@ -54,7 +54,8 @@ The following steps (3-8) are required to generate inputs for projection-based r
 *Inputs*: 
 
 '/DataIn/WCVI_SRbyCU.csv' (summary of data provided by D. Dobson, 2020)
-Outputs: 
+
+*Outputs*: 
 
 '/DataIn/riclogArr.csv' (log alpha values by CU based on run reconstruction, rr)
 
