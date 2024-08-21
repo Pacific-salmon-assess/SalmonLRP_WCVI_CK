@@ -1768,7 +1768,7 @@ if(run.RunReconstruction){
   Scale <- 1000
 
   data <- list()
-  data$biasCor <- as.numeric(TRUE)
+  data$biasCor <- as.numeric(TRUE) # FALSE
   data$S <- SRDat$Spawners/Scale
   data$logR <- log(SRDat$Recruits/Scale)
   data$stk <- as.numeric(SRDat$CU_ID)
@@ -1799,12 +1799,12 @@ if(run.RunReconstruction){
   out <- summary(sdreport(obj), p.value=TRUE)
   out <- as.data.frame(out)
   out$Param <- row.names(out)
-  out$CU <- SRDat$CU_Name
+  # out$CU <- SRDat$CU_Name
   out$Param <- sapply(out$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
   Preds <- out %>% filter (Param %in% c("LogR_Pred"))
   Preds$CU <- SRDat$CU_Name
   Params <- out %>% filter(Param%in% c("logA", "logB", "logSigma"))
-  Params$CU <- rep(CUs,3)
+  Params$CU <- rep(unique(Preds$CU),3)
   lnalpha <- Params %>% filter(Param=="logA") %>% select(Estimate, 'Std. Error')
   lnalpha <- round(lnalpha,2)
 
@@ -1827,7 +1827,8 @@ if(run.RunReconstruction){
   sig <- round(sig,2)
 
   riclogA.rr <- data.frame(CU_Name=unique(SRDat$CU_Name), logRicA=pl$logA)
-  write.csv(riclogA.rr, paste(wcviCKDir,"/DataIn/ricArr.csv", sep=""))
+  if (data$biasCor) write.csv(riclogA.rr, paste(wcviCKDir,"/DataIn/riclogArr.csv", sep=""))
+  if (!data$biasCor) write.csv(riclogA.rr, paste(wcviCKDir,"/DataIn/riclogArr_nBC.csv", sep=""))
 
 }
 
