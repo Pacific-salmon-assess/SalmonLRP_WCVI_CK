@@ -49,9 +49,9 @@ The following steps (3-8) are required to generate inputs for projection-based r
 
 **Step 3)** Estimate CU-specific stock-recruitment parameters based on unpublished run reconstruction (D. Dobson pers. comm.). A standard Ricker model is applied.
 
-File: 'runWCVICHinook_projLRP.R' (Section 13)
+*File*: 'runWCVICHinook_projLRP.R' (Section 13)
 
-Inputs: 
+*Inputs*: 
 
 '/DataIn/WCVI_SRbyCU.csv' (summary of data provided by D. Dobson, 2020)
 Outputs: 
@@ -60,69 +60,68 @@ Outputs:
 
 'pl' is the object that provides all Ricker parameter estimates for each CU.
 
-Required for: 
-
-File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv', where AllExMH specifies the default indicators used in Brown et al. (in press) for projections, which is all indicators except those with major hatchery facilities. Ricker parameter values are manually input into 'CUpars_AllExMH.csv' (see step 8 below).
+*Required for*: File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv', where AllExMH specifies the default indicators used in Brown et al. (in press) for projections, which is all indicators except those with major hatchery facilities. Ricker parameter values are manually input into 'CUpars_AllExMH.csv' (see step 8 below).
 
 **Step 4)** Calculate mean proportions at age in recruitment and estimate variance in proportions at age (tau parameter of multivariate logistic distribution) from the run reconstruction for WCVI Chinook (D. Dobson pers. comm.) by CU. Note, all inlets within a given CU have the same tau parameter and mean proportions at age.
 
-File: 'runWCVICHinook_projLRP.r' (Section 8)
+*File*: 'runWCVICHinook_projLRP.r' (Section 8)
 
-Inputs: 
+*Inputs*: 
 
 'samSimInputs/CUPars_AllExMH.csv' for Inlet names
 
 'DataIn/CUages.csv' for proportions at age from run reconstruction
 
-Outputs: 
+*Outputs*: 
 
 'inletTau' object providing inlet-specific tau estimates. 
 
-Required for: 
+*Required for*: File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv'. Tau values and the mean proportions of age by CU/inlet are manually input into samSimInputs/CUpars_AllExMH.csv. 
 
-File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv'. Tau values and the mean proportions of age by CU/inlet are manually input into samSimInputs/CUpars_AllExMH.csv. 
+**Step 5)** Calculate aggregate spawner abundances summed across indicators (except major hatchery facilities) to inlets, used to estimate pairwise correlations in abundances between inlets required for projections (see Step 6 below).  The summed spawner abundances are calculated in the 'Watershed-Area-Model' repository. 
 
-**Step 5)** Calculate aggregate spawner abundances summed across indicators (except major hatchery facilities) to inlets, used to estimate pairwise correlations in abundances between inlets required for projections (see Step 6 below).  The summed spawner abundances are calculated in the 'Watershed-Area-Model'
-repository. 
+*File*: R/Inlet_Sum.R ('Watershed-Area-Model' repository)
 
-File: R/Inlet_Sum.R ('Watershed-Area-Model' repository)
-
-Inputs: 
+*Inputs*: 
 
 'DataIn/WCVIstocks.csv'(Watershed-Area-Model' repository) for list of indicator stocks
 
 'DataIn/WCVIEsc.csv' (Watershed-Area-Model' repository) for spawner abundances by indicator population, provided by Diana McHugh (DFO South Coast Area, 2021, pers. comm.)
         
-Outputs: 
+*Outputs*: 
 
 'DataOut/Inlet_Sum_AllExMH.csv' (Watershed-Area-Model repository). This file is copied to the 'SalmonLRP_WCVI_CK' repository, location: 'DataIn/Inlet_Sum_AllExMH.csv'.
 
-**Step 6)** Generate a bubble plot of pairwise correlations in spawner abundances between inlets. 
-File: runWCVIChinook_projLRP.R file (See top of Section 3, which refers to Fig. 6 in RmdReports/WCVI_Projections.Rmd for the creation of this plot).
+*Required for*: Estimating pairwise correlations in abundances between inlets required for projections (see Step 6 below)
 
-Inputs:
+
+**Step 6)** Generate a bubble plot of pairwise correlations in spawner abundances between inlets. 
+
+*File*: runWCVIChinook_projLRP.R file (See top of Section 3, which refers to Fig. 6 in RmdReports/WCVI_Projections.Rmd for the creation of this plot).
+
+*Inputs*:
 
 'DataIn/Inlet_Sum_AllExMH.csv' for summed spawner abundances to the inlet level, generated in Step 5 above
 
 'samSimInputs/CUPars_AllExMH.csv' for names of inlets
-Outputs: 
+
+*Outputs*: 
 
 'Figures/SpawnerCorrelation_AllExMH.png', a bubble plot of pairwise correlations in spawner abundances
 
-Required for:
-
-Figure presented in Brown et al. (in revision). Note, the correlation matrix is calculated again when the projection-based reference points are generated (Step 9 below) based on the same input files.
+*Required for*: Figure presented in Brown et al. (in revision). Note, the correlation matrix is calculated again when the projection-based reference points are generated (Step 9 below) based on the same input files.
 
 **Step 7)** Generate a series of random draws for Ricker model to be used in the projections. These are generated and saved a priori to allow for comparison in outputs for scenarios when bias adjustment from back-transformation of log-normal deviates is not included (default is to include this bias adjustment) 
-File: 'runWCVIChinook_projLRP.R' (Section 7) 
 
-Inputs:
+*File*: 'runWCVIChinook_projLRP.R' (Section 7) 
+
+*Inputs*:
 
 'samSimInputs/CUPars_AllExMH.csv' for inlet names, and productivity  (ln alpha) and sigma (SD of Ricker recruitment deviations) by inlet
 
 'DataIn/WCVI_SMSY_AllExMH.csv' for SREP estimates based on accessible watershed area model
 
-Outputs:
+*Outputs*:
 
 'SamSimInputs/Ricker_mcmc_AllExMH.csv' file of random draws for Ricker parameters
 
@@ -130,15 +129,13 @@ Outputs:
 
 'Figures/SREPDensity.png', figure of density of SREP values from random draws
 
-Required for:
-
-Running projection-based reference points (Step 9 below)
+*Required for*: Running projection-based reference points (Step 9 below)
 
 **Step 8)** Manually complete input files of CU-specific parameters for projections.
 
-File: samSimInput/CUPars_AllExMH.csv
+*File*: samSimInput/CUPars_AllExMH.csv
 
-Input: 
+*Inputs*: 
 
 column man Unit = WCVIChinook
 
@@ -172,24 +169,22 @@ column Sinit = initial spawner abundances, set to spawners at equilibrium genera
 
 The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCovar1, sig_logCovar1, min_logCovar, max_logCovar, larkAlpha, larkBeta0, larkBeta1, larkBeta2, larkBeta3, larkSigma, medianRec, lowQRec, highQRec, meanDBE, sdDBE, medMA, meanForecast, sdForecast 
 
-Output: updated samSimInput/CUPars_AllExMH.csv
+*Output*: updated samSimInput/CUPars_AllExMH.csv
 
-Required for:
-
-Running projections for projection-based reference points (Step 9 below)
+*Required for*: Running projections for projection-based reference points (Step 9 below)
 
 **Step 9)** Run projections to derive projection-based reference points. This code requires R package, samSim (branch LRP), which is sourced in the code below. See samSim repository (https://github.com/Pacific-salmon-assess/samSim/tree/LRP) for code, and Holt, K. et al. (2023) Appendix B for equations and documentation.
 
-File: runWCVIChinook_projLRP.R file (See Section 3). This section sources the generic function, run_scenarioProj() in the Code subfolder to generate projections.
+*File*: runWCVIChinook_projLRP.R file (See Section 3). This section sources the generic function, run_scenarioProj() in the Code subfolder to generate projections.
 
 
-Inputs:
+*Inputs*:
 
 'samSimInputs/CUPars_AllExMH.csv' (see Step 8 above)
 
 'samSimInputs/Ricker_mcmc_AllExMH.csv' (see Step 7 above)
 
-Outputs:
+*Outputs*:
 
 'SamSimOutputs/diagnostics/baseER_AllExMH/baseER_AllExMH_baseER_singleTrialFig.pdf' Example trajectory from a single Monte Carlo trial in sub-directory, labeled by scenarioName 
 
@@ -199,33 +194,29 @@ Outputs:
 
 'SamSimOutputs/simData/baseER_AllExMH/' standard outputs from samSim, where the sub-directory is labelled by scenarioName. See repository, 'samSim' (LRP branch) for code, and Holt, K. et al. (2023) Appendix B for equations and documentation.
 
-Required for:
-
-Generating projection-based reference points and figure of projections
+*Required for*: Generating projection-based reference points and figure of projections
 
 **Step 10)** Compile output file documenting whether individual inlets were above their lower benchmarks for each MC trial.
 
-File: 'CUppnLB.R'
+*File*: 'CUppnLB.R'
 
-Inputs:
+*Inputs*:
 
 'SamSimOutputs/simData/baseER_AllExMH/baseER_AllExMH_baseER_CUaboveLB.RData', created in step 9 above.
 
 'SamSimOutputs/simData/baseER_AllExMH/baseER_AllExMH_baseER_lrpdat.csv', created in step 9 above.
 
-Outputs:
+*Outputs*:
 
 'SamSimOutputs/simData/projCUBenchDat_baseER_AllExMH.csv'
 
-Required for:
-
-Plotting projection-based reference points with specified probability of all inlets being above lower benchmarks along a gradient in aggregate spawner abundances, with the probabilities of individual inlets being above their lower benchmarks overlaid (Step 11)
+*Required for*: Plotting projection-based reference points with specified probability of all inlets being above lower benchmarks along a gradient in aggregate spawner abundances, with the probabilities of individual inlets being above their lower benchmarks overlaid (Step 11)
 
 **Step 11)** Plot projection results: binned aggregate abundances against the proportion of Monte Carlo trials in that bin where all component inlets were above their lower benchmark. From this plot, projection-based reference points can be identified at various probability levels. Overlain on this plot is the probability of individual inlets being above their lower benchmark.
 
-File: runWCVIChinook_projLRP.r
+*File*: runWCVIChinook_projLRP.r
 
-Inputs: 
+*Inputs*: 
 
 'SamSimOutputs/simData/projLRPDat_baseER_AllExMH.csv', output from samSim that shows in which Monte Carlo trial and year all inlets were above their lower benchmarks.
 
@@ -233,7 +224,7 @@ Inputs:
 
 'SamSimInputs/CUPars_AllExMH.csv' for list of inlet names
 
-Outputs:
+*Outputs*:
 
 'Figures/ProjectedLRPs/baseER_AllExMH-ProjLRPCurve-ALLp.png' for figure showing projection-based reference point for various propbabilities of all inlets being above lower benchmarks, with individual inlet probabilities included.
 
@@ -243,11 +234,11 @@ Outputs:
 
 **Step 12)** Run sensitivity analyses for projection-based reference points, generated in Step 9.
 
-File: runWCVIChinook_projLRP.r (see Section 4)
+*File*: runWCVIChinook_projLRP.r (see Section 4)
 
-Inputs: as in Step 9, for various alternative assumptions
+*Inputs*: as in Step 9, for various alternative assumptions
 
-Outputs: as in Step 9, for various alternative assumptions
+*Outputs*: as in Step 9, for various alternative assumptions
 
 
 #### Citations
