@@ -77,7 +77,7 @@ The following steps (3-8) are required to generate inputs for projection-based r
 
 'inletTau' object providing inlet-specific tau estimates. 
 
-*Required for*: File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv'. Tau values and the mean proportions of age by CU/inlet are manually input into samSimInputs/CUpars_AllExMH.csv. 
+*Required for*: File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv'. Tau values and the mean proportions of age by CU/inlet are manually input into samSimInputs/CUpars_AllExMH.csv. See step (8) below.
 
 **Step 5)** Calculate aggregate spawner abundances summed across indicators (except major hatchery facilities) to inlets, used to estimate pairwise correlations in abundances between inlets required for projections (see Step 6 below).  The summed spawner abundances are calculated in the 'Watershed-Area-Model' repository. 
 
