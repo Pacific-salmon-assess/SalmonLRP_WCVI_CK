@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # Projection-based reference points for Pacific salmon
 
 Primary contact: Carrie Holt and Kendra Holt, DFO (carrie.holt@dfo-mpo.gc.ca; Kendra.Holt@dfo-mpo.gc.ca). Code developed by Carrie Holt & Kendra Holt, DFO. 
@@ -39,7 +44,7 @@ Code and associated files are organized into the following sub-folders:
 #### To run analyses, follow these steps:
 
 **Step 1)** Open Rproj file in the 'SalmonLRP_WCVI_CK\WCVIChinookStudy' folder.
-File: SalmonLRP_WCVI_CK\WCVIChinookStudy\WCVIChinookStudy.Rproj
+File: 'SalmonLRP_WCVI_CK\WCVIChinookStudy\WCVIChinookStudy.Rproj'
 
 **Step 2)** Open 'runWCVIChinook_projLRP.r' file and run the 'Set-up:Libraries and Source Code' section
 File: runWCVIChinook_projLRP.r (Section: Set-up:Libraries and Source Code)
@@ -61,7 +66,7 @@ The following steps (3-8) are required to generate inputs for projection-based r
 
 'pl' is the object that provides all Ricker parameter estimates for each CU.
 
-*Required for*: File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv', where AllExMH specifies the default indicators used in Brown et al. (in press) for projections, which is all indicators except those with major hatchery facilities. Ricker parameter values are manually input into 'CUpars_AllExMH.csv' (see step 8 below).
+*Required for*: File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv', where AllExMH specifies the default indicators used in Brown et al. (in press) for projections, which is all indicators except those with major hatchery facilities. Ricker parameter values are manually input into 'CUpars_AllExMH.csv' (see step 7 below).
 
 **Step 4)** Calculate mean proportions at age in recruitment and estimate variance in proportions at age (tau parameter of multivariate logistic distribution) from the run reconstruction for WCVI Chinook (D. Dobson pers. comm.) by CU. Note, all inlets within a given CU have the same tau parameter and mean proportions at age.
 
@@ -112,27 +117,7 @@ The following steps (3-8) are required to generate inputs for projection-based r
 
 *Required for*: Figure presented in Brown et al. (in revision). Note, the correlation matrix is calculated again when the projection-based reference points are generated (Step 9 below) based on the same input files.
 
-**Step 7)** Generate a series of random draws for Ricker model to be used in the projections. These are generated and saved a priori to allow for comparison in outputs for scenarios when bias adjustment from back-transformation of log-normal deviates is not included (default is to include this bias adjustment) 
-
-*File*: 'runWCVIChinook_projLRP.R' (Section 7) 
-
-*Inputs*:
-
-'samSimInputs/CUPars_AllExMH.csv' for inlet names, and productivity  (ln alpha) and sigma (SD of Ricker recruitment deviations) by inlet
-
-'DataIn/WCVI_SMSY_AllExMH.csv' for SREP estimates based on accessible watershed area model
-
-*Outputs*:
-
-'SamSimInputs/Ricker_mcmc_AllExMH.csv' file of random draws for Ricker parameters
-
-'Figures/AlphaDensity.png', figure of density in ln alpha values from random draws
-
-'Figures/SREPDensity.png', figure of density of SREP values from random draws
-
-*Required for*: Running projection-based reference points (Step 9 below)
-
-**Step 8)** Manually complete input files of CU-specific parameters for projections.
+**Step 7)** Manually complete input files of CU-specific parameters for projections.
 
 *File*: samSimInput/CUPars_AllExMH.csv
 
@@ -172,7 +157,27 @@ The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCov
 
 *Output*: updated samSimInput/CUPars_AllExMH.csv
 
-*Required for*: Running projections for projection-based reference points (Step 9 below)
+*Required for*: Generating random draws of Ricker model to be used in projections (Step 8 below) and running projections for projection-based reference points (Step 9 below)
+
+**Step 8)** Generate a series of random draws for Ricker model to be used in the projections. These are generated and saved a priori to allow for comparison in outputs for scenarios when bias adjustment from back-transformation of log-normal deviates is not included (default is to include this bias adjustment) 
+
+*File*: 'runWCVIChinook_projLRP.R' (Section 7) 
+
+*Inputs*:
+
+'samSimInputs/CUPars_AllExMH.csv' for inlet names, and productivity  (ln alpha) and sigma (SD of Ricker recruitment deviations) by inlet
+
+'DataIn/WCVI_SMSY_AllExMH.csv' for SREP estimates based on accessible watershed area model
+
+*Outputs*:
+
+'SamSimInputs/Ricker_mcmc_AllExMH.csv' file of random draws for Ricker parameters
+
+'Figures/AlphaDensity.png', figure of density in ln alpha values from random draws
+
+'Figures/SREPDensity.png', figure of density of SREP values from random draws
+
+*Required for*: Running projection-based reference points (Step 9 below)
 
 **Step 9)** Run projections to derive projection-based reference points. This code requires R package, samSim (branch LRP), which is sourced in the code below. See samSim repository (https://github.com/Pacific-salmon-assess/samSim/tree/LRP) for code, and Holt, K. et al. (2023) Appendix B for equations and documentation.
 
@@ -181,9 +186,9 @@ The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCov
 
 *Inputs*:
 
-'samSimInputs/CUPars_AllExMH.csv' (see Step 8 above)
+'samSimInputs/CUPars_AllExMH.csv' (see Step 7 above)
 
-'samSimInputs/Ricker_mcmc_AllExMH.csv' (see Step 7 above)
+'samSimInputs/Ricker_mcmc_AllExMH.csv' (see Step 8 above)
 
 *Outputs*:
 

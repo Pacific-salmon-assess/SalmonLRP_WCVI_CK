@@ -1738,8 +1738,9 @@ for (OM in 1:length(OMsToInclude)){
 # 'CU_pars_AllExMH.csv' samSimInput file.
 #  (1) logA (log alpha or productivity values)
 #  (2) logSigma, exponentiated for CU_pars file
-# Productivity (log alpha) estimates also used in 'Watershed-Area-Model'
-# repository to estimated bootstrapped benchmark estimates:
+# Productivity (log alpha) estimates also used in the 'Watershed-Area-Model'
+# repository to estimate benchmark and their bootstrapped uncertainties, in
+# sensitivity analyses.
 
 # *Note, projections use Ricker B (beta) as calculated from the watershed-area
 # model SREP values, by inlet (from WCVI_SMSY_AllExMH.csv rounded to 2
