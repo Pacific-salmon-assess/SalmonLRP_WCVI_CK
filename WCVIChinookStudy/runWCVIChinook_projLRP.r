@@ -1515,7 +1515,7 @@ for (OM in 1:length(OMsToInclude)){
            # xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
            # xlab="Abondance agrégée", ylab="Prob(tous les inlets) > PRI")
           yaxt <- "s"
-      plot.CUs <- TRUE
+      plot.CUs <- FALSE
       if(plot.CUs){
         points(as.numeric(as.character(projCUBenchDat$bins)),
                projCUBenchDat$prob1, pch=19,
@@ -1764,7 +1764,7 @@ if(run.RunReconstruction){
   #   s <- SRDat %>% filter(CU_ID==0)%>% pull(Spawners)
   #   lm(log(r/s)~s)
   # }
-  Mod <- "SR_RickerBasic"
+  Mod <- "SR_RickerBasic_withPredictions"#"SR_RickerBasic"
 
   Scale <- 1000
 
@@ -1773,6 +1773,11 @@ if(run.RunReconstruction){
   data$S <- SRDat$Spawners/Scale
   data$logR <- log(SRDat$Recruits/Scale)
   data$stk <- as.numeric(SRDat$CU_ID)
+  nstk <- max(data$stk+1)
+  data$predS <- rep(seq(0,max(data$S), 0.2),nstk)
+  pred_length <- length(seq(0,max(data$S), 0.2))
+  data$stk_pred <- sort(rep(c(0:(nstk-1)), pred_length))
+
   N_Stocks <- length(unique(SRDat$CU_Name))
   #data$N_Stks <- N_Stocks
   #data$yr <- SRDat$BroodYear
@@ -1789,7 +1794,7 @@ if(run.RunReconstruction){
   # dyn.unload(dynlib(paste("TMB_Files/",Mod, sep="")))
   compile(paste(codeDir, "/TMB_Files/", Mod, ".cpp", sep=""))
 
-  dyn.load(dynlib("TMB_Files/SR_RickerBasic"))
+  dyn.load(dynlib(paste("TMB_Files/", Mod, sep="")))
 
   obj <- MakeADFun(data, param, DLL=Mod, silent=TRUE)
   opt <- nlminb(obj$par, obj$fn, obj$gr, control = list(eval.max = 1e5, iter.max = 1e5))
@@ -1803,7 +1808,9 @@ if(run.RunReconstruction){
   # out$CU <- SRDat$CU_Name
   out$Param <- sapply(out$Param, function(x) (unlist(strsplit(x, "[.]"))[[1]]))
   Preds <- out %>% filter (Param %in% c("LogR_Pred"))
+  Preds2 <- out %>% filter (Param %in% c("LogR_Pred2"))
   Preds$CU <- SRDat$CU_Name
+  Preds2$CUind <- data$stk_pred
   Params <- out %>% filter(Param%in% c("logA", "logB", "logSigma"))
   Params$CU <- rep(unique(Preds$CU),3)
   lnalpha <- Params %>% filter(Param=="logA") %>% select(Estimate, 'Std. Error')
@@ -1834,14 +1841,25 @@ if(run.RunReconstruction){
 }
 
 plotRR <- FALSE
-Ricker <- TRUE
+Ricker <- FALSE
 linRicker <- FALSE
+Ricker_allmodels <- TRUE
 
 if (plotRR==TRUE){
   CUs <- unique(SRDat$CU_Name)
   nCUs <- length(CUs)
   if(Ricker) file.name <- "RickerFits"
+  if(Ricker_allmodels) file.name <- "RickerFits_altProd"
   if(linRicker) file.name <- "LinRickerFits"
+
+  # Get lnalpha inferred from  Watershed Area Model from repo=
+  # 'Watershed-Area-Model" and lifecycle model (lna=1)
+  if(Ricker_allmodels){
+    download.file('https://raw.githubusercontent.com/carrieholt/Watershed-Area-Model/master/DataOut/lnalphaParken.csv', paste(wcviCKDir,'/DataIn/lnalphaParken.csv', sep=""),  mode="wb")
+    lnalpha_Parken <- read.csv(paste(wcviCKDir,'/DataIn/lnalphaParken.csv', sep=""))[2]$x
+    lnalpha_lifecycle <- 1
+  }
+
   png(paste(wcviCKDir,"/Figures/",file.name, "_WCVICK.png", sep=""), width=4,
       height=6,
       units="in", res=300)#500
@@ -1854,7 +1872,6 @@ if (plotRR==TRUE){
     logA <- pl$logA[i]
     beta <- exp(pl$logB[i])/Scale
     sigma <- exp(pl$logSigma[i])
-
     # Need to divide this Preds into the 3 CUs first
     Preds.CU <- Preds %>% filter(CU == CUs[i]) #%>% dplyr::select('Std. Error')
 
@@ -1862,11 +1879,15 @@ if (plotRR==TRUE){
     PredUL <- exp(Preds.CU$Estimate + 1.96*Preds.CU$'Std. Error') * Scale
     SS <- NA
     RR <- NA
+    RR_lifecycle <- NA
+    RR_Parken <- NA
     logRS <- NA
 
     for (j in 1:100){
       SS[j] <- j*(max(Spawners)/100)
       RR[j] <- exp(logA) * SS[j] * exp(-beta * SS[j])
+      RR_lifecycle[j] <- exp(lnalpha_lifecycle) * SS[j] * exp(-beta * SS[j])
+      RR_Parken[j] <- exp(lnalpha_Parken) * SS[j] * exp(-beta * SS[j])
       logRS[j] <- logA - beta*SS[j]
     }
 
@@ -1883,7 +1904,44 @@ if (plotRR==TRUE){
       if(i==3) mtext("Spawners", side=1, line=2.1)
       if(i==2) mtext("Recruits", side=2, line=2)
     }
-    if(linRicker){
+    # Plot Ricker models from run reconstructin with inferred Ricker curves
+    # from assumptions from watershed area model, and from life cycle model
+    # IN PROGRESS
+    if(Ricker_allmodels){
+      plot(x=Spawners, y=Recruits, pch=19, xlab="", ylab="", cex=0.5,
+           col="deepskyblue3", xlim=c(0,max(SS)), ylim=c(0,max(RR_Parken)))
+      # # Can't use SREP from WA model, as spatial scales differ. Further
+      # # work is required to match the spatial scale of run reconstruction with
+      # # Spatial scale of watershed area model outputs
+      # # Get SREP inferred from Watershed Area Model from repo=
+      # # 'Watershed-Area-Model"
+      # SREP_CU <- data.frame( read.csv(
+      #   here::here("DataIn","WCVI_SMSY_AllExMH.csv")))
+      # SREP_CU <- SREP_CU %>%
+      #   filter(Param == "SREP") %>%
+      #   filter(Stock == CUs[i]) %>%
+      #            # %in%c("WCVI Nootka & Kyuquot", "WCVI North","WCVI South")) %>%
+      #   pull(Estimate)
+      # ricB_CU <- lnalpha_Parken/SREP_CU
+      # RR_lifecycle <- SS*exp(lnalpha_lifecycle - ricB_CU*SS)
+      # RR_Parken <- SS*exp(lnalpha_Parken - ricB_CU*SS)
+
+      lines(x=SS, y=RR, col="deepskyblue3")
+      lines(x=SS, y=RR_lifecycle, col="#ea9999")
+      lines(x=SS, y=RR_Parken, col="grey")
+
+      plot_df <- data.frame(Spawners,  PredLL, PredUL)
+      plot_df <- arrange(plot_df, Spawners)
+      polygon (x= c(plot_df$Spawners, rev(plot_df$Spawners)),
+               y = c(plot_df$PredLL, rev(plot_df$PredUL)),
+               col = adjustcolor("deepskyblue3", alpha.f=0.1),
+               border = FALSE)
+      mtext(CUs[i], side=3, line=0.1, at=min(Spawners), cex=0.8, adj=0)
+      if(i==3) mtext("Spawners", side=1, line=2.1)
+      if(i==2) mtext("Recruits", side=2, line=2)
+    }
+
+        if(linRicker){
       plot(x=Spawners, y=log(Recruits/Spawners), pch=19, xlab="", ylab="")
       lines(x=SS, y=logRS, col='grey')
       # plot_df <- data.frame(Spawners,  PredLL, PredUL)

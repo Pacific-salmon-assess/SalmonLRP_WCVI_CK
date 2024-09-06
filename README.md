@@ -139,7 +139,7 @@ column tauCycAge = tau parameter of the multivariate logistic distribution of pr
 
 column alpha = ln alpha parameter in Ricker model by inlet, provided from Step 3 above, by inlet (all CUs within an inlet are identical)
 
-column beta0 = beta parameter of the Ricker model by inlet, calculated from lnalpha/SREP, where lnalpha is generated in Step 3 and SREP from accessible watershed area model for each inlet (file of accessible watershed-area based benchmarks: 'DataIn/WCVI_SMSY_AllExMH.csv', rounded to 2 significant digits).
+column beta0 = beta parameter of the Ricker model by inlet, calculated from lnalpha/SREP, where lnalpha is generated in Step 3 and SREP from accessible watershed area model for each inlet (file of accessible watershed-area based benchmarks: 'DataIn/WCVI_SMSY_AllExMH.csv').
 
 column sigma = SD of Ricker residuals by inlet, provided from Step 3 above, by inlet (all CUs within an inlet are identical)
 
@@ -151,7 +151,7 @@ column ageMaxRec = 4 (generation time used to set length of the initialization p
 
 columns meanRec2, meanRec3, meanRec4, meanRec5, meanRec6 = mean proportion of ages in recruitment, provided from Step 4 above, by inlet (all CUs within an inlet are identical)
 
-column Sinit = initial spawner abundances, set to spawners at equilibrium generated from accessible watershed area model, by inlet, predicted values from IWAM.r with 2 significant digits.
+column Sinit = initial spawner abundances, set to spawners at equilibrium generated from accessible watershed area model, by inlet, predicted values from IWAM.r.
 
 The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCovar1, sig_logCovar1, min_logCovar, max_logCovar, larkAlpha, larkBeta0, larkBeta1, larkBeta2, larkBeta3, larkSigma, medianRec, lowQRec, highQRec, meanDBE, sdDBE, medMA, meanForecast, sdForecast 
 
@@ -202,7 +202,7 @@ The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCov
 
 *Required for*: Generating projection-based reference points and figure of projections
 
-**Step 10)** Compile output file documenting whether individual inlets were above their lower benchmarks for each MC trial.
+**Step 10)** Compile output file documenting whether individual inlets were above their lower benchmarks for each MC trial (this step is supplemental and is only needed to plot individual inlets on aggregate reference points plot, see 'Required for' section below).
 
 *File*: 'CUppnLB.R'
 
@@ -220,7 +220,7 @@ The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCov
 
 **Step 11)** Plot projection results: binned aggregate abundances against the proportion of Monte Carlo trials in that bin where all component inlets were above their lower benchmark. From this plot, projection-based reference points can be identified at various probability levels. Overlain on this plot is the probability of individual inlets being above their lower benchmark.
 
-*File*: runWCVIChinook_projLRP.r
+*File*: runWCVIChinook_projLRP.r (see Section 12).
 
 *Inputs*: 
 
@@ -238,7 +238,7 @@ The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCov
 
 'DataOut/ProjectedLRPs/ProjectedLRP_databaseER_AllExMH_Allp.csv' for underlying binned data used to generate Figure of probabilities of all inlets being above lower benchmarks along gradient in aggregate abundances, above.
 
-**Step 12)** Run sensitivity analyses for projection-based reference points, generated in Step 9.
+**Step 12)** Run sensitivity analyses for projection-based reference points, generated in Step 9. Note, these were run extensively in Holt, K. et al. (2023), but not for Brown et al. (in revision).
 
 *File*: runWCVIChinook_projLRP.r (see Section 4)
 

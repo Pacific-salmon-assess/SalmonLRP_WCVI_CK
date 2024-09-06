@@ -8,6 +8,7 @@ Type objective_function<Type>:: operator() ()
   DATA_VECTOR(S);
   DATA_VECTOR(logR);
   DATA_IVECTOR(stk);
+  //DATA_VECTOR(predS);
   //DATA_IVECTOR(yr);
 
   PARAMETER_VECTOR(logA);
@@ -17,7 +18,9 @@ Type objective_function<Type>:: operator() ()
 
   Type ans=0.0;
   int N_Obs = S.size();
+  //int N_Preds predS.size();
   vector <Type> LogR_Pred(N_Obs);
+  //vector <Type> LogR_Pred2(N_predS);
   vector <Type> sigma = exp(logSigma);
   vector <Type> A = exp(logA);
 
@@ -31,9 +34,18 @@ Type objective_function<Type>:: operator() ()
 
   }
 
+  //Ricker predictions over a larger range of S
+  //for (int j = 0; j<N_predS; i++){
+  //  LogR_Pred2(i) = logA(stk(i)) + log(predS(i)) - exp(logB(stk(i))) * predS(i);
+  //  //ans += -dnorm(LogR_Pred(i), logR(i),  sigma(stk(i)), true);
+  //  if(biasCor == 0) ans += -dnorm(logR(i) - LogR_Pred2(i), Type(0),  sigma(stk(i)), true);
+  //  if(biasCor == 1) ans += -dnorm(logR(i) - LogR_Pred2(i), - pow(sigma(stk(i)),2)/Type(2),  sigma(stk(i)), true);
+ // }
+
 
   ADREPORT(A);
   ADREPORT(LogR_Pred);
+  //ADREPORT(LogR_Pred2);
 
   return ans;
 
