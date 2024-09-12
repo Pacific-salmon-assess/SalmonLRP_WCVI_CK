@@ -15,5 +15,7 @@ U_MSY  <- function (lna){0.5 * lna - 0.07 *lna^2 }
 lna.vec <- rnorm(10000,lna, sig.lna)
 
 umsy <- U_MSY(lna.vec)
-quantile(umsy, p=c(0.025, 0.5,0.975))
+quantile(umsy, p=c(0.025, 0.25, 0.5, 0.75, 0.975))
 
+# 2.5%         25%         50%         75%       97.5%
+# 0.005693579 0.298928078 0.429132261 0.541525082 0.717059148
