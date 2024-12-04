@@ -1312,7 +1312,7 @@ for (p in 1:length(probThresh)){
 
 # Specify threshold to use when calculating LRP
 propCUThresh <- 1.0 # required proportion of CUs above lower benchmark
-probThresh<-c(0.50,0.66, 0.75, 0.95)#,0.9, 0.99)
+probThresh<-c(0.50, 0.66, 0.75, 0.95)#,0.9, 0.99)
 # probability threshold; the LRP is set as the aggregate abundance that has this
 # probability that the propCUThreshold is met
 
@@ -1515,6 +1515,7 @@ for (OM in 1:length(OMsToInclude)){
            # xlab="Aggregate Abundance", ylab="Pr (All inlets > Lower Benchmark)")
            # xlab="Abondance agrégée", ylab="Prob(tous les inlets) > PRI")
           yaxt <- "s"
+          # axis(side=1, at=c(seq(0,150000,25000)), labels=NA)
       plot.CUs <- FALSE
       if(plot.CUs){
         points(as.numeric(as.character(projCUBenchDat$bins)),

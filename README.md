@@ -232,7 +232,7 @@ The following columns are not used:  domCycle, cvER, coef1, covarInit, mu_logCov
 
 *Outputs*:
 
-'Figures/ProjectedLRPs/baseER_AllExMH-ProjLRPCurve-ALLp.png' for figure showing projection-based reference point for various propbabilities of all inlets being above lower benchmarks, with individual inlet probabilities included.
+'Figures/ProjectedLRPs/baseER_AllExMH-ProjLRPCurve-ALLp.png' for figure showing projection-based reference point for various probabilities of all inlets being above lower benchmarks, with individual inlet probabilities included.
 
 'DataOut/ProjectedLRPs/ProjectedLRPsbaseER_AllExMH_ALLp.csv' for projection-based reference points at various probabilities
 
