@@ -13,7 +13,7 @@
 # (https://github.com/Pacific-salmon-assess/samSim)
 # The code in this file is divided into the following main sections:
 #     (1) Read-in WCVI Chinook data
-#     (2) Specify initial parameters & data sets for projections
+#     (2) Create directories
 #     (3) Run base projections
 #     (4) Run sensitivity analysis projections
 #     (5) Estimate and save LRPs and associated plots (Optional, see Section 12)
@@ -163,7 +163,7 @@ inletPlot <- ggplot(wcviInletsDF) +
 
 
 # ======================================================================
-# (2) Specify initial parameters & data sets for projections
+# (2) Create directories
 # =====================================================================
 
 # Create output directories for Projected LRP outputs
