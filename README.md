@@ -1,17 +1,13 @@
----
-output:
-  pdf_document: default
-  html_document: default
----
+
 # Projection-based reference points for Pacific salmon
 
 Primary contact: Carrie Holt and Kendra Holt, DFO (carrie.holt@dfo-mpo.gc.ca; Kendra.Holt@dfo-mpo.gc.ca). Code developed by Carrie Holt & Kendra Holt, DFO. 
 
 ### Overview
 
-This readme file provides steps to run projection-based reference points for West coast Vancouver Island (WCVI) Chinook salmon. The files needed to run these analyses are primarily in this repository "SalmonLRP_WCVI_CK", but some inputs files are generated in a second repository, "Watershed-Area-Model" repository, which contains files and code required to estimate benchmarks for WCVI Chinook, as noted below. 
+This readme file provides steps to run projection-based reference points for West coast Vancouver Island (WCVI) Chinook salmon. The files needed to run these analyses are primarily in this repository "SalmonLRP_WCVI_CK", but some inputs files are generated in a second repository, "Watershed-Area-Model (wcvi-chinook branch)" repository, which contains files and code required to estimate benchmarks for WCVI Chinook, as noted below. 
 
-The "SalmonLRP_WCVI_CK" repository is forked from the "SalmonLRP_RetroEval" repository which provides code used to estimate projection-based reference points that are documented in Holt, K. et al. (2023), including WCVI Chinook as a case study.
+The "SalmonLRP_WCVI_CK" Github repository was forked from the "SalmonLRP_RetroEval" repository which provides code used to estimate projection-based reference points that are documented in Holt, K. et al. (2023), including WCVI Chinook as a case study.
 
 The analyses and results from this repository are reported in Brown et al. (in revision). Citations are listed below.
 
@@ -84,13 +80,13 @@ The following steps (3-8) are required to generate inputs for projection-based r
 
 *Required for*: File of inputs for projections 'samSimInputs/CUpars_AllExMH.csv'. Tau values and the mean proportions of age by CU/inlet are manually input into samSimInputs/CUpars_AllExMH.csv. See step (8) below.
 
-**Step 5)** Calculate aggregate spawner abundances summed across indicators (except major hatchery facilities) to inlets, used to estimate pairwise correlations in abundances between inlets required for projections (see Step 6 below).  The summed spawner abundances are calculated in the 'Watershed-Area-Model' repository. 
+**Step 5)** Calculate aggregate spawner abundances summed across indicators (except major hatchery facilities) to inlets, used to estimate pairwise correlations in abundances between inlets required for projections (see Step 6 below).  The summed spawner abundances are calculated in the 'Watershed-Area-Model' (wcvi-chinook branch) repository. 
 
-*File*: R/Inlet_Sum.R ('Watershed-Area-Model' repository)
+*File*: R/Inlet_Sum.R ('Watershed-Area-Model' repository, 'wcvi-chinook' branch)
 
 *Inputs*: 
 
-'DataIn/WCVIstocks.csv'(Watershed-Area-Model' repository) for list of indicator stocks
+'DataIn/WCVIstocks.csv'(Watershed-Area-Model' repository, 'wcvi-chinook' branch) for list of indicator stocks
 
 'DataIn/WCVIEsc.csv' (Watershed-Area-Model' repository) for spawner abundances by indicator population, provided by Diana McHugh (DFO South Coast Area, 2021, pers. comm.)
         
